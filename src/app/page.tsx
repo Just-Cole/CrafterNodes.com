@@ -102,7 +102,7 @@ function Footer() {
                 <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
                     <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
                      <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        <a href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</a>
+                        <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
                         <a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a>
                     </div>
                 </div>
