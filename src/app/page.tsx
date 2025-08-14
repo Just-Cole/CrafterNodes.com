@@ -4,7 +4,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { ShieldCheck, Rocket, Zap, Server } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ShieldCheck, Rocket, Zap, Server, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -34,7 +35,12 @@ const supportedGames = [
     {
         name: 'Minecraft',
         image: 'https://placehold.co/1024x1536.png',
-        hint: 'minecraft scene'
+        hint: 'minecraft scene',
+        plans: [
+            { name: 'Dirt Plan', price: '$5', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'] },
+            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', '40 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'] },
+            { name: 'Diamond Plan', price: '$20', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'] },
+        ]
     },
     {
         name: 'Counter-Strike 2',
@@ -145,6 +151,55 @@ function Footer() {
     );
 }
 
+function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button className="w-full">View Plans</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle className="text-3xl font-bold text-center">
+                        {game.name} Server Hosting
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-lg">
+                        Choose the perfect plan for your community.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-8">
+                    {game.plans ? (
+                        game.plans.map(plan => (
+                            <Card key={plan.name} className="flex flex-col">
+                                <CardHeader className="text-center">
+                                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                                    <p className="text-4xl font-bold">{plan.price}<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
+                                </CardHeader>
+                                <CardContent className="flex flex-col flex-grow">
+                                    <ul className="space-y-3 text-muted-foreground flex-grow">
+                                        {plan.features.map(feature => (
+                                            <li key={feature} className="flex items-center gap-2">
+                                                <CheckCircle className="h-5 w-5 text-primary" />
+                                                <span>{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Button className="w-full mt-6">Get Started</Button>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <div className="col-span-3 text-center">
+                            <p>Pricing plans for {game.name} are coming soon!</p>
+                            <Button className="mt-4">
+                                <Link href="/#">Contact Sales</Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function LandingPage() {
     const [api, setApi] = React.useState<CarouselApi>()
@@ -237,8 +292,8 @@ export default function LandingPage() {
                                                 </div>
                                                 <div className="p-4">
                                                     <h3 className="text-xl font-bold mb-2">{game.name}</h3>
-                                                    <p className="text-muted-foreground mb-4">Starting from $5/month</p>
-                                                    <Button className="w-full">View Plans</Button>
+                                                    <p className="text-muted-foreground mb-4">Starting from {game.plans ? game.plans[0].price : "$5"}/month</p>
+                                                    <PricingDialog game={game} />
                                                 </div>
                                             </CardContent>
                                         </Card>
