@@ -3,15 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { CheckCircle, Gamepad2, Puzzle, ShieldCheck } from "lucide-react";
+import { Gamepad2, Puzzle, ShieldCheck, Rocket, Zap, Server } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 
 const features = [
-    { icon: <Gamepad2 className="h-10 w-10" />, title: "Instant Server Setup", description: "Get your game server online in seconds. Our automated system provisions your server instantly after purchase." },
-    { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "We provide enterprise-level DDoS protection to keep your game server online 24/7, no matter what." },
-    { icon: <Puzzle className="h-10 w-10" />, title: "Mod & Plugin Support", description: "Easily install your favorite mods and plugins with our one-click installer. Customize your server to your liking." },
+    { icon: <Rocket className="h-10 w-10" />, title: "Instant Setup", description: "Deploy your server in minutes. Choose a game, and our system handles the rest." },
+    { icon: <Zap className="h-10 w-10" />, title: "High Performance", description: "Powered by NVMe SSDs and high-clock speed CPUs to eliminate lag and ensure smooth gameplay." },
+    { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "Enterprise-grade DDoS protection is included with all plans to keep your server online, always." },
+    { icon: <Server className="h-10 w-10" />, title: "Full Control", description: "Access our intuitive control panel with a live console, file manager, and backup system." },
 ]
 
 const supportedGames = [
@@ -68,17 +69,17 @@ export default function LandingPage() {
                 <div className="container mx-auto text-center">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                            Lag-Free Game Hosting, Powered for Victory.
+                            Powerful Game Server Hosting, Simplified.
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                            CrafterNodes provides high-performance game servers with an intuitive control panel. Focus on your community, we'll handle the rest.
+                            Experience blazing-fast, reliable server hosting for your favorite games with an intuitive control panel. From single servers to complex networks, CrafterNodes is your all-in-one solution.
                         </p>
                         <div className="mt-10 flex items-center justify-center gap-x-6">
                             <Button size="lg" asChild>
-                                <Link href="/#pricing">Get Started</Link>
+                                <Link href="/#pricing">View Pricing</Link>
                             </Button>
                             <Button size="lg" variant="outline" asChild>
-                                <Link href="#features">Learn More</Link>
+                                <Link href="#">Join our Discord</Link>
                             </Button>
                         </div>
                     </div>
@@ -88,10 +89,10 @@ export default function LandingPage() {
             <section id="features" className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">The Ultimate Game Hosting Experience</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">The best features to power your gaming community.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">The Ultimate Server Toolkit</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">Everything you need for a seamless hosting experience, from performance to management.</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         {features.map((feature) => (
                             <div key={feature.title} className="text-center p-8 border border-border rounded-lg bg-background">
                                 <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mx-auto mb-6">
@@ -143,30 +144,6 @@ export default function LandingPage() {
                         <CarouselPrevious />
                         <CarouselNext />
                     </Carousel>
-                </div>
-            </section>
-
-             <section className="w-full py-20 md:py-32 bg-secondary">
-                <div className="container mx-auto">
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Ready to Launch?</h2>
-                            <p className="mt-4 text-lg text-muted-foreground">Your new game server is just a few clicks away. Get started now and be online in minutes.</p>
-                             <div className="mt-8">
-                                <Button size="lg" asChild>
-                                    <Link href="/#pricing">Deploy Your Server</Link>
-                                </Button>
-                             </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="relative aspect-square rounded-lg overflow-hidden">
-                                <Image src="https://placehold.co/400x400.png" alt="Minecraft" fill className="object-cover" data-ai-hint="minecraft video game" />
-                            </div>
-                             <div className="relative aspect-square rounded-lg overflow-hidden">
-                                <Image src="https://placehold.co/400x400.png" alt="Counter Strike 2" fill className="object-cover" data-ai-hint="counter strike" />
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
         </>

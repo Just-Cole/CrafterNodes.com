@@ -1,3 +1,5 @@
+import { Github, Twitter } from "lucide-react";
+
 function Logo() {
     return (
         <div className="flex items-center gap-2">
@@ -16,35 +18,36 @@ export function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <Logo />
-                        <p className="text-muted-foreground mt-4 text-sm">Your all-in-one game hosting control panel.</p>
+                        <p className="text-muted-foreground mt-4 text-sm">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Products</h4>
+                        <h4 className="font-semibold mb-4">Our Services</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="#" className="text-muted-foreground hover:text-foreground">Minecraft Hosting</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Valheim Hosting</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Rust Hosting</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">All Games</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">All Game Servers</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Company</h4>
+                        <h4 className="font-semibold mb-4">Community</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">About</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Careers</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Discord</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Legal</h4>
+                        <h4 className="font-semibold mb-4">Quick Links</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Game Panel</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Pricing</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Login</a></li>
                         </ul>
                     </div>
                 </div>
-                <div className="mt-8 border-t pt-8 flex justify-between items-center">
-                    <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} CrafterNodes. All rights reserved.</p>
+                <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
+                    <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
+                     <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                        <a href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</a>
+                        <a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a>
+                    </div>
                 </div>
             </div>
         </footer>
