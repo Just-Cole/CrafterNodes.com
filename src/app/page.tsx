@@ -331,7 +331,7 @@ export default function LandingPage() {
                                     <div className="p-1">
                                         <Card className="overflow-hidden h-full flex flex-col">
                                             <CardContent className="p-0 flex flex-col flex-grow">
-                                                <div className="relative aspect-[3/2]">
+                                                <div className="relative aspect-[2/3]">
                                                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
                                                 </div>
                                                 <div className="p-4 flex flex-col flex-grow">
