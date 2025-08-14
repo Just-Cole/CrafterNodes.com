@@ -37,11 +37,11 @@ const supportedGames = [
         image: '/Game-Card-icons/Minecraft.png',
         hint: 'minecraft scene',
         plans: [
-            { name: 'Coal Plan', price: '$4', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'] },
-            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', '40 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'] },
-            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', '75 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'] },
-            { name: 'Diamond Plan', price: '$25', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'] },
-            { name: 'Emerald Plan', price: '$40', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'] },
+            { name: 'Coal Plan', price: '$4', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
+            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', '40 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
+            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', '75 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png' },
+            { name: 'Diamond Plan', price: '$25', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
+            { name: 'Emerald Plan', price: '$40', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
         ]
     },
     {
@@ -174,7 +174,12 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
                     {game.plans ? (
                         game.plans.map(plan => (
                             <Card key={plan.name} className="flex flex-col">
-                                <CardHeader className="text-center">
+                                <CardHeader className="text-center items-center">
+                                    {plan.icon && (
+                                        <div className="relative h-20 w-20 mb-4">
+                                            <Image src={plan.icon} alt={`${plan.name} icon`} fill className="object-contain" />
+                                        </div>
+                                    )}
                                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                                     <p className="text-4xl font-bold">{plan.price}<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
                                 </CardHeader>
