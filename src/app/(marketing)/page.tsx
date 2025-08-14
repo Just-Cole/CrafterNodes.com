@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Cpu, Feather, Server } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 function Logo() {
@@ -64,7 +63,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            <section className="w-full py-20 md:py-32 bg-secondary">
+            <section id="features" className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Why Choose CrafterNodes?</h2>
