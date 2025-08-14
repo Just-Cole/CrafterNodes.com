@@ -39,7 +39,7 @@ const supportedGames = [
         plans: [
             { name: 'Coal Plan', price: '$4', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
             { name: 'Iron Plan', price: '$10', features: ['4GB RAM', '40 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
-            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', '75 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png' },
+            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', '75 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
             { name: 'Diamond Plan', price: '$25', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
             { name: 'Emerald Plan', price: '$40', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
         ]
@@ -153,7 +153,7 @@ function Footer() {
     );
 }
 
-function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
+function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean } & typeof supportedGames[0]['plans'][0])[] } }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
 
     return (
@@ -173,7 +173,12 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
                 <div className={`grid grid-cols-1 ${planGridClass} gap-6 py-8`}>
                     {game.plans ? (
                         game.plans.map(plan => (
-                            <Card key={plan.name} className="flex flex-col">
+                            <Card key={plan.name} className="flex flex-col relative overflow-hidden">
+                                {plan.popular && (
+                                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-8 py-1 transform rotate-45 translate-x-1/3 translate-y-4">
+                                        Popular
+                                    </div>
+                                )}
                                 <CardHeader className="text-center items-center">
                                     {plan.icon && (
                                         <div className="relative h-20 w-20 mb-4 transition-transform duration-200 hover:scale-110">
