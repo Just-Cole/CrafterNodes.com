@@ -120,13 +120,6 @@ function Footer() {
                         <p className="text-muted-foreground mt-4 text-sm">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Our Services</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Minecraft Hosting</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">All Game Servers</a></li>
-                        </ul>
-                    </div>
-                    <div>
                         <h4 className="font-semibold mb-4">Community</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="#" className="text-muted-foreground hover:text-foreground">Discord</a></li>
@@ -325,13 +318,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    
-
-    
-
-    
-
-
-
-    
