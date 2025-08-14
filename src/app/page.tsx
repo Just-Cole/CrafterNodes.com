@@ -39,20 +39,15 @@ const supportedGames = [
         hint: 'counter strike soldier'
     },
     {
-        name: 'Valheim',
-        image: 'https://placehold.co/400x300.png',
-        hint: 'valheim viking'
-    },
-    {
         name: 'Rust',
         image: 'https://placehold.co/400x300.png',
         hint: 'rust apocalyptic'
     },
     {
-        name: 'Palworld',
+        name: '7 Days to Die',
         image: 'https://placehold.co/400x300.png',
-        hint: 'palworld character'
-    },
+        hint: 'zombie survival'
+    }
 ];
 
 function Header() {
