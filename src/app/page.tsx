@@ -59,7 +59,7 @@ const supportedGames = [
     },
     {
         name: 'Ark Survival Evolved',
-        image: '/Game-Card-icons/ArkSurvivalEvolved.png',
+        image: '/Game-Card-icons/ASE.png',
         hint: 'ark dinosaur'
     }
 ];
