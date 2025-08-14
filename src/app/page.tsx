@@ -176,7 +176,7 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
                             <Card key={plan.name} className="flex flex-col">
                                 <CardHeader className="text-center items-center">
                                     {plan.icon && (
-                                        <div className="relative h-20 w-20 mb-4">
+                                        <div className="relative h-20 w-20 mb-4 transition-transform duration-200 hover:scale-110">
                                             <Image src={plan.icon} alt={`${plan.name} icon`} fill className="object-contain" />
                                         </div>
                                     )}
