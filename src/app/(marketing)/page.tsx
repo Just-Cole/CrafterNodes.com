@@ -14,18 +14,18 @@ const pricingTiers = [
     {
         name: 'Creeper',
         price: '$5',
-        features: ['10 Player Slots', '2GB RAM', 'Minecraft / Valheim', 'Basic DDoS Protection'],
+        features: ['10 Player Slots', '2GB RAM', 'Minecraft / CS2', 'Basic DDoS Protection'],
     },
     {
         name: 'Ender Dragon',
         price: '$15',
-        features: ['40 Player Slots', '6GB RAM', 'All Supported Games', 'Advanced DDoS Protection'],
+        features: ['40 Player Slots', '6GB RAM', 'Minecraft / CS2', 'Advanced DDoS Protection'],
         popular: true,
     },
     {
         name: 'Warden',
         price: '$30',
-        features: ['Unlimited Slots', '12GB RAM', 'Premium Hardware', 'Premium DDoS Protection'],
+        features: ['Unlimited Slots', '12GB RAM', 'Minecraft / CS2', 'Premium DDoS Protection'],
     },
 ];
 
@@ -124,13 +124,7 @@ export default function LandingPage() {
                                 <Image src="https://placehold.co/400x400.png" alt="Minecraft" fill className="object-cover" data-ai-hint="minecraft video game" />
                             </div>
                              <div className="relative aspect-square rounded-lg overflow-hidden">
-                                <Image src="https://placehold.co/400x400.png" alt="Valheim" fill className="object-cover" data-ai-hint="valheim video game" />
-                            </div>
-                             <div className="relative aspect-square rounded-lg overflow-hidden">
-                                <Image src="https://placehold.co/400x400.png" alt="Rust" fill className="object-cover" data-ai-hint="rust video game" />
-                            </div>
-                             <div className="relative aspect-square rounded-lg overflow-hidden">
-                                <Image src="https://placehold.co/400x400.png" alt="Ark: Survival Evolved" fill className="object-cover" data-ai-hint="ark survival evolved" />
+                                <Image src="https://placehold.co/400x400.png" alt="Counter Strike 2" fill className="object-cover" data-ai-hint="counter strike" />
                             </div>
                         </div>
                     </div>
