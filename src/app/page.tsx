@@ -175,7 +175,7 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({
                         game.plans.map(plan => (
                             <Card key={plan.name} className="flex flex-col relative overflow-hidden">
                                 {plan.popular && (
-                                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-8 py-1 transform rotate-45 translate-x-1/3 translate-y-4">
+                                    <div className="absolute top-2 -right-11 text-center w-32 transform rotate-45 bg-primary py-1 text-xs font-semibold text-primary-foreground">
                                         Popular
                                     </div>
                                 )}
