@@ -23,11 +23,11 @@ export function Header() {
                     <Link href="#" className="text-muted-foreground hover:text-foreground">Docs</Link>
                 </nav>
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" asChild>
-                        <Link href="/login">Log In</Link>
+                    <Button variant="outline">
+                        Contact Sales
                     </Button>
-                    <Button asChild>
-                        <Link href="/dashboard">Sign Up</Link>
+                    <Button>
+                        Get Started
                     </Button>
                 </div>
             </div>
