@@ -54,7 +54,7 @@ const supportedGames = [
     },
     {
         name: '7 Days to Die',
-        image: '/Game-Card-icons/7DaysToDie.png',
+        image: '/Game-Card-icons/7dtd.png',
         hint: 'zombie survival'
     },
     {
@@ -311,3 +311,5 @@ export default function LandingPage() {
         </div>
     );
 }
+
+    
