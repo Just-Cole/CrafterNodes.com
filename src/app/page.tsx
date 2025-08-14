@@ -187,7 +187,7 @@ export default function LandingPage() {
                     <Carousel
                         setApi={setApi}
                         opts={{
-                            align: "start",
+                            align: "center",
                             loop: true,
                         }}
                         className="w-full"
