@@ -78,7 +78,7 @@ function Footer() {
                     <div>
                         <h4 className="font-semibold mb-4">Community</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Discord</a></li>
+                            <li><a href="https://discord.gg/tgaAxZDQAa" className="text-muted-foreground hover:text-foreground">Discord</a></li>
                         </ul>
                     </div>
                     <div>
@@ -115,3 +115,5 @@ export default function TermsLayout({
     </div>
   )
 }
+
+    
