@@ -50,6 +50,11 @@ const supportedGames = [
         name: '7 Days to Die',
         image: 'https://placehold.co/1024x1536.png',
         hint: 'zombie survival'
+    },
+    {
+        name: 'Ark Survival Evolved',
+        image: 'https://placehold.co/1024x1536.png',
+        hint: 'ark dinosaur'
     }
 ];
 
