@@ -50,8 +50,8 @@ const supportedGames = [
         hint: 'counter strike soldier',
         plans: [
             { name: 'Silver', price: '$8', features: ['10-16 Slots', '64 Tickrate', 'Standard DDoS Protection'] },
-            { name: 'Nova', price: '$12', features: ['16-24 Slots', '128 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'] },
-            { name: 'Global Elite', price: '$20', features: ['24-32 Slots', '128 Tickrate', 'Advanced DDoS Protection', 'Premium Support'], popular: true },
+            { name: 'Nova', price: '$12', features: ['16-24 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'] },
+            { name: 'Global Elite', price: '$20', features: ['24-32 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Premium Support'], popular: true },
         ]
     },
     {
@@ -341,4 +341,3 @@ export default function LandingPage() {
 }
 
     
-
