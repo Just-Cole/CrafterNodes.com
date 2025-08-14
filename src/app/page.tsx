@@ -47,22 +47,43 @@ const supportedGames = [
     {
         name: 'Counter-Strike 2',
         image: '/Game-Card-icons/CS2.png',
-        hint: 'counter strike soldier'
+        hint: 'counter strike soldier',
+        plans: [
+            { name: 'Silver', price: '$8', features: ['10-16 Slots', '64 Tickrate', 'Standard DDoS Protection'] },
+            { name: 'Nova', price: '$12', features: ['16-24 Slots', '128 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'] },
+            { name: 'Global Elite', price: '$20', features: ['24-32 Slots', '128 Tickrate', 'Advanced DDoS Protection', 'Premium Support'], popular: true },
+        ]
     },
     {
         name: 'Rust',
         image: '/Game-Card-icons/Rust.png',
-        hint: 'rust apocalyptic'
+        hint: 'rust apocalyptic',
+        plans: [
+            { name: 'Stone Age', price: '$10', features: ['4GB RAM', '50 Player Slots', '50GB NVMe', 'Basic DDoS Protection'] },
+            { name: 'Industrial', price: '$20', features: ['8GB RAM', '100 Player Slots', '100GB NVMe', 'Advanced DDoS Protection'], popular: true },
+            { name: 'Space Age', price: '$35', features: ['12GB RAM', '200 Player Slots', '200GB NVMe', 'Premium DDoS Protection'] },
+        ]
     },
     {
         name: '7 Days to Die',
         image: '/Game-Card-icons/7dtd.png',
-        hint: 'zombie survival'
+        hint: 'zombie survival',
+        plans: [
+            { name: 'Survivor', price: '$8', features: ['8 Player Slots', '4GB RAM', 'Basic DDoS Protection'] },
+            { name: 'Nomad', price: '$15', features: ['16 Player Slots', '8GB RAM', 'Advanced DDoS Protection', 'Automated Backups'], popular: true },
+            { name: 'Wasteland Warrior', price: '$25', features: ['32 Player Slots', '12GB RAM', 'Premium DDoS Protection', 'Priority Support'] },
+        ]
     },
     {
         name: 'Ark Survival Evolved',
         image: '/Game-Card-icons/ASE.png',
-        hint: 'ark dinosaur'
+        hint: 'ark dinosaur',
+        plans: [
+            { name: 'Dodo', price: '$12', features: ['10 Player Slots', '8GB RAM', 'Basic Mod Support'] },
+            { name: 'Raptor', price: '$22', features: ['20 Player Slots', '12GB RAM', 'Full Mod Support', 'Automated Backups'], popular: true },
+            { name: 'T-Rex', price: '$35', features: ['40 Player Slots', '16GB RAM', 'Full Mod Support', 'Dedicated IP'] },
+            { name: 'Giga', price: '$50', features: ['70 Player Slots', '24GB RAM', 'Premium Mod Support', 'Highest CPU Priority'] },
+        ]
     }
 ];
 
@@ -146,7 +167,7 @@ function Footer() {
     );
 }
 
-function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean } & typeof supportedGames[0]['plans'][0])[] } }) {
+function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean; icon?: string } & typeof supportedGames[0]['plans'][0])[] } }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
 
     return (
@@ -320,3 +341,4 @@ export default function LandingPage() {
 }
 
     
+
