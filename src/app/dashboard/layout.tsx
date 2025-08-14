@@ -9,7 +9,6 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, S
 import { Home, PanelLeft, Server } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 function Logo() {
     return (
@@ -72,7 +71,13 @@ export default function DashboardLayout({
     }
 
     if (status === 'unauthenticated') {
-        redirect('/');
+        return (
+            <div className="flex flex-col items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+                <p className="mb-8">You must be logged in to view this page.</p>
+                <Button onClick={() => signIn('discord')}>Login with Discord</Button>
+            </div>
+        )
     }
   
     return (
