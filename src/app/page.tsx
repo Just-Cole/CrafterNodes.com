@@ -194,7 +194,7 @@ export default function LandingPage() {
                     >
                         <CarouselContent>
                             {supportedGames.map((game) => (
-                                <CarouselItem key={game.name} className="md:basis-1/2 lg:basis-1/3">
+                                <CarouselItem key={game.name} className="md:basis-1/3 lg:basis-1/4">
                                     <div className="p-1">
                                         <Card className="overflow-hidden">
                                             <CardContent className="p-0">
