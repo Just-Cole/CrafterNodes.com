@@ -34,6 +34,7 @@ const features = [
 const supportedGames = [
     {
         name: 'Minecraft',
+        description: 'Build, create, and explore in your own dedicated world. Our plans are optimized for both Vanilla and Modded servers.',
         image: '/Game-Card-icons/Minecraft.png',
         hint: 'minecraft scene',
         plans: [
@@ -46,6 +47,7 @@ const supportedGames = [
     },
     {
         name: 'Counter-Strike 2',
+        description: 'Experience elite-level competitive play with our high-performance CS2 servers, featuring the latest sub-tick updates.',
         image: '/Game-Card-icons/CS2.png',
         hint: 'counter strike soldier',
         plans: [
@@ -58,6 +60,7 @@ const supportedGames = [
     },
     {
         name: 'Rust',
+        description: 'Survive the harsh, open world. Our Rust servers are built for stability and performance, even with large groups.',
         image: '/Game-Card-icons/Rust.png',
         hint: 'rust apocalyptic',
         plans: [
@@ -70,6 +73,7 @@ const supportedGames = [
     },
     {
         name: '7 Days to Die',
+        description: 'Team up with friends to survive the zombie horde. Our servers ensure a smooth, lag-free apocalyptic experience.',
         image: '/Game-Card-icons/7dtd.png',
         hint: 'zombie survival',
         plans: [
@@ -82,6 +86,7 @@ const supportedGames = [
     },
     {
         name: 'Ark Survival Evolved',
+        description: 'Tame dinosaurs and explore a vast primeval world. Our servers support large maps and extensive modding.',
         image: '/Game-Card-icons/ASE.png',
         hint: 'ark dinosaur',
         plans: [
@@ -100,7 +105,9 @@ function Header() {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between">
-                <Logo />
+                <Link href="/">
+                    <Logo />
+                </Link>
                 <div className="flex items-center gap-4">
                     {session ? (
                         <DropdownMenu>
@@ -144,7 +151,9 @@ function Footer() {
             <div className="container mx-auto py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
-                        <Logo />
+                        <Link href="/">
+                            <Logo />
+                        </Link>
                         <p className="text-muted-foreground mt-4 text-sm">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
                     </div>
                     <div>
@@ -196,7 +205,7 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({
                         game.plans.map(plan => (
                             <Card key={plan.name} className="flex flex-col relative overflow-hidden">
                                 {plan.popular && (
-                                    <div className="absolute top-4 -right-10 text-center w-36 transform rotate-45 bg-destructive py-1 text-xs font-semibold text-destructive-foreground shadow-lg">
+                                     <div className="absolute top-4 -right-10 text-center w-36 transform rotate-45 bg-destructive py-1 text-xs font-semibold text-destructive-foreground shadow-lg">
                                         Popular
                                     </div>
                                 )}
@@ -318,15 +327,16 @@ export default function LandingPage() {
                     >
                         <CarouselContent>
                             {supportedGames.map((game) => (
-                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/5">
+                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
                                     <div className="p-1">
-                                        <Card className="overflow-hidden">
-                                            <CardContent className="p-0">
-                                                <div className="relative aspect-[2/3]">
+                                        <Card className="overflow-hidden h-full flex flex-col">
+                                            <CardContent className="p-0 flex flex-col flex-grow">
+                                                <div className="relative aspect-[3/2]">
                                                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
                                                 </div>
-                                                <div className="p-4">
+                                                <div className="p-4 flex flex-col flex-grow">
                                                     <h3 className="text-xl font-bold mb-2">{game.name}</h3>
+                                                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
                                                     <p className="text-muted-foreground mb-4">Starting from {game.plans ? game.plans[0].price : "$5"}/month</p>
                                                     <PricingDialog game={game} />
                                                 </div>
@@ -346,7 +356,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    
-
-    
