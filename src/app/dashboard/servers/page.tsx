@@ -18,9 +18,10 @@ export default function ServersPage() {
                     <h1 className="text-2xl font-bold">Your Servers</h1>
                     <p className="text-muted-foreground">Manage your game servers here.</p>
                 </div>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create New Server
+                <Button asChild>
+                    <Link href="/#games">
+                        View Pricing Plans
+                    </Link>
                 </Button>
             </div>
             <div className="mt-8">
@@ -37,9 +38,10 @@ export default function ServersPage() {
                             <p className="text-sm text-muted-foreground mb-4">
                                 Get started by creating your first game server.
                             </p>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Create New Server
+                            <Button asChild>
+                                <Link href="/#games">
+                                    View Pricing Plans
+                                </Link>
                             </Button>
                         </div>
                     </div>
