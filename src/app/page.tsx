@@ -30,22 +30,22 @@ const features = [
 const supportedGames = [
     {
         name: 'Minecraft',
-        image: 'https://placehold.co/500x600.png',
+        image: 'https://placehold.co/1024x1536.png',
         hint: 'minecraft scene'
     },
     {
         name: 'Counter-Strike 2',
-        image: 'https://placehold.co/500x600.png',
+        image: 'https://placehold.co/1024x1536.png',
         hint: 'counter strike soldier'
     },
     {
         name: 'Rust',
-        image: 'https://placehold.co/500x600.png',
+        image: 'https://placehold.co/1024x1536.png',
         hint: 'rust apocalyptic'
     },
     {
         name: '7 Days to Die',
-        image: 'https://placehold.co/500x600.png',
+        image: 'https://placehold.co/1024x1536.png',
         hint: 'zombie survival'
     }
 ];
@@ -198,7 +198,7 @@ export default function LandingPage() {
                                     <div className="p-1">
                                         <Card className="overflow-hidden">
                                             <CardContent className="p-0">
-                                                <div className="relative aspect-[5/6]">
+                                                <div className="relative aspect-[2/3]">
                                                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
                                                 </div>
                                                 <div className="p-6">
