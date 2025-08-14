@@ -95,8 +95,8 @@ export default function LandingPage() {
             <section id="pricing" className="w-full py-20 md:py-32 bg-background">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Game Hosting Plans</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">Find the perfect plan for your favorite games.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Hosting for the Games You Love</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">Fair and simple pricing for Minecraft and Counter-Strike 2.</p>
                     </div>
 
                     <div className="space-y-16">
