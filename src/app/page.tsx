@@ -34,7 +34,7 @@ const features = [
 const supportedGames = [
     {
         name: 'Minecraft',
-        image: 'https://placehold.co/1024x1536.png',
+        image: '/Game card icons/minecraft.png',
         hint: 'minecraft scene',
         plans: [
             { name: 'Dirt Plan', price: '$5', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'] },
@@ -44,22 +44,22 @@ const supportedGames = [
     },
     {
         name: 'Counter-Strike 2',
-        image: 'https://placehold.co/1024x1536.png',
+        image: '/Game card icons/counter-strike-2.png',
         hint: 'counter strike soldier'
     },
     {
         name: 'Rust',
-        image: 'https://placehold.co/1024x1536.png',
+        image: '/Game card icons/rust.png',
         hint: 'rust apocalyptic'
     },
     {
         name: '7 Days to Die',
-        image: 'https://placehold.co/1024x1536.png',
+        image: '/Game card icons/7-days-to-die.png',
         hint: 'zombie survival'
     },
     {
         name: 'Ark Survival Evolved',
-        image: 'https://placehold.co/1024x1536.png',
+        image: '/Game card icons/ark-survival-evolved.png',
         hint: 'ark dinosaur'
     }
 ];
