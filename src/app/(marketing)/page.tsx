@@ -1,41 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Cpu, Feather, Server } from "lucide-react";
+import { CheckCircle, Gamepad2, Puzzle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-
-function Logo() {
-    return (
-        <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-            </svg>
-            <span className="text-xl font-semibold text-foreground">CrafterNodes</span>
-        </div>
-    );
-}
+import Image from "next/image";
 
 const features = [
-    { icon: <Server className="h-10 w-10" />, title: "High Performance Servers", description: "Blazing fast and reliable servers to host your applications." },
-    { icon: <Cpu className="h-10 w-10" />, title: "Dedicated Resources", description: "Get dedicated CPU, RAM, and storage for your projects." },
-    { icon: <Feather className="h-10 w-10" />, title: "Easy-to-use Control Panel", description: "Manage your services with our intuitive and modern dashboard." },
+    { icon: <Gamepad2 className="h-10 w-10" />, title: "Instant Server Setup", description: "Get your game server online in seconds. Our automated system provisions your server instantly after purchase." },
+    { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "We provide enterprise-level DDoS protection to keep your game server online 24/7, no matter what." },
+    { icon: <Puzzle className="h-10 w-10" />, title: "Mod & Plugin Support", description: "Easily install your favorite mods and plugins with our one-click installer. Customize your server to your liking." },
 ]
 
 const pricingTiers = [
     {
-        name: 'Starter',
-        price: '$10',
-        features: ['1 vCPU', '2GB RAM', '50GB SSD', '1TB Bandwidth', 'Basic DDoS Protection'],
+        name: 'Creeper',
+        price: '$5',
+        features: ['10 Player Slots', '2GB RAM', 'Minecraft / Valheim', 'Basic DDoS Protection'],
     },
     {
-        name: 'Pro',
-        price: '$25',
-        features: ['2 vCPU', '4GB RAM', '100GB SSD', '5TB Bandwidth', 'Advanced DDoS Protection'],
+        name: 'Ender Dragon',
+        price: '$15',
+        features: ['40 Player Slots', '6GB RAM', 'All Supported Games', 'Advanced DDoS Protection'],
         popular: true,
     },
     {
-        name: 'Business',
-        price: '$50',
-        features: ['4 vCPU', '8GB RAM', '200GB SSD', '10TB Bandwidth', 'Premium DDoS Protection'],
+        name: 'Warden',
+        price: '$30',
+        features: ['Unlimited Slots', '12GB RAM', 'Premium Hardware', 'Premium DDoS Protection'],
     },
 ];
 
@@ -46,10 +36,10 @@ export default function LandingPage() {
                 <div className="container mx-auto text-center">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                            Powerful Hosting, Simplified.
+                            Lag-Free Game Hosting, Powered for Victory.
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                            CrafterNodes provides high-performance hosting solutions with an intuitive control panel. Focus on your code, we'll handle the rest.
+                            CrafterNodes provides high-performance game servers with an intuitive control panel. Focus on your community, we'll handle the rest.
                         </p>
                         <div className="mt-10 flex items-center justify-center gap-x-6">
                             <Button size="lg" asChild>
@@ -66,8 +56,8 @@ export default function LandingPage() {
             <section id="features" className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Why Choose CrafterNodes?</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">The best features to power your projects.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">The Ultimate Game Hosting Experience</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">The best features to power your gaming community.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {features.map((feature) => (
@@ -86,8 +76,8 @@ export default function LandingPage() {
             <section id="pricing" className="w-full py-20 md:py-32 bg-background">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Flexible Pricing for Teams of All Sizes</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">Choose a plan that fits your needs.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Pricing That Makes Sense</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">Choose a plan that fits your community's size.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {pricingTiers.map((tier) => (
@@ -108,7 +98,7 @@ export default function LandingPage() {
                                 </CardContent>
                                 <div className="p-6">
                                     <Button className="w-full" variant={tier.popular ? 'default' : 'outline'}>
-                                        Choose Plan
+                                        Order Now
                                     </Button>
                                 </div>
                             </Card>
@@ -117,15 +107,33 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            <section className="w-full py-20 md:py-32 bg-secondary text-center">
+             <section className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto">
-                     <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Ready to get started?</h2>
-                     <p className="mt-4 text-lg text-muted-foreground">Create an account and launch your first server in minutes.</p>
-                     <div className="mt-8">
-                        <Button size="lg" asChild>
-                            <Link href="/dashboard">Sign Up Now</Link>
-                        </Button>
-                     </div>
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Featured Games</h2>
+                            <p className="mt-4 text-lg text-muted-foreground">We support all the popular games and are always adding more. Instantly switch between games at any time.</p>
+                             <div className="mt-8">
+                                <Button size="lg" asChild>
+                                    <Link href="/dashboard">Deploy Your Server</Link>
+                                </Button>
+                             </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="relative aspect-square rounded-lg overflow-hidden">
+                                <Image src="https://placehold.co/400x400.png" alt="Minecraft" fill className="object-cover" data-ai-hint="minecraft video game" />
+                            </div>
+                             <div className="relative aspect-square rounded-lg overflow-hidden">
+                                <Image src="https://placehold.co/400x400.png" alt="Valheim" fill className="object-cover" data-ai-hint="valheim video game" />
+                            </div>
+                             <div className="relative aspect-square rounded-lg overflow-hidden">
+                                <Image src="https://placehold.co/400x400.png" alt="Rust" fill className="object-cover" data-ai-hint="rust video game" />
+                            </div>
+                             <div className="relative aspect-square rounded-lg overflow-hidden">
+                                <Image src="https://placehold.co/400x400.png" alt="Ark: Survival Evolved" fill className="object-cover" data-ai-hint="ark survival evolved" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </>

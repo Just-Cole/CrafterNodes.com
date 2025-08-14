@@ -16,14 +16,15 @@ export function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <Logo />
-                        <p className="text-muted-foreground mt-4 text-sm">Your all-in-one hosting control panel.</p>
+                        <p className="text-muted-foreground mt-4 text-sm">Your all-in-one game hosting control panel.</p>
                     </div>
                     <div>
                         <h4 className="font-semibold mb-4">Products</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Game Servers</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Web Hosting</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">VPS</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Minecraft Hosting</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Valheim Hosting</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Rust Hosting</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">All Games</a></li>
                         </ul>
                     </div>
                     <div>
