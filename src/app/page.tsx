@@ -131,7 +131,7 @@ export default function LandingPage() {
             } else {
                 api.scrollTo(0)
             }
-        }, 3000)
+        }, 10000)
 
         return () => clearInterval(interval)
     }, [api])
