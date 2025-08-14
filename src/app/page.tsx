@@ -328,7 +328,7 @@ export default function LandingPage() {
                         <CarouselContent>
                             {supportedGames.map((game) => (
                                 <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/5">
-                                    <div className="p-1">
+                                    <div className="p-1 h-full">
                                         <Card className="overflow-hidden h-full flex flex-col">
                                             <CardContent className="p-0 flex flex-col flex-grow">
                                                 <div className="relative aspect-[2/3]">
