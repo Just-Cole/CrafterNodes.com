@@ -34,7 +34,7 @@ const features = [
 const supportedGames = [
     {
         name: 'Minecraft',
-        image: '/Game card icons/minecraft.png',
+        image: '/Game-Card-icons/Minecraft.png',
         hint: 'minecraft scene',
         plans: [
             { name: 'Dirt Plan', price: '$5', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'] },
@@ -44,22 +44,22 @@ const supportedGames = [
     },
     {
         name: 'Counter-Strike 2',
-        image: '/Game card icons/counter-strike-2.png',
+        image: '/Game-Card-icons/CS2.png',
         hint: 'counter strike soldier'
     },
     {
         name: 'Rust',
-        image: '/Game card icons/rust.png',
+        image: '/Game-Card-icons/Rust.png',
         hint: 'rust apocalyptic'
     },
     {
         name: '7 Days to Die',
-        image: '/Game card icons/7-days-to-die.png',
+        image: '/Game-Card-icons/7DaysToDie.png',
         hint: 'zombie survival'
     },
     {
         name: 'Ark Survival Evolved',
-        image: '/Game card icons/ark-survival-evolved.png',
+        image: '/Game-Card-icons/ArkSurvivalEvolved.png',
         hint: 'ark dinosaur'
     }
 ];
