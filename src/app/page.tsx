@@ -194,14 +194,14 @@ export default function LandingPage() {
                     >
                         <CarouselContent>
                             {supportedGames.map((game) => (
-                                <CarouselItem key={game.name} className="md:basis-1/3 lg:basis-1/4">
+                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/5">
                                     <div className="p-1">
                                         <Card className="overflow-hidden">
                                             <CardContent className="p-0">
                                                 <div className="relative aspect-[2/3]">
                                                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
                                                 </div>
-                                                <div className="p-6">
+                                                <div className="p-4">
                                                     <h3 className="text-xl font-bold mb-2">{game.name}</h3>
                                                     <p className="text-muted-foreground mb-4">Starting from $5/month</p>
                                                     <Button className="w-full">View Plans</Button>
