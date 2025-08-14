@@ -1,8 +1,13 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Cpu, Feather, Server } from "lucide-react";
-import Image from "next/image";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { ShieldCheck, Rocket, Zap, Server } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import React from "react";
 
 function Logo() {
     return (
@@ -16,61 +21,154 @@ function Logo() {
 }
 
 const features = [
-    { icon: <Server className="h-10 w-10" />, title: "High Performance Servers", description: "Blazing fast and reliable servers to host your applications." },
-    { icon: <Cpu className="h-10 w-10" />, title: "Dedicated Resources", description: "Get dedicated CPU, RAM, and storage for your projects." },
-    { icon: <Feather className="h-10 w-10" />, title: "Easy-to-use Control Panel", description: "Manage your services with our intuitive and modern dashboard." },
-]
+    { icon: <Rocket className="h-10 w-10" />, title: "Instant Setup", description: "Deploy your server in minutes. Choose a game, and our system handles the rest." },
+    { icon: <Zap className="h-10 w-10" />, title: "High Performance", description: "Powered by NVMe SSDs and high-clock speed CPUs to eliminate lag and ensure smooth gameplay." },
+    { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "Enterprise-grade DDoS protection is included with all plans to keep your server online, always." },
+    { icon: <Server className="h-10 w-10" />, title: "Full Control", description: "Access our intuitive control panel with a live console, file manager, and backup system." },
+];
 
-const pricingTiers = [
+const supportedGames = [
     {
-        name: 'Starter',
-        price: '$10',
-        features: ['1 vCPU', '2GB RAM', '50GB SSD', '1TB Bandwidth', 'Basic DDoS Protection'],
+        name: 'Minecraft',
+        image: 'https://placehold.co/400x300.png',
+        hint: 'minecraft scene'
     },
     {
-        name: 'Pro',
-        price: '$25',
-        features: ['2 vCPU', '4GB RAM', '100GB SSD', '5TB Bandwidth', 'Advanced DDoS Protection'],
-        popular: true,
+        name: 'Counter-Strike 2',
+        image: 'https://placehold.co/400x300.png',
+        hint: 'counter strike soldier'
     },
     {
-        name: 'Business',
-        price: '$50',
-        features: ['4 vCPU', '8GB RAM', '200GB SSD', '10TB Bandwidth', 'Premium DDoS Protection'],
+        name: 'Valheim',
+        image: 'https://placehold.co/400x300.png',
+        hint: 'valheim viking'
+    },
+    {
+        name: 'Rust',
+        image: 'https://placehold.co/400x300.png',
+        hint: 'rust apocalyptic'
+    },
+    {
+        name: 'Palworld',
+        image: 'https://placehold.co/400x300.png',
+        hint: 'palworld character'
     },
 ];
 
-export default function LandingPage() {
+function Header() {
     return (
-        <>
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container mx-auto flex h-16 items-center justify-between">
+                <Logo />
+                <div className="flex items-center gap-4">
+                    <Button variant="outline">
+                        Login
+                    </Button>
+                    <Button>
+                        Sign Up
+                    </Button>
+                </div>
+            </div>
+        </header>
+    )
+}
+
+function Footer() {
+    return (
+        <footer className="border-t">
+            <div className="container mx-auto py-12">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <Logo />
+                        <p className="text-muted-foreground mt-4 text-sm">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold mb-4">Our Services</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Minecraft Hosting</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">All Game Servers</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold mb-4">Community</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Discord</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold mb-4">Quick Links</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Game Panel</a></li>
+                            <li><a href="#games" className="text-muted-foreground hover:text-foreground">Pricing</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Login</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
+                    <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
+                     <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                        <a href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</a>
+                        <a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+}
+
+
+export default function LandingPage() {
+    const [api, setApi] = React.useState<CarouselApi>()
+    
+    React.useEffect(() => {
+        if (!api) {
+            return
+        }
+
+        const interval = setInterval(() => {
+            if (api.canScrollNext()) {
+                api.scrollNext()
+            } else {
+                api.scrollTo(0)
+            }
+        }, 3000)
+
+        return () => clearInterval(interval)
+    }, [api])
+
+
+    return (
+        <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1">
             <section className="w-full py-20 md:py-32 lg:py-40 bg-background">
                 <div className="container mx-auto text-center">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                            Powerful Hosting, Simplified.
+                            Powerful Game Server Hosting, Simplified.
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                            CrafterNodes provides high-performance hosting solutions with an intuitive control panel. Focus on your code, we'll handle the rest.
+                            Experience blazing-fast, reliable server hosting for your favorite games with an intuitive control panel. From single servers to complex networks, CrafterNodes is your all-in-one solution.
                         </p>
                         <div className="mt-10 flex items-center justify-center gap-x-6">
                             <Button size="lg" asChild>
-                                <Link href="/dashboard">Get Started</Link>
+                                <Link href="#games">View Pricing</Link>
                             </Button>
                             <Button size="lg" variant="outline" asChild>
-                                <Link href="#pricing">View Pricing</Link>
+                                <Link href="#">Join our Discord</Link>
                             </Button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="w-full py-20 md:py-32 bg-secondary">
+            <section id="features" className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Why Choose CrafterNodes?</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">The best features to power your projects.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">The Ultimate Server Toolkit</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">Everything you need for a seamless hosting experience, from performance to management.</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         {features.map((feature) => (
                             <div key={feature.title} className="text-center p-8 border border-border rounded-lg bg-background">
                                 <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mx-auto mb-6">
@@ -84,51 +182,48 @@ export default function LandingPage() {
                 </div>
             </section>
             
-            <section id="pricing" className="w-full py-20 md:py-32 bg-background">
+            <section id="games" className="w-full py-20 md:py-32 bg-background">
                 <div className="container mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Flexible Pricing for Teams of All Sizes</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">Choose a plan that fits your needs.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Games We Support</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games. More are being added all the time!</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {pricingTiers.map((tier) => (
-                            <Card key={tier.name} className={`flex flex-col ${tier.popular ? 'border-primary' : ''}`}>
-                                <CardHeader>
-                                    <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                                    <CardDescription>
-                                        <span className="text-4xl font-bold text-foreground">{tier.price}</span>/month
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1 space-y-4">
-                                    {tier.features.map((feature) => (
-                                        <div key={feature} className="flex items-center gap-2">
-                                            <CheckCircle className="h-5 w-5 text-green-500" />
-                                            <span>{feature}</span>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                                <div className="p-6">
-                                    <Button className="w-full" variant={tier.popular ? 'default' : 'outline'}>
-                                        Choose Plan
-                                    </Button>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            <section className="w-full py-20 md:py-32 bg-secondary text-center">
-                <div className="container mx-auto">
-                     <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Ready to get started?</h2>
-                     <p className="mt-4 text-lg text-muted-foreground">Create an account and launch your first server in minutes.</p>
-                     <div className="mt-8">
-                        <Button size="lg" asChild>
-                            <Link href="/dashboard">Sign Up Now</Link>
-                        </Button>
-                     </div>
+                    <Carousel
+                        setApi={setApi}
+                        opts={{
+                            align: "start",
+                            loop: true,
+                        }}
+                        className="w-full"
+                    >
+                        <CarouselContent>
+                            {supportedGames.map((game) => (
+                                <CarouselItem key={game.name} className="md:basis-1/2 lg:basis-1/3">
+                                    <div className="p-1">
+                                        <Card className="overflow-hidden">
+                                            <CardContent className="p-0">
+                                                <div className="relative aspect-[4/3]">
+                                                    <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
+                                                </div>
+                                                <div className="p-6">
+                                                    <h3 className="text-xl font-bold mb-2">{game.name}</h3>
+                                                    <p className="text-muted-foreground mb-4">Starting from $5/month</p>
+                                                    <Button className="w-full">View Plans</Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
                 </div>
             </section>
-        </>
+        </main>
+        <Footer />
+        </div>
     );
 }
