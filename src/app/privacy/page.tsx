@@ -12,56 +12,68 @@ export default function PrivacyPage() {
           Last Updated: August 13, 2025
         </p>
         <p className="mt-6 text-base leading-7 text-muted-foreground">
-          This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.
+          Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our services.
         </p>
 
         <Separator className="my-8" />
 
         <div className="space-y-8">
           <div>
-            <h2 className="text-2xl font-semibold"><strong>Collecting and Using Your Personal Data</strong></h2>
+            <h2 className="text-2xl font-semibold"><strong>Information We Collect</strong></h2>
             <div className="mt-4 text-muted-foreground leading-7 space-y-4">
-              <h3 className="text-xl font-semibold">Types of Data Collected</h3>
+              <p>To provide our service, we collect a few types of information.</p>
               <div className="pl-4 space-y-2">
-                  <h4 className="text-lg font-semibold">Personal Data</h4>
-                  <p>While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to: Email address, First name and last name, Usage Data.</p>
+                  <h3 className="text-xl font-semibold">Personal Data</h3>
+                  <p>When you create an account, we may ask for information that can be used to identify you. This is limited to what's necessary and may include:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                      <li>Your email address</li>
+                      <li>Your first and last name</li>
+                  </ul>
               </div>
               <div className="pl-4 space-y-2">
-                  <h4 className="text-lg font-semibold">Usage Data</h4>
-                  <p>Usage Data is collected automatically when using the Service. Usage Data may include information such as Your Device's Internet Protocol address (e.g. IP address), browser type, browser version, the pages of our Service that You visit, the time and date of Your visit, the time spent on those pages, unique device identifiers and other diagnostic data.</p>
+                  <h3 className="text-xl font-semibold">Usage Data</h3>
+                  <p>We automatically collect technical data when you use our service. This helps us understand how our service is performing and how to improve it. This data may include:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                      <li>Your IP address</li>
+                      <li>Browser type and version</li>
+                      <li>The pages you visit on our site and how long you spend on them</li>
+                      <li>Unique device identifiers</li>
+                  </ul>
               </div>
             </div>
           </div>
           <Separator className="my-8" />
           <div>
-            <h2 className="text-2xl font-semibold"><strong>Use of Your Personal Data</strong></h2>
+            <h2 className="text-2xl font-semibold"><strong>How We Use Your Data</strong></h2>
             <p className="mt-4 text-muted-foreground leading-7">
-              The Company may use Personal Data for the following purposes:<br />
-              - To provide and maintain our Service, including to monitor the usage of our Service.<br />
-              - To manage Your Account: to manage Your registration as a user of the Service.<br />
-              - To contact You: To contact You by email, or other equivalent forms of electronic communication.<br />
-              - To manage Your requests: To attend and manage Your requests to us.
+              We use the data we collect for the following purposes:
+            </p>
+            <ul className="list-disc pl-6 mt-4 space-y-2 text-muted-foreground leading-7">
+                <li><strong>To Provide and Maintain Our Service:</strong> Ensuring our services are running smoothly and monitoring usage.</li>
+                <li><strong>To Manage Your Account:</strong> To set up and manage your user registration and game servers.</li>
+                <li><strong>To Contact You:</strong> To send important notices or respond to your support requests.</li>
+                <li><strong>To Improve Our Service:</strong> To understand how you use our service so we can make it better.</li>
+            </ul>
+          </div>
+          <Separator className="my-8" />
+          <div>
+            <h2 className="text-2xl font-semibold"><strong>Data Security</strong></h2>
+            <p className="mt-4 text-muted-foreground leading-7">
+              The security of your data is a top priority. While no method of online transmission or storage is 100% secure, we use commercially acceptable means to protect your personal information and continuously work to enhance our security measures.
             </p>
           </div>
           <Separator className="my-8" />
           <div>
-            <h2 className="text-2xl font-semibold"><strong>Security of Your Personal Data</strong></h2>
+            <h2 className="text-2xl font-semibold"><strong>Changes to This Policy</strong></h2>
             <p className="mt-4 text-muted-foreground leading-7">
-              The security of Your Personal Data is important to Us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While We strive to use commercially acceptable means to protect Your Personal Data, We cannot guarantee its absolute security.
-            </p>
-          </div>
-          <Separator className="my-8" />
-          <div>
-            <h2 className="text-2xl font-semibold"><strong>Changes to this Privacy Policy</strong></h2>
-            <p className="mt-4 text-muted-foreground leading-7">
-              We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page.
+              We may update our Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on this page and, if the changes are substantial, by sending you an email.
             </p>
           </div>
           <Separator className="my-8" />
           <div>
             <h2 className="text-2xl font-semibold"><strong>Contact Us</strong></h2>
             <p className="mt-4 text-muted-foreground leading-7">
-              If you have any questions about this Privacy Policy, You can contact us by visiting the support section on our website or joining our Discord.
+              If you have any questions about this Privacy Policy, please don't hesitate to reach out. You can contact us by visiting the support section on our website or by joining our Discord community.
             </p>
           </div>
         </div>
