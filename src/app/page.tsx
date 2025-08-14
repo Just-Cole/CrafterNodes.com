@@ -37,9 +37,9 @@ const supportedGames = [
         image: '/Game-Card-icons/Minecraft.png',
         hint: 'minecraft scene',
         plans: [
-            { name: 'Coal Plan', price: '$4', features: ['2GB RAM', '20 Player Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
-            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', '40 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
-            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', '75 Player Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
+            { name: 'Coal Plan', price: '$4', features: ['2GB RAM', 'Unlimited Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
+            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
+            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
             { name: 'Diamond Plan', price: '$25', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
             { name: 'Emerald Plan', price: '$40', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
         ]
@@ -325,6 +325,8 @@ export default function LandingPage() {
         </div>
     );
 }
+
+    
 
     
 
