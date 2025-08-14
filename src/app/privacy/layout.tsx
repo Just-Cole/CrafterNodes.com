@@ -80,7 +80,7 @@ function Footer() {
     );
 }
 
-export default function TermsLayout({
+export default function PrivacyLayout({
   children,
 }: {
   children: React.ReactNode

@@ -103,7 +103,7 @@ function Footer() {
                     <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
                      <div className="flex items-center space-x-4 mt-4 md:mt-0">
                         <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
-                        <a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a>
+                        <Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link>
                     </div>
                 </div>
             </div>
