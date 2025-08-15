@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, FilePlus2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import pricingData from '@/data/pricing.json';
+import { getPricingData, PricingData } from '@/lib/pricing';
+import { useEffect, useState } from 'react';
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -33,11 +34,18 @@ const gameSchema = z.object({
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
-const { supportedGames } = pricingData;
-const minecraftTemplate = supportedGames.find(game => game.name === 'Minecraft');
-
 export default function AdminPage() {
   const { toast } = useToast();
+  const [pricingData, setPricingData] = useState<PricingData | null>(null);
+
+  useEffect(() => {
+    // This is a workaround to fetch data on the client, as we can't use top-level await in a client component.
+    // In a real app, you might create a dedicated API route for this.
+    fetch('/api/pricing')
+      .then(res => res.json())
+      .then(data => setPricingData(data));
+  }, []);
+
 
   const form = useForm<GameSchema>({
     resolver: zodResolver(gameSchema),
@@ -50,7 +58,7 @@ export default function AdminPage() {
     },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'plans',
   });
@@ -62,8 +70,7 @@ export default function AdminPage() {
         title: 'Success!',
         description: result.message,
       });
-      // Force a reload to see the changes on the main page
-      window.location.reload();
+      // No longer need to force reload, revalidatePath handles it.
     } else {
       toast({
         variant: 'destructive',
@@ -74,22 +81,25 @@ export default function AdminPage() {
   };
 
   const applyTemplate = () => {
-    if (minecraftTemplate) {
-      const templateData = {
-        ...minecraftTemplate,
-        name: '', // Clear name to avoid accidental duplicates
-        plans: minecraftTemplate.plans.map(plan => ({
-          ...plan,
-          features: plan.features.join(', '), // Convert features array to comma-separated string
-        })),
-      };
-      form.reset(templateData);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Template not found',
-        description: 'Could not find the Minecraft game data to use as a template.',
-      });
+    if (pricingData) {
+      const minecraftTemplate = pricingData.supportedGames.find(game => game.name === 'Minecraft');
+      if (minecraftTemplate) {
+        const templateData = {
+          ...minecraftTemplate,
+          name: '', // Clear name to avoid accidental duplicates
+          plans: minecraftTemplate.plans.map(plan => ({
+            ...plan,
+            features: plan.features.join(', '), // Convert features array to comma-separated string
+          })),
+        };
+        form.reset(templateData);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Template not found',
+          description: 'Could not find the Minecraft game data to use as a template.',
+        });
+      }
     }
   };
 
@@ -108,7 +118,7 @@ export default function AdminPage() {
                 <CardTitle>Add New Game</CardTitle>
                 <CardDescription>Fill out the form below to add a new game to the landing page.</CardDescription>
             </div>
-            <Button variant="outline" onClick={applyTemplate}>
+            <Button variant="outline" onClick={applyTemplate} disabled={!pricingData}>
                 <FilePlus2 className="mr-2" />
                 Use Minecraft Template
             </Button>
