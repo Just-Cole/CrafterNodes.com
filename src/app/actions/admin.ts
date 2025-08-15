@@ -6,6 +6,7 @@ import path from 'path';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
+import { revalidatePath } from 'next/cache';
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
@@ -51,6 +52,8 @@ export async function addGame(formData: GameSchema) {
     pricingData.supportedGames.push(newGame);
 
     await fs.writeFile(pricingFilePath, JSON.stringify(pricingData, null, 4));
+
+    revalidatePath('/');
 
     return { success: true, message: "Game added successfully!" };
   } catch (error) {
