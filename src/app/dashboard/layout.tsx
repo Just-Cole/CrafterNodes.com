@@ -39,7 +39,7 @@ function UserMenu() {
                         <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => signOut()}>
                             Sign out
@@ -109,7 +109,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                    <Link href="/dashboard/billing">
+                    <Link href="/billing">
                         <CreditCard />
                         Billing
                     </Link>
@@ -151,7 +151,7 @@ export default function DashboardLayout({
                             Servers
                         </Link>
                         <Link
-                            href="/dashboard/billing"
+                            href="/billing"
                             className="flex items-center gap-4 px-2.5 text-foreground"
                         >
                             <CreditCard className="h-5 w-5" />
