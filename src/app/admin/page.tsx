@@ -11,9 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { addGame, type GameSchema } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, FilePlus2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import pricingData from '@/data/pricing.json';
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -32,6 +33,9 @@ const gameSchema = z.object({
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
+const { supportedGames } = pricingData;
+const minecraftTemplate = supportedGames.find(game => game.name === 'Minecraft');
+
 export default function AdminPage() {
   const { toast } = useToast();
 
@@ -46,7 +50,7 @@ export default function AdminPage() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'plans',
   });
@@ -58,12 +62,38 @@ export default function AdminPage() {
         title: 'Success!',
         description: result.message,
       });
-      form.reset();
+      form.reset({
+        name: '',
+        description: '',
+        image: '',
+        hint: '',
+        plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
+      });
     } else {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: typeof result.error === 'string' ? result.error : 'There was an error submitting the form.',
+      });
+    }
+  };
+
+  const applyTemplate = () => {
+    if (minecraftTemplate) {
+      const templateData = {
+        ...minecraftTemplate,
+        name: '', // Clear name to avoid accidental duplicates
+        plans: minecraftTemplate.plans.map(plan => ({
+          ...plan,
+          features: plan.features.join(', '), // Convert features array to comma-separated string
+        })),
+      };
+      form.reset(templateData);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Template not found',
+        description: 'Could not find the Minecraft game data to use as a template.',
       });
     }
   };
@@ -78,9 +108,15 @@ export default function AdminPage() {
       </div>
 
       <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Add New Game</CardTitle>
-          <CardDescription>Fill out the form below to add a new game to the landing page.</CardDescription>
+        <CardHeader className="flex-row items-center justify-between">
+            <div>
+                <CardTitle>Add New Game</CardTitle>
+                <CardDescription>Fill out the form below to add a new game to the landing page.</CardDescription>
+            </div>
+            <Button variant="outline" onClick={applyTemplate}>
+                <FilePlus2 className="mr-2" />
+                Use Minecraft Template
+            </Button>
         </CardHeader>
         <CardContent>
           <Form {...form}>
