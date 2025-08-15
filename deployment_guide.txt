@@ -38,9 +38,9 @@ sudo npm install pm2 -g
 # Step 3: Clone and Build Your Application
 # --------------------------------------------------
 
-# Clone your project from your Git repository (replace with your actual URL)
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+# Clone your project from your Git repository
+git clone https://github.com/Just-Cole/CrafterNodes.com.git
+cd CrafterNodes.com
 
 # Install project dependencies
 npm install
