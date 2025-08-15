@@ -135,7 +135,7 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
     const { toast } = useToast();
 
     const handleCheckout = async (plan: typeof game.plans[0]) => {
-        if (!session) {
+        if (!session || !session.user) {
             toast({
                 title: "Authentication Required",
                 description: "Please log in to purchase a plan.",
@@ -170,7 +170,11 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
                 cancelUrl: window.location.href,
                 gameName: game.name,
                 planName: plan.name,
-                userId: session.user.id
+                userId: session.user.id,
+                userEmail: session.user.email!,
+                userName: session.user.name!,
+                pterodactylNestId: game.pterodactylNestId,
+                pterodactylEggId: game.pterodactylEggId,
             });
 
             const { error } = await stripe.redirectToCheckout({

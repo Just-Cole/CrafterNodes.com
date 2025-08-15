@@ -16,7 +16,11 @@ const CheckoutInputSchema = z.object({
   cancelUrl: z.string().describe('The URL to redirect to on cancellation.'),
   gameName: z.string().describe('The name of the game being purchased.'),
   planName: z.string().describe('The name of the plan being purchased.'),
-  userId: z.string().describe('The ID of the user making the purchase.')
+  userId: z.string().describe('The ID of the user making the purchase.'),
+  userEmail: z.string().describe("The email of the user making the purchase."),
+  userName: z.string().describe("The name of the user making the purchase."),
+  pterodactylNestId: z.number().describe("The Pterodactyl Nest ID for the game."),
+  pterodactylEggId: z.number().describe("The Pterodactyl Egg ID for the game."),
 });
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 
@@ -43,11 +47,16 @@ async function createCheckoutSession(
     mode: 'subscription',
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
+    customer_email: input.userEmail,
     metadata: {
       userId: input.userId,
+      userName: input.userName,
+      userEmail: input.userEmail,
       gameName: input.gameName,
       planName: input.planName,
       priceId: input.priceId,
+      pterodactylNestId: input.pterodactylNestId,
+      pterodactylEggId: input.pterodactylEggId,
     },
   });
 

@@ -32,6 +32,8 @@ const gameSchema = z.object({
   description: z.string().min(1, "Description is required."),
   image: z.string().min(1, "Image path is required."),
   hint: z.string().min(1, "AI hint is required."),
+  pterodactylNestId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Nest ID is required."),
+  pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
@@ -45,13 +47,15 @@ function AddGameForm() {
       .then(data => setPricingData(data));
   }, []);
 
-  const form = useForm<GameSchema>({
+  const form = useForm<z.infer<typeof gameSchema>>({
     resolver: zodResolver(gameSchema),
     defaultValues: {
       name: '',
       description: '',
       image: '',
       hint: '',
+      pterodactylNestId: 1,
+      pterodactylEggId: 1,
       plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
     },
   });
@@ -61,14 +65,22 @@ function AddGameForm() {
     name: 'plans',
   });
 
-  const onSubmit = async (data: GameSchema) => {
-    const result = await addGame(data);
+  const onSubmit = async (data: z.infer<typeof gameSchema>) => {
+    // The Zod schema for the server action expects numbers, but the form gives strings.
+    const dataForAction: GameSchema = {
+      ...data,
+      pterodactylNestId: Number(data.pterodactylNestId),
+      pterodactylEggId: Number(data.pterodactylEggId),
+    };
+    const result = await addGame(dataForAction);
+
     if (result.success) {
       toast({
         title: 'Success!',
         description: result.message,
       });
-      // No longer need to force reload, revalidatePath handles it.
+      // Force a reload to ensure the new data from pricing.json is fetched.
+      window.location.reload();
     } else {
       toast({
         variant: 'destructive',
@@ -85,6 +97,11 @@ function AddGameForm() {
         const templateData = {
           ...minecraftTemplate,
           name: '', // Clear name to avoid accidental duplicates
+          description: minecraftTemplate.description,
+          image: minecraftTemplate.image,
+          hint: minecraftTemplate.hint,
+          pterodactylNestId: minecraftTemplate.pterodactylNestId,
+          pterodactylEggId: minecraftTemplate.pterodactylEggId,
           plans: minecraftTemplate.plans.map(plan => ({
             ...plan,
             features: plan.features.join(', '), // Convert features array to comma-separated string
@@ -116,50 +133,78 @@ function AddGameForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Game Name</FormLabel>
-                    <FormControl><Input placeholder="e.g. Valheim" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Game Description</FormLabel>
-                    <FormControl><Textarea placeholder="A short description of the game..." {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Game Image Path</FormLabel>
-                    <FormControl><Input placeholder="/Game-Card-icons/NewGame.png" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="hint"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>AI Hint</FormLabel>
-                    <FormControl><Input placeholder="e.g. viking survival" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Game Name</FormLabel>
+                      <FormControl><Input placeholder="e.g. Valheim" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Game Image Path</FormLabel>
+                      <FormControl><Input placeholder="/Game-Card-icons/NewGame.png" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="pterodactylNestId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pterodactyl Nest ID</FormLabel>
+                      <FormControl><Input type="number" placeholder="e.g. 1" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pterodactylEggId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pterodactyl Egg ID</FormLabel>
+                      <FormControl><Input type="number" placeholder="e.g. 1" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="md:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Game Description</FormLabel>
+                        <FormControl><Textarea placeholder="A short description of the game..." {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="hint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>AI Hint</FormLabel>
+                        <FormControl><Input placeholder="e.g. viking survival" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               <Separator />
 
@@ -306,3 +351,4 @@ export default function AdminPage() {
       </Tabs>
     </div>
   );
+}

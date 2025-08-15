@@ -24,6 +24,8 @@ const gameSchema = z.object({
   description: z.string().min(1, "Description is required."),
   image: z.string().min(1, "Image path is required."),
   hint: z.string().min(1, "AI hint is required."),
+  pterodactylNestId: z.coerce.number().min(1, "Pterodactyl Nest ID is required."),
+  pterodactylEggId: z.coerce.number().min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 

@@ -1,3 +1,4 @@
+
 {
     "supportedGames": [
         {
@@ -5,6 +6,8 @@
             "description": "Build, create, and explore in your own dedicated world. Our plans are optimized for both Vanilla and Modded servers.",
             "image": "/Game-Card-icons/Minecraft.png",
             "hint": "minecraft scene",
+            "pterodactylNestId": 1,
+            "pterodactylEggId": 1,
             "plans": [
                 {
                     "name": "Coal Plan",
@@ -77,6 +80,8 @@
             "description": "Experience elite-level competitive play with our high-performance CS2 servers, featuring the latest sub-tick updates.",
             "image": "/Game-Card-icons/CS2.png",
             "hint": "counter strike soldier",
+            "pterodactylNestId": 1,
+            "pterodactylEggId": 2,
             "plans": [
                 {
                     "name": "Pistol Round",
@@ -139,6 +144,8 @@
             "description": "Survive the harsh, open world. Our Rust servers are built for stability and performance, even with large groups.",
             "image": "/Game-Card-icons/Rust.png",
             "hint": "rust apocalyptic",
+            "pterodactylNestId": 1,
+            "pterodactylEggId": 3,
             "plans": [
                 {
                     "name": "Naked",
@@ -203,6 +210,8 @@
             "description": "Team up with friends to survive the zombie horde. Our servers ensure a smooth, lag-free apocalyptic experience.",
             "image": "/Game-Card-icons/7dtd.png",
             "hint": "zombie survival",
+            "pterodactylNestId": 1,
+            "pterodactylEggId": 4,
             "plans": [
                 {
                     "name": "Scavenger",
@@ -265,6 +274,8 @@
             "description": "Tame dinosaurs and explore a vast primeval world. Our servers support large maps and extensive modding.",
             "image": "/Game-Card-icons/ASE.png",
             "hint": "ark dinosaur",
+            "pterodactylNestId": 1,
+            "pterodactylEggId": 5,
             "plans": [
                 {
                     "name": "Beach Bob",

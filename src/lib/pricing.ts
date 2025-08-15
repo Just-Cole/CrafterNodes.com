@@ -17,6 +17,8 @@ const gameSchema = z.object({
   description: z.string(),
   image: z.string(),
   hint: z.string(),
+  pterodactylNestId: z.number(),
+  pterodactylEggId: z.number(),
   plans: z.array(planSchema),
 });
 
@@ -31,9 +33,8 @@ export type PricingData = z.infer<typeof pricingDataSchema>;
 let cachedPricingData: PricingData | null = null;
 
 export async function getPricingData(): Promise<PricingData> {
-  if (cachedPricingData) {
-    return cachedPricingData;
-  }
+  // In a real production environment, you might want a more sophisticated cache
+  // invalidation strategy, but for now, re-reading on revalidation is fine.
   
   try {
     const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
@@ -42,7 +43,6 @@ export async function getPricingData(): Promise<PricingData> {
     
     // Validate data with Zod
     const validatedData = pricingDataSchema.parse(data);
-    cachedPricingData = validatedData;
     
     return validatedData;
   } catch (error) {
