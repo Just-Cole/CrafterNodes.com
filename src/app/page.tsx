@@ -15,6 +15,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import pricingData from '@/data/pricing.json';
+import { useToast } from "@/hooks/use-toast";
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -132,20 +133,46 @@ function Footer() {
 function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
+    const { data: session } = useSession();
+    const { toast } = useToast();
 
-    const handleCheckout = async (priceId: string) => {
-        setLoading(priceId);
+    const handleCheckout = async (plan: typeof game.plans[0]) => {
+        if (!session) {
+            toast({
+                title: "Authentication Required",
+                description: "Please log in to purchase a plan.",
+                variant: "destructive",
+            })
+            signIn('discord');
+            return;
+        }
+
+        if (!plan.priceId) {
+            toast({
+                title: "Price ID Missing",
+                description: "This plan is not available for purchase yet.",
+                variant: "destructive",
+            })
+            return;
+        }
+
+
+        setLoading(plan.priceId);
         try {
             const stripe = await stripePromise;
             if (!stripe) {
                 console.error("Stripe.js has not loaded yet.");
+                setLoading(null);
                 return;
             }
 
             const response = await checkoutFlow({
-                priceId: priceId,
+                priceId: plan.priceId,
                 successUrl: `${window.location.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
                 cancelUrl: window.location.href,
+                gameName: game.name,
+                planName: plan.name,
+                userId: session.user.id
             });
 
             const { error } = await stripe.redirectToCheckout({
@@ -154,9 +181,19 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
 
             if (error) {
                 console.error("Stripe checkout error:", error);
+                 toast({
+                    title: "Checkout Error",
+                    description: error.message || "An unexpected error occurred.",
+                    variant: "destructive",
+                })
             }
         } catch (error) {
             console.error("Error creating checkout session:", error);
+            toast({
+                title: "Error",
+                description: "Could not initiate the checkout process. Please try again later.",
+                variant: "destructive",
+            })
         } finally {
             setLoading(null);
         }
@@ -206,7 +243,7 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
                                     </ul>
                                     <Button 
                                         className="w-full mt-6"
-                                        onClick={() => plan.priceId && handleCheckout(plan.priceId)}
+                                        onClick={() => handleCheckout(plan)}
                                         disabled={!plan.priceId || loading === plan.priceId}
                                     >
                                         {loading === plan.priceId ? 'Processing...' : 'Get Started'}

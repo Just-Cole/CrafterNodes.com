@@ -14,6 +14,9 @@ const CheckoutInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe price.'),
   successUrl: z.string().describe('The URL to redirect to on success.'),
   cancelUrl: z.string().describe('The URL to redirect to on cancellation.'),
+  gameName: z.string().describe('The name of the game being purchased.'),
+  planName: z.string().describe('The name of the plan being purchased.'),
+  userId: z.string().describe('The ID of the user making the purchase.')
 });
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 
@@ -40,6 +43,12 @@ async function createCheckoutSession(
     mode: 'subscription',
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
+    metadata: {
+      userId: input.userId,
+      gameName: input.gameName,
+      planName: input.planName,
+      priceId: input.priceId,
+    },
   });
 
   if (!session.id) {
