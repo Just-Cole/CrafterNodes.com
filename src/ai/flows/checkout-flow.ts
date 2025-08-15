@@ -1,0 +1,59 @@
+
+'use server';
+
+/**
+ * @fileoverview A flow for creating a Stripe checkout session.
+ */
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
+import Stripe from 'stripe';
+import {NextRequest} from 'next/server';
+import { headers } from 'next/headers';
+
+const CheckoutInputSchema = z.object({
+  priceId: z.string().describe('The ID of the Stripe price.'),
+  successUrl: z.string().url().describe('The URL to redirect to on success.'),
+  cancelUrl: z.string().url().describe('The URL to redirect to on cancellation.'),
+});
+export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
+
+const CheckoutOutputSchema = z.object({
+  sessionId: z.string().describe('The ID of the Stripe checkout session.'),
+});
+export type CheckoutOutput = z.infer<typeof CheckoutOutputSchema>;
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2024-06-20',
+});
+
+async function createCheckoutSession(
+  input: CheckoutInput
+): Promise<CheckoutOutput> {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: input.priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'subscription',
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
+  });
+
+  if (!session.id) {
+    throw new Error('Could not create Stripe checkout session');
+  }
+
+  return { sessionId: session.id };
+}
+
+export const checkoutFlow = ai.defineFlow(
+  {
+    name: 'checkoutFlow',
+    inputSchema: CheckoutInputSchema,
+    outputSchema: CheckoutOutputSchema,
+  },
+  createCheckoutSession
+);

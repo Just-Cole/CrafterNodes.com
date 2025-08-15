@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, PanelLeft, Server } from "lucide-react";
+import { CreditCard, Home, PanelLeft, Server } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -39,6 +39,7 @@ function UserMenu() {
                         <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => signOut()}>
                             Sign out
@@ -106,6 +107,14 @@ export default function DashboardLayout({
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/dashboard/billing">
+                        <CreditCard />
+                        Billing
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -136,10 +145,17 @@ export default function DashboardLayout({
                         </Link>
                         <Link
                             href="/dashboard/servers"
-                            className="flex items-center gap-4 px-2.5 text-foreground"
+                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                         >
                             <Server className="h-5 w-5" />
                             Servers
+                        </Link>
+                        <Link
+                            href="/dashboard/billing"
+                            className="flex items-center gap-4 px-2.5 text-foreground"
+                        >
+                            <CreditCard className="h-5 w-5" />
+                            Billing
                         </Link>
                     </nav>
                 </SheetContent>

@@ -1,10 +1,12 @@
 
 'use client';
 
+import { checkoutFlow } from "@/ai/flows/checkout-flow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { loadStripe } from "@stripe/stripe-js";
 import { ShieldCheck, Rocket, Zap, Server, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +14,9 @@ import React from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+// Make sure to replace with your actual Stripe publishable key
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 function Logo() {
     return (
@@ -38,11 +43,11 @@ const supportedGames = [
         image: '/Game-Card-icons/Minecraft.png',
         hint: 'minecraft scene',
         plans: [
-            { name: 'Coal Plan', price: '$4', features: ['2GB RAM', 'Unlimited Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
-            { name: 'Iron Plan', price: '$10', features: ['4GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
-            { name: 'Gold Plan', price: '$18', features: ['6GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
-            { name: 'Diamond Plan', price: '$25', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
-            { name: 'Emerald Plan', price: '$40', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
+            { name: 'Coal Plan', price: '$4', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['2GB RAM', 'Unlimited Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
+            { name: 'Iron Plan', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
+            { name: 'Gold Plan', price: '$18', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['6GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
+            { name: 'Diamond Plan', price: '$25', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
+            { name: 'Emerald Plan', price: '$40', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
         ]
     },
     {
@@ -51,11 +56,11 @@ const supportedGames = [
         image: '/Game-Card-icons/CS2.png',
         hint: 'counter strike soldier',
         plans: [
-            { name: 'Pistol Round', price: '$5', features: ['8-12 Slots', '64 Tickrate', 'Basic DDoS Protection'] },
-            { name: 'Silver', price: '$8', features: ['10-16 Slots', '64 Tickrate', 'Standard DDoS Protection'] },
-            { name: 'Nova', price: '$12', features: ['16-24 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'], popular: true },
-            { name: 'Global Elite', price: '$20', features: ['24-32 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Premium Support'] },
-            { name: 'Pro Circuit', price: '$28', features: ['32+ Slots', '64 Tickrate', 'Premium DDoS Protection', '1-Click Plugin Installer'] }
+            { name: 'Pistol Round', price: '$5', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8-12 Slots', '64 Tickrate', 'Basic DDoS Protection'] },
+            { name: 'Silver', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['10-16 Slots', '64 Tickrate', 'Standard DDoS Protection'] },
+            { name: 'Nova', price: '$12', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16-24 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'], popular: true },
+            { name: 'Global Elite', price: '$20', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['24-32 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Premium Support'] },
+            { name: 'Pro Circuit', price: '$28', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['32+ Slots', '64 Tickrate', 'Premium DDoS Protection', '1-Click Plugin Installer'] }
         ]
     },
     {
@@ -64,11 +69,11 @@ const supportedGames = [
         image: '/Game-Card-icons/Rust.png',
         hint: 'rust apocalyptic',
         plans: [
-            { name: 'Naked', price: '$8', features: ['2GB RAM', '30 Player Slots', '30GB NVMe', 'Basic DDoS Protection'] },
-            { name: 'Stone Age', price: '$10', features: ['4GB RAM', '50 Player Slots', '50GB NVMe', 'Basic DDoS Protection'] },
-            { name: 'Industrial', price: '$20', features: ['8GB RAM', '100 Player Slots', '100GB NVMe', 'Advanced DDoS Protection'], popular: true },
-            { name: 'Space Age', price: '$35', features: ['12GB RAM', '200 Player Slots', '200GB NVMe', 'Premium DDoS Protection'] },
-            { name: 'Zerg', price: '$50', features: ['16GB RAM', '400 Player Slots', 'Unlimited NVMe', 'Elite DDoS Protection'] }
+            { name: 'Naked', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['2GB RAM', '30 Player Slots', '30GB NVMe', 'Basic DDoS Protection'] },
+            { name: 'Stone Age', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4GB RAM', '50 Player Slots', '50GB NVMe', 'Basic DDoS Protection'] },
+            { name: 'Industrial', price: '$20', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8GB RAM', '100 Player Slots', '100GB NVMe', 'Advanced DDoS Protection'], popular: true },
+            { name: 'Space Age', price: '$35', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['12GB RAM', '200 Player Slots', '200GB NVMe', 'Premium DDoS Protection'] },
+            { name: 'Zerg', price: '$50', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16GB RAM', '400 Player Slots', 'Unlimited NVMe', 'Elite DDoS Protection'] }
         ]
     },
     {
@@ -77,11 +82,11 @@ const supportedGames = [
         image: '/Game-Card-icons/7dtd.png',
         hint: 'zombie survival',
         plans: [
-            { name: 'Scavenger', price: '$6', features: ['4 Player Slots', '2GB RAM', 'Basic DDoS Protection'] },
-            { name: 'Survivor', price: '$8', features: ['8 Player Slots', '4GB RAM', 'Basic DDoS Protection'] },
-            { name: 'Nomad', price: '$15', features: ['16 Player Slots', '8GB RAM', 'Advanced DDoS Protection', 'Automated Backups'], popular: true },
-            { name: 'Wasteland Warrior', price: '$25', features: ['32 Player Slots', '12GB RAM', 'Premium DDoS Protection', 'Priority Support'] },
-            { name: 'Horde Master', price: '$40', features: ['64 Player Slots', '16GB RAM', 'Elite DDoS Protection', 'Mod Support'] }
+            { name: 'Scavenger', price: '$6', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4 Player Slots', '2GB RAM', 'Basic DDoS Protection'] },
+            { name: 'Survivor', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8 Player Slots', '4GB RAM', 'Basic DDoS Protection'] },
+            { name: 'Nomad', price: '$15', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16 Player Slots', '8GB RAM', 'Advanced DDoS Protection', 'Automated Backups'], popular: true },
+            { name: 'Wasteland Warrior', price: '$25', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['32 Player Slots', '12GB RAM', 'Premium DDoS Protection', 'Priority Support'] },
+            { name: 'Horde Master', price: '$40', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['64 Player Slots', '16GB RAM', 'Elite DDoS Protection', 'Mod Support'] }
         ]
     },
     {
@@ -90,11 +95,11 @@ const supportedGames = [
         image: '/Game-Card-icons/ASE.png',
         hint: 'ark dinosaur',
         plans: [
-            { name: 'Beach Bob', price: '$10', features: ['5 Player Slots', '4GB RAM', 'Basic Mod Support'] },
-            { name: 'Dodo', price: '$12', features: ['10 Player Slots', '8GB RAM', 'Basic Mod Support'] },
-            { name: 'Raptor', price: '$22', features: ['20 Player Slots', '12GB RAM', 'Full Mod Support', 'Automated Backups'], popular: true },
-            { name: 'T-Rex', price: '$35', features: ['40 Player Slots', '16GB RAM', 'Full Mod Support', 'Dedicated IP'] },
-            { name: 'Giga', price: '$50', features: ['70 Player Slots', '24GB RAM', 'Premium Mod Support', 'Highest CPU Priority'] },
+            { name: 'Beach Bob', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['5 Player Slots', '4GB RAM', 'Basic Mod Support'] },
+            { name: 'Dodo', price: '$12', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['10 Player Slots', '8GB RAM', 'Basic Mod Support'] },
+            { name: 'Raptor', price: '$22', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['20 Player Slots', '12GB RAM', 'Full Mod Support', 'Automated Backups'], popular: true },
+            { name: 'T-Rex', price: '$35', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['40 Player Slots', '16GB RAM', 'Full Mod Support', 'Dedicated IP'] },
+            { name: 'Giga', price: '$50', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['70 Player Slots', '24GB RAM', 'Premium Mod Support', 'Highest CPU Priority'] },
         ]
     }
 ];
@@ -123,6 +128,7 @@ function Header() {
                                 <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
                                     Sign out
@@ -183,8 +189,39 @@ function Footer() {
     );
 }
 
-function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean; icon?: string } & typeof supportedGames[0]['plans'][0])[] } }) {
+function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean; icon?: string; priceId?: string; } & typeof supportedGames[0]['plans'][0])[] } }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
+    const [loading, setLoading] = React.useState<string | null>(null);
+
+    const handleCheckout = async (priceId: string) => {
+        setLoading(priceId);
+        try {
+            const stripe = await stripePromise;
+            if (!stripe) {
+                console.error("Stripe.js has not loaded yet.");
+                return;
+            }
+
+            const response = await checkoutFlow({
+                priceId: priceId,
+                successUrl: `${window.location.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+                cancelUrl: window.location.href,
+            });
+
+            const { error } = await stripe.redirectToCheckout({
+                sessionId: response.sessionId,
+            });
+
+            if (error) {
+                console.error("Stripe checkout error:", error);
+            }
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+        } finally {
+            setLoading(null);
+        }
+    };
+
 
     return (
         <Dialog>
@@ -227,7 +264,13 @@ function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({
                                             </li>
                                         ))}
                                     </ul>
-                                    <Button className="w-full mt-6">Get Started</Button>
+                                    <Button 
+                                        className="w-full mt-6"
+                                        onClick={() => plan.priceId && handleCheckout(plan.priceId)}
+                                        disabled={!plan.priceId || loading === plan.priceId}
+                                    >
+                                        {loading === plan.priceId ? 'Processing...' : 'Get Started'}
+                                    </Button>
                                 </CardContent>
                             </Card>
                         ))
