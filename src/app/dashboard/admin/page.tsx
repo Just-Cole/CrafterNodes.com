@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -15,8 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-
-const ADMIN_DISCORD_ID = "949172257345921045";
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -36,7 +33,6 @@ const gameSchema = z.object({
 });
 
 export default function AdminPage() {
-  const { data: session, status } = useSession();
   const { toast } = useToast();
 
   const form = useForm<GameSchema>({
@@ -46,7 +42,7 @@ export default function AdminPage() {
       description: '',
       image: '',
       hint: '',
-      plans: [{ name: '', price: '', features: '', popular: false }],
+      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
     },
   });
 
@@ -71,19 +67,6 @@ export default function AdminPage() {
       });
     }
   };
-
-  if (status === 'loading') {
-    return <div className="py-6">Loading...</div>;
-  }
-
-  if (session?.user?.id !== ADMIN_DISCORD_ID) {
-    return (
-      <div className="py-6">
-        <h1 className="text-2xl font-bold">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="py-6">
@@ -243,7 +226,7 @@ export default function AdminPage() {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => append({ name: '', price: '', features: '', popular: false })}
+                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Plan

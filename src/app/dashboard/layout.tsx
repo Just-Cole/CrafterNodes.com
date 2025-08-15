@@ -45,7 +45,7 @@ function UserMenu() {
                         <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                         {session.user?.id === ADMIN_DISCORD_ID && (
-                          <DropdownMenuItem asChild><Link href="/dashboard/admin">Admin</Link></DropdownMenuItem>
+                          <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => signOut()}>
@@ -125,8 +125,8 @@ export default function DashboardLayout({
             </SidebarMenuItem>
              {session?.user?.id === ADMIN_DISCORD_ID && (
                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname === '/dashboard/admin'}>
-                      <Link href="/dashboard/admin">
+                  <SidebarMenuButton asChild isActive={pathname === '/admin'}>
+                      <Link href="/admin">
                           <Shield />
                           Admin
                       </Link>
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                             Billing
                         </Link>
                         {session?.user?.id === ADMIN_DISCORD_ID && (
-                            <Link href="/dashboard/admin" className="flex items-center gap-4 px-2.5 text-foreground">
+                            <Link href="/admin" className="flex items-center gap-4 px-2.5 text-foreground">
                                 <Shield className="h-5 w-5" />
                                 Admin
                             </Link>
