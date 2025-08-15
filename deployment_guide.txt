@@ -1,0 +1,158 @@
+
+# Ubuntu Server Deployment Guide for Next.js Application
+
+This guide provides the necessary commands to deploy your Next.js application on a fresh Ubuntu server.
+
+**Prerequisites:**
+- An Ubuntu 22.04 server.
+- A domain name pointing to your server's IP address.
+- You are logged in as a user with sudo privileges.
+
+# --------------------------------------------------
+# Step 1: Update Server and Install Dependencies
+# --------------------------------------------------
+
+# Update package lists
+sudo apt update && sudo apt upgrade -y
+
+# Install Nginx (web server), Git (for pulling code), and UFW (firewall)
+sudo apt install -y nginx git ufw
+
+# --------------------------------------------------
+# Step 2: Install Node.js and PM2
+# --------------------------------------------------
+
+# We will use NodeSource to install a modern version of Node.js (e.g., Node.js 20.x)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify installation
+node -v
+npm -v
+
+# Install PM2, a process manager for Node.js applications.
+# This will keep your app running forever and restart it if it crashes.
+sudo npm install pm2 -g
+
+# --------------------------------------------------
+# Step 3: Clone and Build Your Application
+# --------------------------------------------------
+
+# Clone your project from your Git repository (replace with your actual URL)
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+
+# Install project dependencies
+npm install
+
+# Create a production build of your Next.js app
+npm run build
+
+# Create a .env.local file for your production environment variables
+# IMPORTANT: You must fill this file with your actual secrets.
+cat > .env.local << EOF
+# Pterodactyl Environment Variables
+PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
+PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
+
+# Stripe Environment Variables
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+
+# NextAuth Environment Variables
+NEXTAUTH_SECRET=generate_a_strong_secret_here # You can generate one with `openssl rand -base64 32`
+NEXTAUTH_URL=https://your-domain.com
+
+# Discord OAuth Environment Variables
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+EOF
+
+# --------------------------------------------------
+# Step 4: Run the Application with PM2
+# --------------------------------------------------
+
+# Start the Next.js application using PM2.
+# This will start the app on port 3000 by default.
+pm2 start npm --name "next-app" -- start
+
+# Tell PM2 to start on system boot
+pm2 startup
+# (You will need to run the command PM2 gives you here)
+
+# Save the current process list
+pm2 save
+
+# --------------------------------------------------
+# Step 5: Configure Nginx as a Reverse Proxy
+# --------------------------------------------------
+
+# Create a new Nginx configuration file for your site.
+# Replace 'your-domain.com' with your actual domain name.
+sudo nano /etc/nginx/sites-available/your-domain.com
+
+# Paste the following configuration into the file.
+# This tells Nginx to listen for traffic on port 80 and forward it
+# to your Next.js app running on port 3000.
+#
+# Again, replace 'your-domain.com' with your actual domain.
+
+<<'EOF'
+server {
+    listen 80;
+    server_name your-domain.com www.your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Enable the new configuration by creating a symbolic link
+sudo ln -s /etc/nginx/sites-available/your-domain.com /etc/nginx/sites-enabled/
+
+# Test the Nginx configuration for syntax errors
+sudo nginx -t
+
+# Restart Nginx to apply the changes
+sudo systemctl restart nginx
+
+# --------------------------------------------------
+# Step 6: Configure Firewall
+# --------------------------------------------------
+
+# Allow OpenSSH
+sudo ufw allow 'OpenSSH'
+
+# Allow Nginx HTTP traffic
+sudo ufw allow 'Nginx Full'
+
+# Enable the firewall
+sudo ufw enable
+# (Press 'y' to confirm)
+
+# --------------------------------------------------
+# Step 7: Secure Your Site with SSL (Let's Encrypt)
+# --------------------------------------------------
+
+# Install Certbot, the client for Let's Encrypt
+sudo apt install -y certbot python3-certbot-nginx
+
+# Obtain and install the SSL certificate.
+# Certbot will automatically edit your Nginx configuration to handle HTTPS.
+# Replace 'your-domain.com' with your domain.
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+
+# Certbot will ask for your email and to agree to the terms of service.
+# It will then automatically configure SSL.
+
+# Your site should now be live and accessible via HTTPS!
+# You can check the status of the certbot renewal timer with:
+sudo systemctl status certbot.timer
+
