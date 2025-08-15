@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getPricingData, PricingData } from '@/lib/pricing';
 import { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -34,18 +35,15 @@ const gameSchema = z.object({
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
-export default function AdminPage() {
+function AddGameForm() {
   const { toast } = useToast();
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
 
   useEffect(() => {
-    // This is a workaround to fetch data on the client, as we can't use top-level await in a client component.
-    // In a real app, you might create a dedicated API route for this.
     fetch('/api/pricing')
       .then(res => res.json())
       .then(data => setPricingData(data));
   }, []);
-
 
   const form = useForm<GameSchema>({
     resolver: zodResolver(gameSchema),
@@ -102,17 +100,9 @@ export default function AdminPage() {
       }
     }
   };
-
+  
   return (
-    <div className="py-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground">Add new games to the pricing page.</p>
-        </div>
-      </div>
-
-      <Card className="mt-8">
+      <Card>
         <CardHeader className="flex-row items-center justify-between">
             <div>
                 <CardTitle>Add New Game</CardTitle>
@@ -281,6 +271,38 @@ export default function AdminPage() {
           </Form>
         </CardContent>
       </Card>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <div className="py-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Admin Panel</h1>
+          <p className="text-muted-foreground">Manage your games and pricing.</p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="add" className="mt-8">
+        <TabsList>
+          <TabsTrigger value="add">Add Game</TabsTrigger>
+          <TabsTrigger value="manage">Manage Games</TabsTrigger>
+        </TabsList>
+        <TabsContent value="add" className="mt-6">
+          <AddGameForm />
+        </TabsContent>
+        <TabsContent value="manage" className="mt-6">
+           <Card>
+             <CardHeader>
+               <CardTitle>Manage Existing Games</CardTitle>
+                <CardDescription>Edit or delete games from your pricing page.</CardDescription>
+             </CardHeader>
+             <CardContent>
+                <p>Functionality to manage existing games is coming soon!</p>
+             </CardContent>
+           </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
