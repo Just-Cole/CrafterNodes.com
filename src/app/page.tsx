@@ -14,9 +14,12 @@ import React from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import pricingData from '@/data/pricing.json';
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+const { supportedGames } = pricingData;
 
 function Logo() {
     return (
@@ -34,74 +37,6 @@ const features = [
     { icon: <Zap className="h-10 w-10" />, title: "High Performance", description: "Powered by NVMe SSDs and high-clock speed CPUs to eliminate lag and ensure smooth gameplay." },
     { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "Enterprise-grade DDoS protection is included with all plans to keep your server online, always." },
     { icon: <Server className="h-10 w-10" />, title: "Full Control", description: "Access our intuitive control panel with a live console, file manager, and backup system." },
-];
-
-const supportedGames = [
-    {
-        name: 'Minecraft',
-        description: 'Build, create, and explore in your own dedicated world. Our plans are optimized for both Vanilla and Modded servers.',
-        image: '/Game-Card-icons/Minecraft.png',
-        hint: 'minecraft scene',
-        plans: [
-            { name: 'Coal Plan', price: '$4', priceId: 'price_1RwDdDGiQmXe4wKvj0RexV7n', features: ['2GB RAM', 'Unlimited Slots', 'Basic DDoS Protection'], icon: '/Plans-Icons/Minecraft/Block_of_Coal.png' },
-            { name: 'Iron Plan', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install'], icon: '/Plans-Icons/Minecraft/Block_of_Iron.png' },
-            { name: 'Gold Plan', price: '$18', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['6GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Priority Support'], icon: '/Plans-Icons/Minecraft/Block_of_Gold.png', popular: true },
-            { name: 'Diamond Plan', price: '$25', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP'], icon: '/Plans-Icons/Minecraft/Block_of_Diamond.png' },
-            { name: 'Emerald Plan', price: '$40', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16GB RAM', 'Unlimited Slots', 'Advanced DDoS Protection', '1-Click Modpack Install', 'Dedicated IP', 'Premium Support'], icon: '/Plans-Icons/Minecraft/Block_of_Emerald.png' },
-        ]
-    },
-    {
-        name: 'Counter-Strike 2',
-        description: 'Experience elite-level competitive play with our high-performance CS2 servers, featuring the latest sub-tick updates.',
-        image: '/Game-Card-icons/CS2.png',
-        hint: 'counter strike soldier',
-        plans: [
-            { name: 'Pistol Round', price: '$5', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8-12 Slots', '64 Tickrate', 'Basic DDoS Protection'] },
-            { name: 'Silver', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['10-16 Slots', '64 Tickrate', 'Standard DDoS Protection'] },
-            { name: 'Nova', price: '$12', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16-24 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Choice of Location'], popular: true },
-            { name: 'Global Elite', price: '$20', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['24-32 Slots', '64 Tickrate', 'Advanced DDoS Protection', 'Premium Support'] },
-            { name: 'Pro Circuit', price: '$28', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['32+ Slots', '64 Tickrate', 'Premium DDoS Protection', '1-Click Plugin Installer'] }
-        ]
-    },
-    {
-        name: 'Rust',
-        description: 'Survive the harsh, open world. Our Rust servers are built for stability and performance, even with large groups.',
-        image: '/Game-Card-icons/Rust.png',
-        hint: 'rust apocalyptic',
-        plans: [
-            { name: 'Naked', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['2GB RAM', '30 Player Slots', '30GB NVMe', 'Basic DDoS Protection'] },
-            { name: 'Stone Age', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4GB RAM', '50 Player Slots', '50GB NVMe', 'Basic DDoS Protection'] },
-            { name: 'Industrial', price: '$20', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8GB RAM', '100 Player Slots', '100GB NVMe', 'Advanced DDoS Protection'], popular: true },
-            { name: 'Space Age', price: '$35', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['12GB RAM', '200 Player Slots', '200GB NVMe', 'Premium DDoS Protection'] },
-            { name: 'Zerg', price: '$50', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16GB RAM', '400 Player Slots', 'Unlimited NVMe', 'Elite DDoS Protection'] }
-        ]
-    },
-    {
-        name: '7 Days to Die',
-        description: 'Team up with friends to survive the zombie horde. Our servers ensure a smooth, lag-free apocalyptic experience.',
-        image: '/Game-Card-icons/7dtd.png',
-        hint: 'zombie survival',
-        plans: [
-            { name: 'Scavenger', price: '$6', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['4 Player Slots', '2GB RAM', 'Basic DDoS Protection'] },
-            { name: 'Survivor', price: '$8', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['8 Player Slots', '4GB RAM', 'Basic DDoS Protection'] },
-            { name: 'Nomad', price: '$15', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['16 Player Slots', '8GB RAM', 'Advanced DDoS Protection', 'Automated Backups'], popular: true },
-            { name: 'Wasteland Warrior', price: '$25', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['32 Player Slots', '12GB RAM', 'Premium DDoS Protection', 'Priority Support'] },
-            { name: 'Horde Master', price: '$40', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['64 Player Slots', '16GB RAM', 'Elite DDoS Protection', 'Mod Support'] }
-        ]
-    },
-    {
-        name: 'Ark Survival Evolved',
-        description: 'Tame dinosaurs and explore a vast primeval world. Our servers support large maps and extensive modding.',
-        image: '/Game-Card-icons/ASE.png',
-        hint: 'ark dinosaur',
-        plans: [
-            { name: 'Beach Bob', price: '$10', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['5 Player Slots', '4GB RAM', 'Basic Mod Support'] },
-            { name: 'Dodo', price: '$12', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['10 Player Slots', '8GB RAM', 'Basic Mod Support'] },
-            { name: 'Raptor', price: '$22', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['20 Player Slots', '12GB RAM', 'Full Mod Support', 'Automated Backups'], popular: true },
-            { name: 'T-Rex', price: '$35', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['40 Player Slots', '16GB RAM', 'Full Mod Support', 'Dedicated IP'] },
-            { name: 'Giga', price: '$50', priceId: 'price_1PQ1JsRvxVp0wJqL2g5uJ4E6', features: ['70 Player Slots', '24GB RAM', 'Premium Mod Support', 'Highest CPU Priority'] },
-        ]
-    }
 ];
 
 function Header() {
@@ -189,7 +124,7 @@ function Footer() {
     );
 }
 
-function PricingDialog({ game }: { game: typeof supportedGames[0] & { plans?: ({ popular?: boolean; icon?: string; priceId?: string; } & typeof supportedGames[0]['plans'][0])[] } }) {
+function PricingDialog({ game }: { game: typeof supportedGames[0] }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
 
@@ -370,7 +305,7 @@ export default function LandingPage() {
                     >
                         <CarouselContent>
                             {supportedGames.map((game) => (
-                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/5">
+                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
                                     <div className="p-1 h-full">
                                         <Card className="overflow-hidden h-full flex flex-col">
                                             <CardContent className="p-0 flex flex-col flex-grow">
@@ -399,3 +334,4 @@ export default function LandingPage() {
         </div>
     );
 }
+
