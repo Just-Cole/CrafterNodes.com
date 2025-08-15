@@ -156,3 +156,27 @@ sudo certbot --nginx -d your-domain.com -d www.your-domain.com
 # You can check the status of the certbot renewal timer with:
 sudo systemctl status certbot.timer
 
+# --------------------------------------------------
+# Step 8: Updating Your Application
+# --------------------------------------------------
+
+# When you make changes to your application and push them to your GitHub repository,
+# you'll need to pull those changes down to your server to make them live.
+
+# First, connect to your server and navigate to your project directory:
+cd ~/CrafterNodes.com
+
+# Pull the latest changes from the 'main' branch (or whichever branch you use)
+git pull
+
+# Install any new dependencies that might have been added
+npm install
+
+# Re-build the application with the new changes
+npm run build
+
+# Restart the application using PM2 to apply the changes
+pm2 restart next-app
+
+# You can check the status of your application with:
+pm2 status
