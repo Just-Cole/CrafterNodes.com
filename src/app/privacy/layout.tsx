@@ -7,6 +7,8 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+const ADMIN_DISCORD_ID = "949172257345921045";
+
 function Logo() {
     return (
         <div className="flex items-center gap-2">
@@ -42,6 +44,9 @@ function Header() {
                                 <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                                {session?.user?.id === ADMIN_DISCORD_ID && (
+                                  <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
                                     Sign out
@@ -115,5 +120,3 @@ export default function PrivacyLayout({
     </div>
   )
 }
-
-    

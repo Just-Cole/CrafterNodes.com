@@ -21,6 +21,8 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 const { supportedGames } = pricingData;
 
+const ADMIN_DISCORD_ID = "949172257345921045";
+
 function Logo() {
     return (
         <div className="flex items-center gap-2">
@@ -64,6 +66,9 @@ function Header() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
+                                {session?.user?.id === ADMIN_DISCORD_ID && (
+                                  <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
                                     Sign out
@@ -334,4 +339,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
