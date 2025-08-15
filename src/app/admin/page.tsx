@@ -62,13 +62,8 @@ export default function AdminPage() {
         title: 'Success!',
         description: result.message,
       });
-      form.reset({
-        name: '',
-        description: '',
-        image: '',
-        hint: '',
-        plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
-      });
+      // Force a reload to see the changes on the main page
+      window.location.reload();
     } else {
       toast({
         variant: 'destructive',
