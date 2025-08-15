@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
 import { CreditCard, Home, PanelLeft, Server, Shield } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -44,7 +44,7 @@ function UserMenu() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
-                        {session.user?.id === ADMIN_DISCORD_ID && (
+                        {session?.user?.id === ADMIN_DISCORD_ID && (
                           <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -125,7 +125,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
              {session?.user?.id === ADMIN_DISCORD_ID && (
                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname === '/admin'}>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/admin')}>
                       <Link href="/admin">
                           <Shield />
                           Admin
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                             Billing
                         </Link>
                         {session?.user?.id === ADMIN_DISCORD_ID && (
-                            <Link href="/admin" className="flex items-center gap-4 px-2.5 text-foreground">
+                            <Link href="/admin" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                                 <Shield className="h-5 w-5" />
                                 Admin
                             </Link>

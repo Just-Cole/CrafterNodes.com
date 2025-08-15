@@ -4,6 +4,7 @@
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import DashboardLayout from "../dashboard/layout";
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
@@ -40,5 +41,5 @@ export default function AdminLayout({
         )
     }
 
-    return <div className="container mx-auto py-8">{children}</div>;
+    return <DashboardLayout>{children}</DashboardLayout>;
 }
