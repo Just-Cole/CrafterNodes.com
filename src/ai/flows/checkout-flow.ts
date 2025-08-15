@@ -12,8 +12,8 @@ import { headers } from 'next/headers';
 
 const CheckoutInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe price.'),
-  successUrl: z.string().url().describe('The URL to redirect to on success.'),
-  cancelUrl: z.string().url().describe('The URL to redirect to on cancellation.'),
+  successUrl: z.string().describe('The URL to redirect to on success.'),
+  cancelUrl: z.string().describe('The URL to redirect to on cancellation.'),
 });
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 
