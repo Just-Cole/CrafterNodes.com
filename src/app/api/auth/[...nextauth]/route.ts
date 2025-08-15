@@ -1,3 +1,4 @@
+
 import NextAuth from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
 
@@ -9,6 +10,14 @@ export const authOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async session({ session, token }: { session: any, token: any }) {
+      if (session?.user) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+  }
 }
 
 const handler = NextAuth(authOptions)

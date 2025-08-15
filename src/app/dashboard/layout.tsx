@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { CreditCard, Home, PanelLeft, Server } from "lucide-react";
+import { CreditCard, Home, PanelLeft, Server, Shield } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const ADMIN_DISCORD_ID = "949172257345921045";
 
 function Logo() {
     return (
@@ -40,6 +44,9 @@ function UserMenu() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
+                        {session.user?.id === ADMIN_DISCORD_ID && (
+                          <DropdownMenuItem asChild><Link href="/dashboard/admin">Admin</Link></DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => signOut()}>
                             Sign out
@@ -66,6 +73,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
     const { data: session, status } = useSession();
+    const pathname = usePathname();
 
     if (status === 'loading') {
         return <div>Loading...</div>;
@@ -92,7 +100,7 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={pathname === '/dashboard'}>
                     <Link href="/dashboard">
                         <Home />
                         Dashboard
@@ -100,7 +108,7 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/servers')}>
                     <Link href="/dashboard/servers">
                         <Server />
                         Servers
@@ -108,13 +116,23 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={pathname === '/billing'}>
                     <Link href="/billing">
                         <CreditCard />
                         Billing
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+             {session?.user?.id === ADMIN_DISCORD_ID && (
+               <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === '/dashboard/admin'}>
+                      <Link href="/dashboard/admin">
+                          <Shield />
+                          Admin
+                      </Link>
+                  </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -157,6 +175,12 @@ export default function DashboardLayout({
                             <CreditCard className="h-5 w-5" />
                             Billing
                         </Link>
+                        {session?.user?.id === ADMIN_DISCORD_ID && (
+                            <Link href="/dashboard/admin" className="flex items-center gap-4 px-2.5 text-foreground">
+                                <Shield className="h-5 w-5" />
+                                Admin
+                            </Link>
+                        )}
                     </nav>
                 </SheetContent>
             </Sheet>
