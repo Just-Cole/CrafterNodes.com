@@ -4,7 +4,7 @@
         {
             "name": "Minecraft",
             "description": "Build, create, and explore in your own dedicated world. Our plans are optimized for both Vanilla and Modded servers.",
-            "image": "/Game-Card-icons/Minecraft.png",
+            "image": "https://placehold.co/600x400.png",
             "hint": "minecraft scene",
             "pterodactylNestId": 1,
             "pterodactylEggId": 1,
@@ -18,7 +18,7 @@
                         "Unlimited Slots",
                         "Basic DDoS Protection"
                     ],
-                    "icon": "/Plans-Icons/Minecraft/Block_of_Coal.png"
+                    "icon": "https://placehold.co/100x100.png"
                 },
                 {
                     "name": "Iron Plan",
@@ -30,7 +30,7 @@
                         "Advanced DDoS Protection",
                         "1-Click Modpack Install"
                     ],
-                    "icon": "/Plans-Icons/Minecraft/Block_of_Iron.png"
+                    "icon": "https://placehold.co/100x100.png"
                 },
                 {
                     "name": "Gold Plan",
@@ -43,7 +43,7 @@
                         "1-Click Modpack Install",
                         "Priority Support"
                     ],
-                    "icon": "/Plans-Icons/Minecraft/Block_of_Gold.png",
+                    "icon": "https://placehold.co/100x100.png",
                     "popular": true
                 },
                 {
@@ -57,7 +57,7 @@
                         "1-Click Modpack Install",
                         "Dedicated IP"
                     ],
-                    "icon": "/Plans-Icons/Minecraft/Block_of_Diamond.png"
+                    "icon": "https://placehold.co/100x100.png"
                 },
                 {
                     "name": "Emerald Plan",
@@ -71,14 +71,14 @@
                         "Dedicated IP",
                         "Premium Support"
                     ],
-                    "icon": "/Plans-Icons/Minecraft/Block_of_Emerald.png"
+                    "icon": "https://placehold.co/100x100.png"
                 }
             ]
         },
         {
             "name": "Counter-Strike 2",
             "description": "Experience elite-level competitive play with our high-performance CS2 servers, featuring the latest sub-tick updates.",
-            "image": "/Game-Card-icons/CS2.png",
+            "image": "https://placehold.co/600x400.png",
             "hint": "counter strike soldier",
             "pterodactylNestId": 1,
             "pterodactylEggId": 2,
@@ -142,7 +142,7 @@
         {
             "name": "Rust",
             "description": "Survive the harsh, open world. Our Rust servers are built for stability and performance, even with large groups.",
-            "image": "/Game-Card-icons/Rust.png",
+            "image": "https://placehold.co/600x400.png",
             "hint": "rust apocalyptic",
             "pterodactylNestId": 1,
             "pterodactylEggId": 3,
@@ -208,7 +208,7 @@
         {
             "name": "7 Days to Die",
             "description": "Team up with friends to survive the zombie horde. Our servers ensure a smooth, lag-free apocalyptic experience.",
-            "image": "/Game-Card-icons/7dtd.png",
+            "image": "https://placehold.co/600x400.png",
             "hint": "zombie survival",
             "pterodactylNestId": 1,
             "pterodactylEggId": 4,
@@ -272,7 +272,7 @@
         {
             "name": "Ark Survival Evolved",
             "description": "Tame dinosaurs and explore a vast primeval world. Our servers support large maps and extensive modding.",
-            "image": "/Game-Card-icons/ASE.png",
+            "image": "https://placehold.co/600x400.png",
             "hint": "ark dinosaur",
             "pterodactylNestId": 1,
             "pterodactylEggId": 5,
