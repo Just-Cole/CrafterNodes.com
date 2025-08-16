@@ -36,9 +36,9 @@ function Logo() {
                 strokeLinejoin="round"
                 className="h-8 w-8 text-primary"
             >
-                <path d="M12 2l2.37 6.36h6.63l-5.37 3.92 2.37 6.36-6-4.6-6 4.6 2.37-6.36-5.37-3.92h6.63z" />
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
             </svg>
-            <span className="text-xl font-bold text-foreground">Glist</span>
+            <span className="text-xl font-bold text-foreground">CrafterNodes</span>
         </div>
     );
 }
@@ -140,7 +140,7 @@ function Footer() {
                     </div>
                 </div>
                 <div className="mt-8 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center">
-                    <p className="text-sm text-muted-foreground">&copy; 2025 Glist. All rights reserved.</p>
+                    <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
                 </div>
             </div>
         </footer>
