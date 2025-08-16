@@ -4,10 +4,9 @@
 import { checkoutFlow } from "@/ai/flows/checkout-flow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { loadStripe } from "@stripe/stripe-js";
-import { ShieldCheck, Rocket, Zap, Server, CheckCircle } from "lucide-react";
+import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, LifeBuoy, Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -16,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import type { PricingData } from "@/lib/pricing";
+import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -25,30 +26,48 @@ const ADMIN_DISCORD_ID = "949172257345921045";
 function Logo() {
     return (
         <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+             <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8 text-primary"
+            >
+                <path d="M12 2l2.37 6.36h6.63l-5.37 3.92 2.37 6.36-6-4.6-6 4.6 2.37-6.36-5.37-3.92h6.63z" />
             </svg>
-            <span className="text-xl font-semibold text-foreground">CrafterNodes</span>
+            <span className="text-xl font-bold text-foreground">Glist</span>
         </div>
     );
 }
 
+
 const features = [
-    { icon: <Rocket className="h-10 w-10" />, title: "Instant Setup", description: "Deploy your server in minutes. Choose a game, and our system handles the rest." },
-    { icon: <Zap className="h-10 w-10" />, title: "High Performance", description: "Powered by NVMe SSDs and high-clock speed CPUs to eliminate lag and ensure smooth gameplay." },
-    { icon: <ShieldCheck className="h-10 w-10" />, title: "DDoS Protection", description: "Enterprise-grade DDoS protection is included with all plans to keep your server online, always." },
-    { icon: <Server className="h-10 w-10" />, title: "Full Control", description: "Access our intuitive control panel with a live console, file manager, and backup system." },
+    { icon: <Rocket className="h-8 w-8 text-primary" />, title: "Instant Deployment", description: "All servers are set up instantly upon purchase, so you can get started right away without any waiting." },
+    { icon: <Zap className="h-8 w-8 text-primary" />, title: "Great Performance", description: "We use the latest hardware to ensure your game server runs smoothly with no lag." },
+    { icon: <ShieldCheck className="h-8 w-8 text-primary" />, title: "DDoS Protection", description: "Our servers are equipped with advanced DDoS protection to keep your game online 24/7." },
+    { icon: <Server className="h-8 w-8 text-primary" />, title: "Game Optimized", description: "Our servers are specifically configured to provide the best performance for your favorite games." },
+    { icon: <Users className="h-8 w-8 text-primary" />, title: "Player Slots", description: "We offer flexible player slot options to fit the size of your community, big or small." },
+    { icon: <MapPin className="h-8 w-8 text-primary" />, title: "Global Locations", description: "Choose from multiple server locations around the world for the lowest latency." },
 ];
 
 function Header() {
     const { data: session } = useSession();
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between">
                 <Link href="/">
                     <Logo />
                 </Link>
+                <nav className="hidden md:flex gap-6 items-center">
+                    <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-primary">Home</Link>
+                    <Link href="#games" className="text-sm font-medium text-muted-foreground hover:text-primary">Pricing</Link>
+                    <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-primary">FAQ</Link>
+                    <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary">Features</Link>
+                </nav>
                 <div className="flex items-center gap-4">
                     {session ? (
                         <DropdownMenu>
@@ -75,14 +94,9 @@ function Header() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <>
-                            <Button variant="outline" onClick={() => signIn("discord")}>
-                                Login
-                            </Button>
-                            <Button onClick={() => signIn("discord")}>
-                                Sign Up
-                            </Button>
-                        </>
+                        <Button onClick={() => signIn("discord")}>
+                            Login
+                        </Button>
                     )}
                 </div>
             </div>
@@ -92,43 +106,48 @@ function Header() {
 
 function Footer() {
     return (
-        <footer className="border-t">
+        <footer className="border-t border-border/40">
             <div className="container mx-auto py-12">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+                    <div className="md:col-span-2">
                         <Link href="/">
                             <Logo />
                         </Link>
-                        <p className="text-muted-foreground mt-4 text-sm">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
+                        <p className="text-muted-foreground mt-4 text-sm max-w-xs">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Community</h4>
+                        <h4 className="font-semibold mb-4 text-foreground">Company</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="https://discord.gg/tgaAxZDQAa" className="text-muted-foreground hover:text-foreground">Discord</a></li>
+                            <li><a href="#features" className="text-muted-foreground hover:text-primary">Features</a></li>
+                            <li><a href="#games" className="text-muted-foreground hover:text-primary">Pricing</a></li>
+                             <li><a href="#" className="text-muted-foreground hover:text-primary">Blog</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold mb-4">Quick Links</h4>
+                        <h4 className="font-semibold mb-4 text-foreground">Support</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Game Panel</a></li>
-                            <li><a href="#games" className="text-muted-foreground hover:text-foreground">Pricing</a></li>
-                            <li><a href="#" className="text-muted-foreground hover:text-foreground">Login</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-primary">Support Portal</a></li>
+                            <li><a href="#faq" className="text-muted-foreground hover:text-primary">FAQ</a></li>
+                            <li><a href="#" className="text-muted-foreground hover:text-primary">Contact Us</a></li>
+                        </ul>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold mb-4 text-foreground">Legal</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="/terms" className="text-muted-foreground hover:text-primary">Terms of Service</a></li>
+                            <li><a href="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</a></li>
                         </ul>
                     </div>
                 </div>
-                <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
-                    <p className="text-sm text-muted-foreground">&copy; 2025 CrafterNodes. All rights reserved.</p>
-                     <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        <Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link>
-                        <Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link>
-                    </div>
+                <div className="mt-8 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center">
+                    <p className="text-sm text-muted-foreground">&copy; 2025 Glist. All rights reserved.</p>
                 </div>
             </div>
         </footer>
     );
 }
 
-function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
+function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
     const { data: session } = useSession();
@@ -153,7 +172,6 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
             })
             return;
         }
-
 
         setLoading(plan.priceId);
         try {
@@ -201,27 +219,26 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
         }
     };
 
-
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button className="w-full">View Plans</Button>
+                {children}
             </DialogTrigger>
-            <DialogContent className="max-w-7xl">
+            <DialogContent className="max-w-7xl bg-background border-border">
                 <DialogHeader>
-                    <DialogTitle className="text-3xl font-bold text-center">
+                    <DialogTitle className="text-3xl font-bold text-center text-foreground">
                         {game.name} Server Hosting
                     </DialogTitle>
-                    <DialogDescription className="text-center text-lg">
+                    <DialogDescription className="text-center text-lg text-muted-foreground">
                         Choose the perfect plan for your community.
                     </DialogDescription>
                 </DialogHeader>
                 <div className={`grid grid-cols-1 ${planGridClass} gap-6 py-8`}>
                     {game.plans ? (
                         game.plans.map(plan => (
-                            <Card key={plan.name} className="flex flex-col relative overflow-hidden">
+                            <Card key={plan.name} className="flex flex-col relative overflow-hidden bg-secondary border-border hover:border-primary transition-colors">
                                 {plan.popular && (
-                                     <div className="absolute top-4 -right-10 text-center w-36 transform rotate-45 bg-destructive py-1 text-xs font-semibold text-destructive-foreground shadow-lg">
+                                     <div className="absolute top-4 -right-10 text-center w-36 transform rotate-45 bg-primary py-1 text-xs font-semibold text-primary-foreground shadow-lg">
                                         Popular
                                     </div>
                                 )}
@@ -231,8 +248,8 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
                                             <Image src={plan.icon} alt={`${plan.name} icon`} fill className="object-contain" />
                                         </div>
                                     )}
-                                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                                    <p className="text-4xl font-bold">{plan.price}<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
+                                    <CardTitle className="text-2xl text-foreground">{plan.name}</CardTitle>
+                                    <p className="text-4xl font-bold text-foreground">{plan.price}<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
                                 </CardHeader>
                                 <CardContent className="flex flex-col flex-grow">
                                     <ul className="space-y-3 text-muted-foreground flex-grow">
@@ -254,7 +271,7 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
                             </Card>
                         ))
                     ) : (
-                        <div className="col-span-full text-center">
+                        <div className="col-span-full text-center text-foreground">
                             <p>Pricing plans for {game.name} are coming soon!</p>
                             <Button className="mt-4">
                                 <Link href="/#">Contact Sales</Link>
@@ -268,63 +285,122 @@ function PricingDialog({ game }: { game: PricingData['supportedGames'][0] }) {
 }
 
 export function LandingPageContent({ supportedGames }: { supportedGames: PricingData['supportedGames']}) {
-    const [api, setApi] = React.useState<CarouselApi>()
-    
-    React.useEffect(() => {
-        if (!api) {
-            return
-        }
 
-        const interval = setInterval(() => {
-            if (api.canScrollNext()) {
-                api.scrollNext()
-            } else {
-                api.scrollTo(0)
-            }
-        }, 10000)
+    const testimonials = [
+        {
+            name: "Alex Morgan",
+            role: "Gamer",
+            avatar: "https://placehold.co/100x100.png",
+            review: "The performance and reliability of the game servers is outstanding. My community has never been happier, and the customer support team is always quick to help with any questions I have.",
+            rating: 5,
+        },
+        {
+            name: "Sarah Dale",
+            role: "Content Creator",
+            avatar: "https://placehold.co/100x100.png",
+            review: "Their sub-user support for collaboration is fantastic. It makes managing our development server a breeze. Plus, the one-click modpack installs save us so much time and effort.",
+            rating: 5,
+        },
+        {
+            name: "Steve Thompson",
+            role: "Server Admin",
+            avatar: "https://placehold.co/100x100.png",
+            review: "We were looking for a reliable host for our game, and we found it. The automated cloud backups give us peace of mind, and the performance has been flawless since we switched over.",
+            rating: 5,
+        },
+    ]
 
-        return () => clearInterval(interval)
-    }, [api])
-
+    const faqItems = [
+        { 
+            question: "How long until my game server is online?", 
+            answer: "Your game server is deployed instantly after your payment is confirmed. You will receive an email with all the details you need to get started right away." 
+        },
+        { 
+            question: "Can I change my server's location?", 
+            answer: "Yes, you can request a server location change at any time by contacting our support team. We will migrate your server to the new location with minimal downtime." 
+        },
+        { 
+            question: "Do you offer automated backups?", 
+            answer: "Absolutely. All our hosting plans come with automated cloud backups to ensure your server's data is always safe. You can also create manual backups whenever you wish." 
+        },
+        { 
+            question: "How do I add a sub-user to my server?", 
+            answer: "You can easily add sub-users through our intuitive control panel. This feature allows you to grant specific permissions to your friends or staff for server management." 
+        },
+        { 
+            question: "Do you offer modpack support?", 
+            answer: "Yes, we provide one-click modpack installations for many popular games. You can also manually install any mods or plugins you like, and our support team is available to assist you."
+        },
+    ];
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-background">
         <Header />
         <main className="flex-1">
-            <section className="w-full py-20 md:py-32 lg:py-40 bg-background">
-                <div className="container mx-auto text-center">
+            <section className="w-full pt-20 md:pt-32 lg:pt-40 pb-10 md:pb-20 lg:pb-28 bg-grid">
+                <div className="container mx-auto text-center px-4">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                            Powerful Game Server Hosting, Simplified.
+                            Premium Game Hosting for Serious Gamers
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                            Experience blazing-fast, reliable server hosting for your favorite games with an intuitive control panel. From single servers to complex networks, CrafterNodes is your all-in-one solution.
+                            Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
                         </p>
-                        <div className="mt-10 flex items-center justify-center gap-x-6">
+                        <div className="mt-10 flex items-center justify-center gap-x-4">
                             <Button size="lg" asChild>
-                                <Link href="#games">View Pricing</Link>
+                                <Link href="#games">Get Started</Link>
                             </Button>
-                            <Button size="lg" variant="outline" asChild>
-                                <Link href="https://discord.gg/tgaAxZDQAa">Join our Discord</Link>
+                            <Button size="lg" variant="outline">
+                                Watch Video
                             </Button>
                         </div>
                     </div>
                 </div>
             </section>
-
-            <section id="features" className="w-full py-20 md:py-32 bg-secondary">
-                <div className="container mx-auto">
+            
+            <section id="games" className="w-full py-20 md:py-32 bg-background">
+                <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">The Ultimate Server Toolkit</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">Everything you need for a seamless hosting experience, from performance to management.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Game Server Hosting</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games, all optimized for the best performance.</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {supportedGames.map((game) => (
+                            <Card key={game.name} className="bg-secondary border-border/60 overflow-hidden flex flex-col hover:border-primary transition-colors duration-300">
+                                <div className="relative aspect-video">
+                                    <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
+                                </div>
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h3 className="text-2xl font-bold mb-2 text-foreground">{game.name}</h3>
+                                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
+                                    <div className="flex justify-between items-center">
+                                       <p className="text-muted-foreground text-sm">Starting from <span className="font-bold text-foreground">{game.plans ? game.plans[0].price : "$5"}</span>/mo</p>
+                                        <PricingDialog game={game}>
+                                            <Button variant="outline">View Plans</Button>
+                                        </PricingDialog>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+             <section id="features" className="w-full py-20 md:py-32 bg-secondary">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-16">
+                         <p className="text-sm font-semibold uppercase tracking-wider text-primary">Our Features</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mt-2">Premium Server Hosting Experience</h2>
+                        <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">We provide everything you need for a seamless and powerful game hosting experience, from performance and security to management and support.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {features.map((feature) => (
-                            <div key={feature.title} className="text-center p-8 border border-border rounded-lg bg-background">
-                                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mx-auto mb-6">
+                            <div key={feature.title} className="text-left p-6 border border-border/60 rounded-lg bg-background">
+                                <div className="mb-4">
                                     {feature.icon}
                                 </div>
-                                <h3 className="text-xl font-bold">{feature.title}</h3>
+                                <h3 className="text-xl font-bold text-foreground">{feature.title}</h3>
                                 <p className="mt-2 text-muted-foreground">{feature.description}</p>
                             </div>
                         ))}
@@ -332,49 +408,136 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                 </div>
             </section>
             
-            <section id="games" className="w-full py-20 md:py-32 bg-background">
-                <div className="container mx-auto">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Games We Support</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games. More are being added all the time!</p>
+            <section className="w-full py-20 md:py-32 bg-background">
+                 <div className="container mx-auto px-4">
+                     <div className="text-center mb-16">
+                         <p className="text-sm font-semibold uppercase tracking-wider text-primary">Testimonials</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mt-2">Trusted by Top Content Creators</h2>
+                        <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Our platform is trusted by gamers and creators worldwide for its reliability and top-tier support.</p>
                     </div>
-
-                    <Carousel
-                        setApi={setApi}
-                        opts={{
-                            align: "center",
-                            loop: true,
-                        }}
-                        className="w-full"
-                    >
-                        <CarouselContent>
-                            {supportedGames.map((game) => (
-                                <CarouselItem key={game.name} className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                                    <div className="p-1 h-full">
-                                        <Card className="overflow-hidden h-full flex flex-col">
-                                            <CardContent className="p-0 flex flex-col flex-grow">
-                                                <div className="relative aspect-[2/3]">
-                                                    <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
-                                                </div>
-                                                <div className="p-4 flex flex-col flex-grow">
-                                                    <h3 className="text-xl font-bold mb-2">{game.name}</h3>
-                                                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
-                                                    <p className="text-muted-foreground mb-4">Starting from {game.plans ? game.plans[0].price : "$5"}/month</p>
-                                                    <PricingDialog game={game} />
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {testimonials.map((testimonial, index) => (
+                            <Card key={index} className="bg-secondary border-border/60 p-6">
+                                <div className="flex items-center mb-4">
+                                    <Avatar className="h-12 w-12 mr-4">
+                                        <AvatarImage src={testimonial.avatar} alt={testimonial.name}/>
+                                        <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <h4 className="font-bold text-foreground">{testimonial.name}</h4>
+                                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                                     </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
+                                </div>
+                                <div className="flex mb-4">
+                                    {[...Array(testimonial.rating)].map((_, i) => (
+                                        <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                                    ))}
+                                </div>
+                                <p className="text-muted-foreground">{testimonial.review}</p>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
             </section>
+
+             <section className="w-full py-20 md:py-32 bg-secondary">
+                <div className="container mx-auto px-4">
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div>
+                             <p className="text-sm font-semibold uppercase tracking-wider text-primary">Support</p>
+                            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mt-2">Contact Support</h2>
+                            <p className="mt-4 text-lg text-muted-foreground">Having trouble? Our dedicated support team is available around the clock to help you with any issues.</p>
+                            <div className="mt-8 space-y-6">
+                                <Card className="bg-background border-border/60 p-6 flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-full">
+                                        <LifeBuoy className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-foreground">Support Ticket</h4>
+                                        <p className="text-muted-foreground text-sm">Get fast and detailed help from our experts.</p>
+                                        <Button variant="link" className="p-0 h-auto text-primary">Open a Ticket</Button>
+                                    </div>
+                                </Card>
+                                 <Card className="bg-background border-border/60 p-6 flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-full">
+                                        <MessageSquare className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-foreground">Live Chat</h4>
+                                        <p className="text-muted-foreground text-sm">Chat with a support agent for immediate assistance.</p>
+                                        <Button variant="link" className="p-0 h-auto text-primary">Start a Chat</Button>
+                                    </div>
+                                </Card>
+                            </div>
+                        </div>
+                        <div>
+                           <Card className="bg-background border-border/60 p-8">
+                               <h3 className="text-2xl font-bold text-foreground mb-4">Send Us a Message</h3>
+                               <form className="space-y-4">
+                                   <div className="grid grid-cols-2 gap-4">
+                                       <Input placeholder="Name" className="bg-secondary border-border/60 focus:ring-primary"/>
+                                       <Input placeholder="Email" type="email" className="bg-secondary border-border/60 focus:ring-primary"/>
+                                   </div>
+                                   <Input placeholder="Subject" className="bg-secondary border-border/60 focus:ring-primary"/>
+                                   <Textarea placeholder="Your Message..." rows={5} className="bg-secondary border-border/60 focus:ring-primary"/>
+                                   <Button type="submit" className="w-full">Send Message</Button>
+                               </form>
+                           </Card>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <section id="faq" className="w-full py-20 md:py-32 bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-16">
+                         <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mt-2">Frequently Asked Questions</h2>
+                        <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Find answers to common questions about our game server hosting services.</p>
+                    </div>
+                    <div className="max-w-3xl mx-auto">
+                        <Accordion type="single" collapsible className="w-full">
+                            {faqItems.map((item, index) => (
+                                <AccordionItem key={index} value={`item-${index}`} className="border-b-border/40">
+                                    <AccordionTrigger className="text-left text-lg font-semibold text-foreground hover:no-underline">{item.question}</AccordionTrigger>
+                                    <AccordionContent className="text-muted-foreground">
+                                        {item.answer}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    </div>
+                </div>
+             </section>
+
         </main>
         <Footer />
         </div>
     );
 }
+
+// Minimal stub for Textarea to avoid breaking changes.
+const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+);
+
+// Add this CSS to your globals.css or a style tag if you prefer
+const GlobalStyles = () => (
+    <style jsx global>{`
+        .bg-grid {
+            background-image:
+                linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
+            background-size: 4rem 4rem;
+            background-position: center center;
+            position: relative;
+        }
+        .bg-grid::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 30%, hsl(var(--background)));
+            z-index: -1;
+        }
+    `}</style>
+);
