@@ -417,36 +417,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                 </div>
             </section>
             
-            <section id="games" className="w-full py-20 md:py-32 bg-background">
-                <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Game Server Hosting</h2>
-                        <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games, all optimized for the best performance.</p>
-                    </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {supportedGames.map((game) => (
-                            <Card key={game.name} className="bg-secondary border-border/60 overflow-hidden flex flex-col hover:border-primary transition-colors duration-300">
-                                <div className="relative aspect-video">
-                                    <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
-                                </div>
-                                <div className="p-6 flex flex-col flex-grow">
-                                    <h3 className="text-2xl font-bold mb-2 text-foreground">{game.name}</h3>
-                                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
-                                    <div className="flex justify-between items-center">
-                                       <p className="text-muted-foreground text-sm">Starting from <span className="font-bold text-foreground">{game.plans ? game.plans[0].price : "$5"}</span>/mo</p>
-                                        <PricingDialog game={game}>
-                                            <Button variant="outline">View Plans</Button>
-                                        </PricingDialog>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-             <section id="features" className="w-full py-20 md:py-32 bg-secondary">
+            <section id="features" className="w-full py-20 md:py-32 bg-secondary">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
                          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Our Features</p>
@@ -568,6 +539,35 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                     </div>
                 </div>
              </section>
+             
+             <section id="games" className="w-full py-20 md:py-32 bg-secondary">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Game Server Hosting</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games, all optimized for the best performance.</p>
+                    </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {supportedGames.map((game) => (
+                            <Card key={game.name} className="bg-background border-border/60 overflow-hidden flex flex-col hover:border-primary transition-colors duration-300">
+                                <div className="relative aspect-video">
+                                    <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
+                                </div>
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h3 className="text-2xl font-bold mb-2 text-foreground">{game.name}</h3>
+                                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
+                                    <div className="flex justify-between items-center">
+                                       <p className="text-muted-foreground text-sm">Starting from <span className="font-bold text-foreground">{game.plans ? game.plans[0].price : "$5"}</span>/mo</p>
+                                        <PricingDialog game={game}>
+                                            <Button variant="outline">View Plans</Button>
+                                        </PricingDialog>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
         </main>
         <Footer />
