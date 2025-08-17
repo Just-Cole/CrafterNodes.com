@@ -358,14 +358,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
             avatar: "https://placehold.co/100x100.png",
             review: "Their sub-user support for collaboration is fantastic. It makes managing our development server a breeze. Plus, the one-click modpack installs save us so much time and effort.",
             rating: 5,
-        },
-        {
-            name: "Steve Thompson",
-            role: "Server Admin",
-            avatar: "https://placehold.co/100x100.png",
-            review: "We were looking for a reliable host for our game, and we found it. The automated cloud backups give us peace of mind, and the performance has been flawless since we switched over.",
-            rating: 5,
-        },
+        }
     ]
 
     const faqItems = [
@@ -450,7 +443,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                             </div>
                         </div>
                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {testimonials.map((testimonial, index) => (
                             <Card key={index} className="bg-secondary border-border/60 p-6">
                                 <div className="flex items-center mb-4">
