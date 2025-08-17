@@ -344,22 +344,13 @@ function PricingDialog({ game, children }: { game: PricingData['supportedGames']
 
 export function LandingPageContent({ supportedGames }: { supportedGames: PricingData['supportedGames']}) {
 
-    const testimonials = [
-        {
-            name: "Alex Morgan",
-            role: "Gamer",
-            avatar: "https://placehold.co/100x100.png",
-            review: "The performance and reliability of the game servers is outstanding. My community has never been happier, and the customer support team is always quick to help with any questions I have.",
-            rating: 5,
-        },
-        {
-            name: "Sarah Dale",
-            role: "Content Creator",
-            avatar: "https://placehold.co/100x100.png",
-            review: "Their sub-user support for collaboration is fantastic. It makes managing our development server a breeze. Plus, the one-click modpack installs save us so much time and effort.",
-            rating: 5,
-        }
-    ]
+    const testimonials: {
+        name: string,
+        role: string,
+        avatar: string,
+        review: string,
+        rating: number,
+    }[] = [];
 
     const faqItems = [
         { 
@@ -599,5 +590,7 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
+
+    
 
     
