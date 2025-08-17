@@ -396,7 +396,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
         <Header />
         <main className="flex-1">
             <section className="w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28 bg-grid">
-                <div className="container mx-auto text-center px-4">
+                <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
                         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
                             Premium Game Hosting for Serious Gamers
@@ -404,7 +404,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                         <p className="mt-6 text-lg leading-8 text-muted-foreground">
                             Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
                         </p>
-                        <div className="mt-10 flex items-center justify-center gap-x-4">
+                        <div className="mt-10 flex items-center justify-start gap-x-4">
                             <Button size="lg" asChild>
                                 <Link href="#games">Get Started</Link>
                             </Button>
