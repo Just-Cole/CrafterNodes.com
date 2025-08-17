@@ -440,10 +440,15 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
             
             <section className="w-full py-20 md:py-32 bg-background">
                  <div className="container mx-auto px-4">
-                     <div className="text-center mb-16">
-                         <p className="text-sm font-semibold uppercase tracking-wider text-primary">Testimonials</p>
+                    <div className="text-center mb-16">
+                        <p className="text-sm font-semibold uppercase tracking-wider text-primary">Testimonials</p>
                         <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mt-2">Trusted by Top Content Creators</h2>
                         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Our platform is trusted by gamers and creators worldwide for its reliability and top-tier support.</p>
+                        <div className="mt-6">
+                            <div className="trustpilot-widget" data-locale="en-US" data-template-id="56278e9abfbbba0bdcd568bc" data-businessunit-id="68a19f094bf30535fa42228e" data-style-height="52px" data-style-width="100%" data-token="642b724c-9c4d-4794-b1b2-050d50451f92">
+                                <a href="https://www.trustpilot.com/review/crafternodes.com" target="_blank" rel="noopener">Trustpilot</a>
+                            </div>
+                        </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {testimonials.map((testimonial, index) => (
