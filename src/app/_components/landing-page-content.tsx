@@ -536,7 +536,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                         <p className="mt-4 text-lg text-muted-foreground">We offer hosting for a variety of popular games, all optimized for the best performance.</p>
                     </div>
 
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                         {supportedGames.map((game) => (
                             <Card key={game.name} className="bg-background border-border/60 overflow-hidden flex flex-col hover:border-primary transition-colors duration-300">
                                 <div className="relative aspect-[2/3]">
@@ -594,3 +594,4 @@ const GlobalStyles = () => (
     
 
     
+
