@@ -78,7 +78,7 @@
         {
             "name": "Counter-Strike 2",
             "description": "Experience elite-level competitive play with our high-performance CS2 servers, featuring the latest sub-tick updates.",
-            "image": "https://placehold.co/600x400.png",
+            "image": "/Game-Card-icons/CS2.jpg",
             "hint": "counter strike soldier",
             "pterodactylNestId": 1,
             "pterodactylEggId": 2,
