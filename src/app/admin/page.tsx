@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -695,9 +696,9 @@ function ManageGamesTab() {
                     </CardContent>
                 </Card>
                 
-                {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); }} />}
-                {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); }} />}
-                {addingPlanToGame && <AddPlanForm game={addingPlanToGame} onFinished={() => { setAddingPlanToGame(null); }} />}
+                {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); onModalOpenChange(false) }} />}
+                {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); onModalOpenChange(false) }} />}
+                {addingPlanToGame && <AddPlanForm game={addingPlanToGame} onFinished={() => { setAddingPlanToGame(null); onModalOpenChange(false) }} />}
 
             </div>
         </Dialog>

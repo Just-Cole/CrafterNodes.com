@@ -3,10 +3,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSession } from "next-auth/react";
 
 export default function BillingPage() {
-    const { data: session } = useSession();
 
     // In a real app, you'd fetch subscription status from your backend
     const subscription = {
