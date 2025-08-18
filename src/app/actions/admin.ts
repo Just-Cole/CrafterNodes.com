@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
+import SteamGridDb from 'steamgriddb';
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
@@ -22,7 +23,7 @@ const planSchema = z.object({
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
-  image: z.string().min(1, "Image path is required."),
+  image: z.string().optional(),
   hint: z.string().min(1, "AI hint is required."),
   pterodactylNestId: z.coerce.number().min(1, "Pterodactyl Nest ID is required."),
   pterodactylEggId: z.coerce.number().min(1, "Pterodactyl Egg ID is required."),
@@ -32,19 +33,60 @@ const gameSchema = z.object({
 export type GameSchema = z.infer<typeof gameSchema>;
 export type PlanSchema = z.infer<typeof planSchema>;
 
+async function getSteamGridDBImage(gameName: string): Promise<string> {
+    const defaultImage = `https://placehold.co/600x900.png`;
+    try {
+        const steamGridDbKey = process.env.STEAMGRIDDB_API_KEY;
+        if (!steamGridDbKey) {
+            console.warn("STEAMGRIDDB_API_KEY is not set. Using placeholder image.");
+            return defaultImage;
+        }
+
+        const client = new SteamGridDb(steamGridDbKey);
+        const [searchResult] = await client.searchGame(gameName);
+
+        if (!searchResult) {
+            console.warn(`No game found on SteamGridDB for "${gameName}". Using placeholder.`);
+            return defaultImage;
+        }
+
+        const icons = await client.getGrids({ type: 'game', id: searchResult.id, styles: ['alternate'], dimensions: ['600x900'] });
+
+        if (icons && icons.length > 0) {
+            return icons[0].url;
+        } else {
+             console.warn(`No 600x900 icon found for "${gameName}". Using placeholder.`);
+            return defaultImage;
+        }
+    } catch (error) {
+        console.error("Error fetching image from SteamGridDB:", error);
+        return defaultImage;
+    }
+}
+
+
 export async function addGame(formData: GameSchema) {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
     return { success: false, error: "Unauthorized" };
   }
-
+  
   const result = gameSchema.safeParse(formData);
   if (!result.success) {
     return { success: false, error: result.error.flatten() };
   }
+  
+  const newGameData = result.data;
 
-  const newGame = result.data;
+  // Fetch image from SteamGridDB
+  const imageUrl = await getSteamGridDBImage(newGameData.name);
+
+  const newGame = {
+    ...newGameData,
+    image: imageUrl,
+  };
+
 
   try {
     const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
@@ -56,6 +98,7 @@ export async function addGame(formData: GameSchema) {
     await fs.writeFile(pricingFilePath, JSON.stringify(pricingData, null, 4));
 
     revalidatePath('/');
+    revalidatePath('/games');
 
     return { success: true, message: "Game added successfully!" };
   } catch (error) {

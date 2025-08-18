@@ -30,7 +30,7 @@ const planSchema = z.object({
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
-  image: z.string().min(1, "Image path is required."),
+  image: z.string().optional(),
   hint: z.string().min(1, "AI hint is required."),
   pterodactylNestId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Nest ID is required."),
   pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
@@ -66,7 +66,6 @@ function AddGameForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof gameSchema>) => {
-    // The Zod schema for the server action expects numbers, but the form gives strings.
     const dataForAction: GameSchema = {
       ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
@@ -98,7 +97,7 @@ function AddGameForm() {
           ...minecraftTemplate,
           name: '', // Clear name to avoid accidental duplicates
           description: minecraftTemplate.description,
-          image: minecraftTemplate.image,
+          image: '', // Image will be auto-fetched
           hint: minecraftTemplate.hint,
           pterodactylNestId: minecraftTemplate.pterodactylNestId,
           pterodactylEggId: minecraftTemplate.pterodactylEggId,
@@ -150,8 +149,8 @@ function AddGameForm() {
                   name="image"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Game Image Path</FormLabel>
-                      <FormControl><Input placeholder="/Game-Card-icons/NewGame.png" {...field} /></FormControl>
+                      <FormLabel>Game Image (Optional)</FormLabel>
+                      <FormControl><Input placeholder="Auto-fetched from SteamGridDB" {...field} disabled /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
