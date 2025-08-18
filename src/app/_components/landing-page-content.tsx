@@ -140,7 +140,6 @@ function Header() {
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                                 {session?.user?.id === ADMIN_DISCORD_ID && (
                                   <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
@@ -242,7 +241,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
 
             const response = await checkoutFlow({
                 priceId: plan.priceId,
-                successUrl: `${window.location.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+                successUrl: `${window.location.origin}/billing?session_id={CHECKOUT_SESSION_ID}`,
                 cancelUrl: window.location.href,
                 gameName: game.name,
                 planName: plan.name,
@@ -321,7 +320,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     <Button 
                                         className="w-full mt-6"
                                         onClick={() => handleCheckout(plan)}
-                                        disabled={!plan.priceId || loading === plan.priceId}
+                                        disabled={loading !== null || !plan.priceId}
                                     >
                                         {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
                                     </Button>

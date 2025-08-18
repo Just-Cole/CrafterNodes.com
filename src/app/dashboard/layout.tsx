@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { CreditCard, Home, PanelLeft, Server, Shield } from "lucide-react";
+import { CreditCard, PanelLeft, Shield } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,6 @@ function UserMenu() {
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                         {session?.user?.id === ADMIN_DISCORD_ID && (
                           <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
@@ -95,22 +94,6 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/dashboard'}>
-                    <Link href="/dashboard">
-                        <Home />
-                        Dashboard
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/servers')}>
-                    <Link href="/dashboard/servers">
-                        <Server />
-                        Servers
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/billing'}>
                     <Link href="/billing">
                         <CreditCard />
@@ -148,20 +131,6 @@ export default function DashboardLayout({
                         >
                             <Logo />
                             <span className="sr-only">CrafterNodes</span>
-                        </Link>
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                            <Home className="h-5 w-5" />
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/dashboard/servers"
-                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                            <Server className="h-5 w-5" />
-                            Servers
                         </Link>
                         <Link
                             href="/billing"
