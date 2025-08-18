@@ -7,16 +7,18 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { addGame, type GameSchema, updateAllGameImages } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, FilePlus2, RefreshCw } from 'lucide-react';
+import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PricingData } from '@/lib/pricing';
 import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -307,6 +309,27 @@ function AddGameForm() {
 function ManageGamesTab() {
     const { toast } = useToast();
     const [isUpdating, setIsUpdating] = useState(false);
+    const [games, setGames] = useState<PricingData['supportedGames']>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/pricing')
+            .then(res => res.json())
+            .then((data: PricingData) => {
+                setGames(data.supportedGames);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.error("Failed to fetch games:", error);
+                toast({
+                    title: "Error",
+                    description: "Could not load games data.",
+                    variant: "destructive",
+                });
+                setIsLoading(false);
+            });
+    }, [toast]);
+
 
     const handleUpdateImages = async () => {
         setIsUpdating(true);
@@ -332,24 +355,81 @@ function ManageGamesTab() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Manage Existing Games</CardTitle>
-                <CardDescription>Perform actions on all existing games in your catalog.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4">
-                    <Button onClick={handleUpdateImages} disabled={isUpdating}>
-                        <RefreshCw className={`mr-2 h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-                        {isUpdating ? 'Updating Images...' : 'Update All Game Images'}
-                    </Button>
-                    <p className="text-sm text-muted-foreground">
-                        Fetches the latest 600x900 images from SteamGridDB for all games.
-                    </p>
-                </div>
-                 <p className="text-sm text-muted-foreground mt-8">More management functionality is coming soon!</p>
-            </CardContent>
-        </Card>
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Global Actions</CardTitle>
+                    <CardDescription>Perform actions on all existing games in your catalog.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center gap-4">
+                        <Button onClick={handleUpdateImages} disabled={isUpdating}>
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                            {isUpdating ? 'Updating Images...' : 'Update All Game Images'}
+                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                            Fetches the latest 600x900 images from SteamGridDB for all games.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Existing Games</CardTitle>
+                    <CardDescription>Edit or delete existing games and their pricing plans.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {isLoading ? (
+                        <p>Loading games...</p>
+                    ) : games.length > 0 ? (
+                        games.map((game) => (
+                            <Card key={game.id} className="overflow-hidden">
+                                <div className="flex items-center justify-between bg-secondary p-4">
+                                     <div className="flex items-center gap-4">
+                                        <div className="relative h-16 w-12 flex-shrink-0">
+                                            <Image src={game.image} alt={game.name} fill className="object-cover rounded-md" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl">{game.name}</CardTitle>
+                                            <p className="text-sm text-muted-foreground">Game ID: {game.id}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Edit Game</Button>
+                                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Game</Button>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 space-y-4">
+                                    <h4 className="font-semibold text-muted-foreground">Plans for {game.name}</h4>
+                                    {game.plans && game.plans.length > 0 ? (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            {game.plans.map(plan => (
+                                                <div key={plan.id} className="flex items-center justify-between rounded-md border p-4">
+                                                    <div className="font-medium">
+                                                        <p className="text-foreground">{plan.name}</p>
+                                                        <p className="text-sm text-muted-foreground">{plan.price}/mo</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="ghost" size="sm"><Edit className="mr-2 h-4 w-4" />Edit</Button>
+                                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ): (
+                                        <p className="text-sm text-muted-foreground">No plans found for this game.</p>
+                                    )}
+                                </div>
+                            </Card>
+                        ))
+                    ) : (
+                        <p>No games found in the database.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 
@@ -379,3 +459,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
