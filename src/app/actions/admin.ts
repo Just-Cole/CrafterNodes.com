@@ -95,8 +95,7 @@ export async function addGame(formData: GameSchema) {
 
   try {
     const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
-    const fileContents = await fs.readFile(pricingFilePath, 'utf8');
-    const pricingData = JSON.parse(fileContents);
+    const pricingData = await getPricingData();
 
     pricingData.supportedGames.push(newGame);
 
