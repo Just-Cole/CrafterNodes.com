@@ -50,7 +50,7 @@ const features = [
     { icon: <ShieldCheck className="h-8 w-8 text-primary" />, title: "DDoS Protection", description: "Our servers are equipped with advanced DDoS protection to keep your game online 24/7." },
     { icon: <Server className="h-8 w-8 text-primary" />, title: "Game Optimized", description: "Our servers are specifically configured to provide the best performance for your favorite games." },
     { icon: <Users className="h-8 w-8 text-primary" />, title: "Player Slots", description: "We offer flexible player slot options to fit the size of your community, big or small." },
-    { icon: <MapPin className="h-8 w-8 text-primary" />, title: "New York City", description: "Our servers are currently hosted in New York City, providing low latency to players in North America." },
+    { icon: <MapPin className="h-8 w-8 text-primary" />, title: "New York City", description: "Our servers are currently hosted in New York City, providing low latency to players in North America. More locations are coming soon!" },
 ];
 
 function Header() {
