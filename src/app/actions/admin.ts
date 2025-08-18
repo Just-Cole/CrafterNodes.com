@@ -7,11 +7,20 @@ import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 import SteamGridDb from 'steamgriddb';
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
 async function getConnection() {
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+    if (!process.env.DATABASE_URL) {
+        throw new Error(
+            'DATABASE_URL is not set in your environment variables. Please add it to your .env file.\n' +
+            'Example: DATABASE_URL="mysql://user:password@host:port/database"'
+        );
+    }
+  const connection = await mysql.createConnection(process.env.DATABASE_URL);
   return connection;
 }
 

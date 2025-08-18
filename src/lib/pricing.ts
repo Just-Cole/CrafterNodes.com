@@ -1,6 +1,9 @@
 
 import { z } from 'zod';
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const planSchema = z.object({
   id: z.number().optional(),
@@ -34,7 +37,13 @@ export type Plan = z.infer<typeof planSchema>;
 
 
 async function getConnection() {
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+    if (!process.env.DATABASE_URL) {
+        throw new Error(
+            'DATABASE_URL is not set in your environment variables. Please add it to your .env file.\n' +
+            'Example: DATABASE_URL="mysql://user:password@host:port/database"'
+        );
+    }
+  const connection = await mysql.createConnection(process.env.DATABASE_URL);
   return connection;
 }
 
