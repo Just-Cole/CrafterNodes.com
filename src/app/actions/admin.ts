@@ -56,12 +56,13 @@ async function getSteamGridDBImage(gameName: string): Promise<string> {
         if (icons && icons.length > 0) {
             return icons[0].url;
         } else {
-             console.warn(`No 600x900 icon found for "${gameName}". Using placeholder.`);
+             console.warn(`No 600x900 icon found for "${gameName}". Trying any grid.`);
              const anyGrids = await client.getGrids({ type: 'game', id: searchResult.id });
              if (anyGrids && anyGrids.length > 0) {
                  console.warn(`Falling back to first available grid for "${gameName}".`);
                  return anyGrids[0].url;
              }
+             console.warn(`No grids found at all for "${gameName}". Using placeholder.`);
             return defaultImage;
         }
     } catch (error) {

@@ -66,8 +66,10 @@ function AddGameForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof gameSchema>) => {
+    // We can omit the image from the form data as the action will fetch it.
+    const { image, ...restOfData } = data;
     const dataForAction: GameSchema = {
-      ...data,
+      ...restOfData,
       pterodactylNestId: Number(data.pterodactylNestId),
       pterodactylEggId: Number(data.pterodactylEggId),
     };
@@ -143,17 +145,6 @@ function AddGameForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Game Image (Optional)</FormLabel>
-                      <FormControl><Input placeholder="Auto-fetched from SteamGridDB" {...field} disabled /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                  <FormField
                   control={form.control}
                   name="pterodactylNestId"
@@ -195,7 +186,7 @@ function AddGameForm() {
                     name="hint"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>AI Hint</FormLabel>
+                        <FormLabel>AI Hint for Image Generation</FormLabel>
                         <FormControl><Input placeholder="e.g. viking survival" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
