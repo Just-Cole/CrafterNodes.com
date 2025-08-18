@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, addPlan, type PlanSchema as DbPlanSchema, type GameSchema as DbGameSchema } from '@/app/actions/admin';
+import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, addPlan } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -73,11 +73,12 @@ function AddGameForm() {
     name: 'plans',
   });
 
-  const onSubmit = async (data: z.infer<typeof gameSchema>>) => {
+  const onSubmit = async (data: z.infer<typeof gameSchema>) => {
     const dataForAction: GameSchema = {
       ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
       pterodactylEggId: Number(data.pterodactylEggId),
+      plans: data.plans.map(p => ({...p, features: p.features.split(',').map(s => s.trim())}))
     };
     const result = await addGame(dataForAction);
 
@@ -385,6 +386,7 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
         const result = await updatePlan({
             ...data,
             id: plan.id!,
+            features: data.features.split(',').map(s => s.trim()),
         });
 
         if (result.success) {
@@ -440,7 +442,10 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
     });
 
     const onSubmit = async (data: z.infer<typeof addPlanSchema>) => {
-        const result = await addPlan(data);
+        const result = await addPlan({
+            ...data,
+            features: data.features.split(',').map(s => s.trim()),
+        });
         if (result.success) {
             toast({ title: 'Success!', description: result.message });
             onFinished();
@@ -517,6 +522,7 @@ function ManageGamesTab() {
             setEditingGame(null);
             setEditingPlan(null);
             setAddingPlanToGame(null);
+            refreshGames();
         }
     }
 
@@ -689,9 +695,9 @@ function ManageGamesTab() {
                     </CardContent>
                 </Card>
                 
-                {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); refreshGames(); }} />}
-                {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); refreshGames(); }} />}
-                {addingPlanToGame && <AddPlanForm game={addingPlanToGame} onFinished={() => { setAddingPlanToGame(null); refreshGames(); }} />}
+                {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); }} />}
+                {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); }} />}
+                {addingPlanToGame && <AddPlanForm game={addingPlanToGame} onFinished={() => { setAddingPlanToGame(null); }} />}
 
             </div>
         </Dialog>
