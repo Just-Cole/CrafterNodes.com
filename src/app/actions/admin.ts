@@ -7,9 +7,6 @@ import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 import SteamGridDb from 'steamgriddb';
 import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 

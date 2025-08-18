@@ -1,9 +1,6 @@
 
 import { z } from 'zod';
 import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const planSchema = z.object({
   id: z.number().optional(),
