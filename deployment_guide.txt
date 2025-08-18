@@ -7,7 +7,6 @@ This guide provides the necessary commands to deploy your Next.js application on
 - An Ubuntu 22.04 server.
 - A domain name pointing to your server's IP address.
 - You are logged in as a user with sudo privileges.
-- A MariaDB or MySQL server is installed and accessible.
 
 # --------------------------------------------------
 # Step 1: Update Server and Install Dependencies
@@ -36,12 +35,49 @@ npm -v
 sudo npm install pm2 -g
 
 # --------------------------------------------------
-# Step 3: Configure Database
+# Step 3: Install and Configure MariaDB
 # --------------------------------------------------
 
-# Connect to your MariaDB/MySQL server using a client like HeidiSQL or the command line.
-# Create a new database for your application, e.g., 'crafternodes'.
-# Run the following SQL commands to create the necessary tables.
+# Install the MariaDB server package
+sudo apt install -y mariadb-server
+
+# Run the secure installation script.
+# This will guide you through setting a root password, removing anonymous users,
+# and other important security settings. This step is highly recommended.
+sudo mysql_secure_installation
+
+# Log in to MariaDB as the root user to set up your database.
+# You will be prompted for the root password you created in the step above.
+sudo mysql -u root -p
+
+# --- Run the following commands inside the MariaDB prompt ---
+
+# 1. Create a database for your application.
+CREATE DATABASE crafternodes;
+
+# 2. Create a dedicated user for your application.
+#    Replace 'your_strong_password' with a secure password.
+CREATE USER 'crafteruser'@'localhost' IDENTIFIED BY 'your_strong_password';
+
+# 3. Grant the new user privileges on your application's database.
+GRANT ALL PRIVILEGES ON crafternodes.* TO 'crafteruser'@'localhost';
+
+# 4. Apply the changes.
+FLUSH PRIVILEGES;
+
+# 5. Exit the MariaDB prompt.
+EXIT;
+
+# --- End of MariaDB prompt commands ---
+
+# Now, connect to your new database as the user you just created
+# and run the table creation scripts below.
+# You can do this from the command line:
+# mysql -u crafteruser -p crafternodes
+#
+# Or you can connect using a GUI tool like HeidiSQL with the new user credentials.
+
+# --- SQL Commands to create the necessary tables ---
 
 CREATE TABLE `games` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -68,6 +104,7 @@ CREATE TABLE `plans` (
   CONSTRAINT `plans_ibfk_1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+
 # --------------------------------------------------
 # Step 4: Clone and Build Your Application
 # --------------------------------------------------
@@ -79,14 +116,16 @@ cd CrafterNodes.com
 # Install project dependencies
 npm install
 
-# Create a production build of your Next.js app
+# Build your Next.js app for production
 npm run build
 
 # Create a .env.local file for your production environment variables
 # IMPORTANT: You must fill this file with your actual secrets.
 cat > .env.local << EOF
 # Database
-# Example: DATABASE_URL="mysql://username:password@localhost:3306/database_name"
+# Use the credentials for the 'crafteruser' you created in Step 3.
+# The format is: mysql://user:password@host:port/database
+# Example: DATABASE_URL="mysql://crafteruser:your_strong_password@localhost:3306/crafternodes"
 DATABASE_URL="your_database_connection_string"
 
 # SteamGridDB
