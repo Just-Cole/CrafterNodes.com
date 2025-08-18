@@ -1,16 +1,19 @@
 
 'use server';
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 import SteamGridDb from 'steamgriddb';
-import { getPricingData } from '@/lib/pricing';
+import mysql from 'mysql2/promise';
 
 const ADMIN_DISCORD_ID = "949172257345921045";
+
+async function getConnection() {
+  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  return connection;
+}
 
 const planSchema = z.object({
   name: z.string().min(1),
@@ -73,7 +76,6 @@ async function getSteamGridDBImage(gameName: string): Promise<string> {
 
 export async function addGame(formData: GameSchema) {
   const session = await getServerSession(authOptions);
-
   if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
     return { success: false, error: "Unauthorized" };
   }
@@ -87,51 +89,74 @@ export async function addGame(formData: GameSchema) {
 
   const imageUrl = await getSteamGridDBImage(newGameData.name);
 
-  const newGame = {
-    ...newGameData,
-    image: imageUrl,
-  };
-
-
+  const connection = await getConnection();
   try {
-    const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
-    const pricingData = await getPricingData();
+    await connection.beginTransaction();
 
-    pricingData.supportedGames.push(newGame);
+    const [gameInsertResult] = await connection.execute<mysql.ResultSetHeader>(
+      `INSERT INTO games (name, description, image, hint, pterodactylNestId, pterodactylEggId) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        newGameData.name,
+        newGameData.description,
+        imageUrl,
+        newGameData.hint,
+        newGameData.pterodactylNestId,
+        newGameData.pterodactylEggId
+      ]
+    );
+    const gameId = gameInsertResult.insertId;
 
-    await fs.writeFile(pricingFilePath, JSON.stringify(pricingData, null, 4));
+    for (const plan of newGameData.plans) {
+      await connection.execute(
+        `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          gameId,
+          plan.name,
+          plan.price,
+          plan.priceId || null,
+          JSON.stringify(plan.features),
+          plan.icon || null,
+          plan.popular || false
+        ]
+      );
+    }
+
+    await connection.commit();
 
     revalidatePath('/');
     revalidatePath('/games');
 
     return { success: true, message: "Game added successfully!" };
   } catch (error) {
+    await connection.rollback();
     console.error("Failed to add game:", error);
     if (error instanceof Error) {
       return { success: false, error: error.message };
     }
     return { success: false, error: "An unknown error occurred." };
+  } finally {
+      await connection.end();
   }
 }
 
 export async function updateAllGameImages() {
     const session = await getServerSession(authOptions);
-
     if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
         return { success: false, error: "Unauthorized" };
     }
-
+    
+    const connection = await getConnection();
     try {
-        const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
-        const pricingData = await getPricingData();
+        const [games] = await connection.execute<mysql.RowDataPacket[]>('SELECT id, name FROM games');
 
-        for (const game of pricingData.supportedGames) {
+        for (const game of games) {
             console.log(`Fetching image for ${game.name}...`);
             const imageUrl = await getSteamGridDBImage(game.name);
-            game.image = imageUrl;
+            await connection.execute(
+              'UPDATE games SET image = ? WHERE id = ?',
+              [imageUrl, game.id]
+            );
         }
-
-        await fs.writeFile(pricingFilePath, JSON.stringify(pricingData, null, 4));
 
         revalidatePath('/');
         revalidatePath('/games');
@@ -143,5 +168,7 @@ export async function updateAllGameImages() {
             return { success: false, error: error.message };
         }
         return { success: false, error: "An unknown error occurred while updating images." };
+    } finally {
+        await connection.end();
     }
 }

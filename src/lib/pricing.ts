@@ -1,18 +1,20 @@
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import { z } from 'zod';
+import mysql from 'mysql2/promise';
 
 const planSchema = z.object({
+  id: z.number().optional(),
+  game_id: z.number().optional(),
   name: z.string(),
   price: z.string(),
-  priceId: z.string().optional(),
+  priceId: z.string().optional().nullable(),
   features: z.array(z.string()),
-  icon: z.string().optional(),
+  icon: z.string().optional().nullable(),
   popular: z.boolean().optional(),
 });
 
 const gameSchema = z.object({
+  id: z.number().optional(),
   name: z.string(),
   description: z.string(),
   image: z.string(),
@@ -27,28 +29,45 @@ const pricingDataSchema = z.object({
 });
 
 export type PricingData = z.infer<typeof pricingDataSchema>;
+export type Game = z.infer<typeof gameSchema>;
+export type Plan = z.infer<typeof planSchema>;
 
-// We cache the data so we don't have to read the file on every request.
-// The cache is invalidated when the admin panel updates the file.
-let cachedPricingData: PricingData | null = null;
+
+async function getConnection() {
+  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  return connection;
+}
 
 export async function getPricingData(): Promise<PricingData> {
-  // In a real production environment, you might want a more sophisticated cache
-  // invalidation strategy, but for now, re-reading on revalidation is fine.
-  
+  const connection = await getConnection();
   try {
-    const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
-    const fileContents = await fs.readFile(pricingFilePath, 'utf8');
-    const data = JSON.parse(fileContents);
+    const [gamesRows] = await connection.execute<mysql.RowDataPacket[]>(`
+      SELECT * FROM games ORDER BY id
+    `);
+
+    const games: Game[] = [];
+
+    for (const gameRow of gamesRows) {
+      const [plansRows] = await connection.execute<mysql.RowDataPacket[]>(
+        'SELECT * FROM plans WHERE game_id = ? ORDER BY id',
+        [gameRow.id]
+      );
+      
+      const plans = plansRows.map(planRow => ({
+        ...planRow,
+        features: JSON.parse(planRow.features || '[]'),
+        popular: Boolean(planRow.popular),
+      })) as Plan[];
+
+      games.push({
+        ...gameRow,
+        plans,
+      } as Game);
+    }
     
-    // Validate data with Zod
-    const validatedData = pricingDataSchema.parse(data);
-    
-    return validatedData;
-  } catch (error) {
-    console.error("Failed to read or parse pricing data:", error);
-    // Return a default empty state or throw an error
-    return { supportedGames: [] };
+    return { supportedGames: games };
+  } finally {
+    await connection.end();
   }
 }
 

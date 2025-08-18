@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, FilePlus2, RefreshCw } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getPricingData, PricingData } from '@/lib/pricing';
+import { PricingData } from '@/lib/pricing';
 import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -30,7 +30,6 @@ const planSchema = z.object({
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
-  // Image is removed from the form schema as it's handled by the server action
   hint: z.string().min(1, "AI hint is required."),
   pterodactylNestId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Nest ID is required."),
   pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
@@ -65,7 +64,6 @@ function AddGameForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof gameSchema>) => {
-    // The type from the server action doesn't expect `image`
     const dataForAction: GameSchema = {
       ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
@@ -102,7 +100,7 @@ function AddGameForm() {
           pterodactylEggId: minecraftTemplate.pterodactylEggId,
           plans: minecraftTemplate.plans.map(plan => ({
             ...plan,
-            features: plan.features.join(', '), 
+            features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
           })),
         };
         form.reset(templateData);
@@ -121,7 +119,7 @@ function AddGameForm() {
         <CardHeader className="flex-row items-center justify-between">
             <div>
                 <CardTitle>Add New Game</CardTitle>
-                <CardDescription>Fill out the form below to add a new game to the landing page.</CardDescription>
+                <CardDescription>Fill out the form below to add a new game to the database.</CardDescription>
             </div>
             <Button variant="outline" onClick={applyTemplate} disabled={!pricingData}>
                 <FilePlus2 className="mr-2" />
@@ -362,7 +360,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground">Manage your games and pricing.</p>
+          <p className="text-muted-foreground">Manage your games and pricing via the database.</p>
         </div>
       </div>
 

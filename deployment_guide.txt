@@ -7,6 +7,7 @@ This guide provides the necessary commands to deploy your Next.js application on
 - An Ubuntu 22.04 server.
 - A domain name pointing to your server's IP address.
 - You are logged in as a user with sudo privileges.
+- A MariaDB or MySQL server is installed and accessible.
 
 # --------------------------------------------------
 # Step 1: Update Server and Install Dependencies
@@ -35,7 +36,40 @@ npm -v
 sudo npm install pm2 -g
 
 # --------------------------------------------------
-# Step 3: Clone and Build Your Application
+# Step 3: Configure Database
+# --------------------------------------------------
+
+# Connect to your MariaDB/MySQL server using a client like HeidiSQL or the command line.
+# Create a new database for your application, e.g., 'crafternodes'.
+# Run the following SQL commands to create the necessary tables.
+
+CREATE TABLE `games` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `image` varchar(255) NOT NULL,
+  `hint` varchar(255) NOT NULL,
+  `pterodactylNestId` int(11) NOT NULL,
+  `pterodactylEggId` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `plans` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `price` varchar(255) NOT NULL,
+  `priceId` varchar(255) DEFAULT NULL,
+  `features` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`features`)),
+  `icon` varchar(255) DEFAULT NULL,
+  `popular` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `game_id` (`game_id`),
+  CONSTRAINT `plans_ibfk_1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+# --------------------------------------------------
+# Step 4: Clone and Build Your Application
 # --------------------------------------------------
 
 # Clone your project from your Git repository
@@ -51,6 +85,13 @@ npm run build
 # Create a .env.local file for your production environment variables
 # IMPORTANT: You must fill this file with your actual secrets.
 cat > .env.local << EOF
+# Database
+# Example: DATABASE_URL="mysql://username:password@localhost:3306/database_name"
+DATABASE_URL="your_database_connection_string"
+
+# SteamGridDB
+STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
+
 # Pterodactyl Environment Variables
 PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
 PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
@@ -70,7 +111,7 @@ DISCORD_CLIENT_SECRET=your_discord_client_secret
 EOF
 
 # --------------------------------------------------
-# Step 4: Run the Application with PM2
+# Step 5: Run the Application with PM2
 # --------------------------------------------------
 
 # Start the Next.js application using PM2.
@@ -85,7 +126,7 @@ pm2 startup
 pm2 save
 
 # --------------------------------------------------
-# Step 5: Configure Nginx as a Reverse Proxy
+# Step 6: Configure Nginx as a Reverse Proxy
 # --------------------------------------------------
 
 # Create a new Nginx configuration file for your site.
@@ -124,7 +165,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 # --------------------------------------------------
-# Step 6: Configure Firewall
+# Step 7: Configure Firewall
 # --------------------------------------------------
 
 # Allow OpenSSH
@@ -138,7 +179,7 @@ sudo ufw enable
 # (Press 'y' to confirm)
 
 # --------------------------------------------------
-# Step 7: Secure Your Site with SSL (Let's Encrypt)
+# Step 8: Secure Your Site with SSL (Let's Encrypt)
 # --------------------------------------------------
 
 # Install Certbot, the client for Let's Encrypt
@@ -157,7 +198,7 @@ sudo certbot --nginx -d your-domain.com -d www.your-domain.com
 sudo systemctl status certbot.timer
 
 # --------------------------------------------------
-# Step 8: Updating Your Application
+# Step 9: Updating Your Application
 # --------------------------------------------------
 
 # When you make changes to your application and push them to your GitHub repository,
