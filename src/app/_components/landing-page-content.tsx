@@ -412,7 +412,7 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
             <section className="relative w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28">
                 <div className="absolute inset-0 z-0">
                     <Image src={heroImage} alt="Star Citizen hero image" fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-background/80 to-background" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 </div>
                 <div className="container relative z-10 mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
@@ -617,3 +617,4 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
+
