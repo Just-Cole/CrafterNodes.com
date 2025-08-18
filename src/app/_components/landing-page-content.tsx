@@ -323,7 +323,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                         onClick={() => handleCheckout(plan)}
                                         disabled={!plan.priceId || loading === plan.priceId}
                                     >
-                                        {loading === plan.priceId ? 'Processing...' : 'Get Started'}
+                                        {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
                                     </Button>
                                 </CardContent>
                             </Card>
