@@ -9,16 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addGame, type GameSchema, updateAllGameImages } from '@/app/actions/admin';
+import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign } from 'lucide-react';
+import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PricingData } from '@/lib/pricing';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -311,13 +311,14 @@ function ManageGamesTab() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [games, setGames] = useState<PricingData['supportedGames']>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
+        setIsLoading(true);
         fetch('/api/pricing')
             .then(res => res.json())
             .then((data: PricingData) => {
                 setGames(data.supportedGames);
-                setIsLoading(false);
             })
             .catch(error => {
                 console.error("Failed to fetch games:", error);
@@ -326,8 +327,8 @@ function ManageGamesTab() {
                     description: "Could not load games data.",
                     variant: "destructive",
                 });
-                setIsLoading(false);
-            });
+            })
+            .finally(() => setIsLoading(false));
     }, [toast]);
 
 
@@ -353,6 +354,35 @@ function ManageGamesTab() {
         }
         setIsUpdating(false);
     };
+
+    const handleDeleteGame = (gameId: number) => {
+        startTransition(async () => {
+            const result = await deleteGame(gameId);
+            if (result.success) {
+                toast({ title: 'Success', description: result.message });
+                setGames(prev => prev.filter(g => g.id !== gameId));
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            }
+        });
+    };
+
+    const handleDeletePlan = (planId: number) => {
+        startTransition(async () => {
+            const result = await deletePlan(planId);
+            if (result.success) {
+                toast({ title: 'Success', description: result.message });
+                // Refresh data to show updated plan list
+                 setGames(prevGames => prevGames.map(game => ({
+                    ...game,
+                    plans: game.plans.filter(p => p.id !== planId)
+                })));
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            }
+        });
+    };
+
 
     return (
         <div className="space-y-8">
@@ -396,8 +426,27 @@ function ManageGamesTab() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4" />Add Plan</Button>
                                         <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Edit Game</Button>
-                                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Game</Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Game</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the game "{game.name}" and all of its associated plans. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteGame(game.id!)} disabled={isPending}>
+                                                    {isPending ? "Deleting..." : "Delete"}
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </div>
 
@@ -413,7 +462,25 @@ function ManageGamesTab() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <Button variant="ghost" size="sm"><Edit className="mr-2 h-4 w-4" />Edit</Button>
-                                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                                                         <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will permanently delete the plan "{plan.name}". This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeletePlan(plan.id!)} disabled={isPending}>
+                                                                    {isPending ? "Deleting..." : "Delete"}
+                                                                </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
                                                     </div>
                                                 </div>
                                             ))}
@@ -444,7 +511,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="add" className="mt-8">
+      <Tabs defaultValue="manage" className="mt-8">
         <TabsList>
           <TabsTrigger value="add">Add Game</TabsTrigger>
           <TabsTrigger value="manage">Manage Games</TabsTrigger>

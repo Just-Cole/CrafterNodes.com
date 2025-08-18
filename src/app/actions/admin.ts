@@ -133,6 +133,8 @@ export async function addGame(formData: GameSchema) {
 
     revalidatePath('/');
     revalidatePath('/games');
+    revalidatePath('/admin');
+
 
     return { success: true, message: "Game added successfully!" };
   } catch (error) {
@@ -168,6 +170,8 @@ export async function updateAllGameImages() {
 
         revalidatePath('/');
         revalidatePath('/games');
+        revalidatePath('/admin');
+
 
         return { success: true, message: "All game images updated successfully!" };
     } catch (error) {
@@ -176,6 +180,48 @@ export async function updateAllGameImages() {
             return { success: false, error: error.message };
         }
         return { success: false, error: "An unknown error occurred while updating images." };
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function deleteGame(gameId: number) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const connection = await getConnection();
+    try {
+        await connection.execute('DELETE FROM games WHERE id = ?', [gameId]);
+        revalidatePath('/');
+        revalidatePath('/games');
+        revalidatePath('/admin');
+        return { success: true, message: 'Game deleted successfully.' };
+    } catch (error) {
+        console.error("Failed to delete game:", error);
+        return { success: false, error: "Database error occurred." };
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function deletePlan(planId: number) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const connection = await getConnection();
+    try {
+        await connection.execute('DELETE FROM plans WHERE id = ?', [planId]);
+        revalidatePath('/');
+        revalidatePath('/games');
+        revalidatePath('/admin');
+        return { success: true, message: 'Plan deleted successfully.' };
+    } catch (error) {
+        console.error("Failed to delete plan:", error);
+        return { success: false, error: "Database error occurred." };
     } finally {
         await connection.end();
     }
