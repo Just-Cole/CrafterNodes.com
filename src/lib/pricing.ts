@@ -32,7 +32,7 @@ export type PricingData = z.infer<typeof pricingDataSchema>;
 export type Game = z.infer<typeof gameSchema>;
 export type Plan = z.infer<typeof planSchema>;
 
-// IMPORTANT: Replace this with your actual database connection string.
+// IMPORTANT: This is the hardcoded database connection string.
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
 async function getConnection() {
@@ -46,8 +46,9 @@ async function getConnection() {
 }
 
 export async function getPricingData(): Promise<PricingData> {
-  const connection = await getConnection();
+  let connection;
   try {
+    connection = await getConnection();
     const [gamesRows] = await connection.execute<mysql.RowDataPacket[]>(`
       SELECT * FROM games ORDER BY id
     `);
@@ -73,8 +74,18 @@ export async function getPricingData(): Promise<PricingData> {
     }
     
     return { supportedGames: games };
+  } catch (error: any) {
+    if (error.code === 'ETIMEDOUT') {
+      throw new Error(
+        'Database connection timed out. This is a firewall issue. Please ensure that your cloud provider\'s firewall allows inbound TCP traffic on port 3306 from all IPs (0.0.0.0/0). Also, verify that your server\'s firewall (ufw) allows traffic on port 3306.'
+      );
+    }
+    // Re-throw other errors
+    throw error;
   } finally {
-    await connection.end();
+    if (connection) {
+      await connection.end();
+    }
   }
 }
 

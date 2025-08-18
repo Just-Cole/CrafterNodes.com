@@ -131,7 +131,7 @@ cat > .env.local << EOF
 # Use the credentials for the 'crafteruser' you created in Step 3.
 # The format is: mysql://user:password@host:port/database
 # The host should be your server's public IP address or 127.0.0.1
-DATABASE_URL="mysql://crafteruser:your_strong_password@127.0.0.1:3306/crafternodes"
+DATABASE_URL="mysql://crafteruser:your_strong_password@172.93.108.112:3306/crafternodes"
 
 # SteamGridDB
 STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
@@ -343,3 +343,4 @@ sudo apt purge -y mariadb-server
 sudo npm uninstall -g pm2
 sudo apt autoremove -y
 
+      
