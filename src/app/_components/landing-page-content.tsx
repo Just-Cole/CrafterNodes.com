@@ -205,7 +205,7 @@ function Footer() {
     );
 }
 
-function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
+export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
     const { data: session } = useSession();
@@ -375,6 +375,8 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
         },
     ];
 
+    const gamesToShow = supportedGames.slice(0, 5);
+
     return (
         <div className="flex flex-col min-h-screen bg-background">
         <Header />
@@ -537,7 +539,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                     </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        {supportedGames.map((game) => (
+                        {gamesToShow.map((game) => (
                             <Card key={game.name} className="bg-background border-border/60 overflow-hidden flex flex-col hover:border-primary transition-colors duration-300">
                                 <div className="relative aspect-[2/3]">
                                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.hint} />
@@ -555,6 +557,13 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                             </Card>
                         ))}
                     </div>
+                    {supportedGames.length > 5 && (
+                        <div className="text-center mt-12">
+                            <Button size="lg" asChild>
+                                <Link href="/games">Show All Games</Link>
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -590,8 +599,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
-    
-
-    
-
