@@ -298,7 +298,7 @@ pm2 restart next-app
 
 
 # --------------------------------------------------
-# How to Uninstall
+# Step 12: How to Uninstall
 # --------------------------------------------------
 
 # This section provides the steps to remove the application and its components.
@@ -323,6 +323,7 @@ rm -rf CrafterNodes.com
 # 4. Revert firewall changes
 sudo ufw delete allow 'Nginx Full'
 sudo ufw delete allow 3306/tcp
+sudo ufw reload
 
 # 5. Remove the database and user
 #    Log in to MariaDB as the root user.
@@ -336,12 +337,9 @@ EXIT;
 #    --- End of MariaDB prompt commands ---
 
 # 6. (Optional) Uninstall the main packages if no longer needed
-# sudo apt purge -y nginx nginx-common certbot python3-certbot-nginx
-# sudo apt purge -y nodejs
-# sudo apt purge -y mariadb-server
-# sudo npm uninstall -g pm2
-# sudo apt autoremove -y
+sudo apt purge -y nginx nginx-common certbot python3-certbot-nginx
+sudo apt purge -y nodejs
+sudo apt purge -y mariadb-server
+sudo npm uninstall -g pm2
+sudo apt autoremove -y
 
-
-
-    
