@@ -557,7 +557,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                             </Card>
                         ))}
                     </div>
-                    {supportedGames.length > 5 && (
+                    {supportedGames.length > gamesToShow.length && (
                         <div className="text-center mt-12">
                             <Button size="lg" asChild>
                                 <Link href="/games">Show All Games</Link>
