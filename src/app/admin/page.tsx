@@ -9,16 +9,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan } from '@/app/actions/admin';
+import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, type PlanSchema as DbPlanSchema, type GameSchema as DbGameSchema } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PricingData } from '@/lib/pricing';
+import type { PricingData, Game as GameData, Plan as PlanData } from '@/lib/pricing';
 import { useEffect, useState, useTransition } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
 
 const planSchema = z.object({
   name: z.string().min(1, "Plan name is required."),
@@ -37,6 +39,11 @@ const gameSchema = z.object({
   pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
+
+// For updates
+const updatePlanSchema = planSchema.extend({ id: z.number() });
+const updateGameSchema = gameSchema.omit({ plans: true }).extend({ id: z.number() });
+
 
 function AddGameForm() {
   const { toast } = useToast();
@@ -306,14 +313,128 @@ function AddGameForm() {
   )
 }
 
+function EditGameForm({ game, onFinished }: { game: GameData, onFinished: () => void }) {
+    const { toast } = useToast();
+    const form = useForm<z.infer<typeof updateGameSchema>>({
+        resolver: zodResolver(updateGameSchema),
+        defaultValues: {
+            id: game.id,
+            name: game.name,
+            description: game.description,
+            hint: game.hint,
+            pterodactylNestId: game.pterodactylNestId,
+            pterodactylEggId: game.pterodactylEggId,
+        },
+    });
+
+    const onSubmit = async (data: z.infer<typeof updateGameSchema>) => {
+        const result = await updateGame(data);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            onFinished();
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: typeof result.error === 'string' ? result.error : JSON.stringify(result.error),
+            });
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Game</DialogTitle>
+                <DialogDescription>Update the details for {game.name}.</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Game Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="pterodactylNestId" render={({ field }) => ( <FormItem> <FormLabel>Nest ID</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="pterodactylEggId" render={({ field }) => ( <FormItem> <FormLabel>Egg ID</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="description" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="hint" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>AI Hint</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                    </div>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                    </Button>
+                </form>
+            </Form>
+        </DialogContent>
+    );
+}
+
+function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => void }) {
+    const { toast } = useToast();
+    const form = useForm<z.infer<typeof updatePlanSchema>>({
+        resolver: zodResolver(updatePlanSchema),
+        defaultValues: {
+            id: plan.id,
+            name: plan.name,
+            price: plan.price,
+            priceId: plan.priceId || '',
+            icon: plan.icon || '',
+            popular: plan.popular || false,
+            features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
+        },
+    });
+    
+    const onSubmit = async (data: z.infer<typeof updatePlanSchema>) => {
+        const result = await updatePlan({
+            ...data,
+            id: plan.id!,
+        });
+
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            onFinished();
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error updating plan',
+                description: typeof result.error === 'string' ? result.error : JSON.stringify(result.error),
+            });
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Plan</DialogTitle>
+                <DialogDescription>Update the details for the {plan.name} plan.</DialogDescription>
+            </DialogHeader>
+             <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Plan Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="popular" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"> <FormControl> <Checkbox checked={field.value} onCheckedChange={field.onChange} /> </FormControl> <div className="space-y-1 leading-none"> <FormLabel> Mark as Popular </FormLabel> </div> </FormItem> )} />
+                    </div>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                    </Button>
+                </form>
+            </Form>
+        </DialogContent>
+    )
+}
+
 function ManageGamesTab() {
     const { toast } = useToast();
     const [isUpdating, setIsUpdating] = useState(false);
     const [games, setGames] = useState<PricingData['supportedGames']>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPending, startTransition] = useTransition();
+    
+    // State for modals
+    const [editingGame, setEditingGame] = useState<GameData | null>(null);
+    const [editingPlan, setEditingPlan] = useState<PlanData | null>(null);
 
-    useEffect(() => {
+    const refreshGames = () => {
         setIsLoading(true);
         fetch('/api/pricing')
             .then(res => res.json())
@@ -329,6 +450,10 @@ function ManageGamesTab() {
                 });
             })
             .finally(() => setIsLoading(false));
+    };
+
+    useEffect(() => {
+        refreshGames();
     }, [toast]);
 
 
@@ -344,7 +469,7 @@ function ManageGamesTab() {
                 title: 'Success!',
                 description: result.message,
             });
-             window.location.reload();
+             refreshGames();
         } else {
             toast({
                 variant: 'destructive',
@@ -372,11 +497,7 @@ function ManageGamesTab() {
             const result = await deletePlan(planId);
             if (result.success) {
                 toast({ title: 'Success', description: result.message });
-                // Refresh data to show updated plan list
-                 setGames(prevGames => prevGames.map(game => ({
-                    ...game,
-                    plans: game.plans.filter(p => p.id !== planId)
-                })));
+                refreshGames();
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: result.error });
             }
@@ -385,118 +506,128 @@ function ManageGamesTab() {
 
 
     return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Global Actions</CardTitle>
-                    <CardDescription>Perform actions on all existing games in your catalog.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-4">
-                        <Button onClick={handleUpdateImages} disabled={isUpdating}>
-                            <RefreshCw className={`mr-2 h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-                            {isUpdating ? 'Updating Images...' : 'Update All Game Images'}
-                        </Button>
-                        <p className="text-sm text-muted-foreground">
-                            Fetches the latest 600x900 images from SteamGridDB for all games.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+        <Dialog onOpenChange={(open) => { if (!open) { setEditingGame(null); setEditingPlan(null); }}}>
+            <div className="space-y-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Global Actions</CardTitle>
+                        <CardDescription>Perform actions on all existing games in your catalog.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center gap-4">
+                            <Button onClick={handleUpdateImages} disabled={isUpdating}>
+                                <RefreshCw className={`mr-2 h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                                {isUpdating ? 'Updating Images...' : 'Update All Game Images'}
+                            </Button>
+                            <p className="text-sm text-muted-foreground">
+                                Fetches the latest 600x900 images from SteamGridDB for all games.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Existing Games</CardTitle>
-                    <CardDescription>Edit or delete existing games and their pricing plans.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {isLoading ? (
-                        <p>Loading games...</p>
-                    ) : games.length > 0 ? (
-                        games.map((game) => (
-                            <Card key={game.id} className="overflow-hidden">
-                                <div className="flex items-center justify-between bg-secondary p-4">
-                                     <div className="flex items-center gap-4">
-                                        <div className="relative h-16 w-12 flex-shrink-0">
-                                            <Image src={game.image} alt={game.name} fill className="object-cover rounded-md" />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Existing Games</CardTitle>
+                        <CardDescription>Edit or delete existing games and their pricing plans.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {isLoading ? (
+                            <p>Loading games...</p>
+                        ) : games.length > 0 ? (
+                            games.map((game) => (
+                                <Card key={game.id} className="overflow-hidden">
+                                    <div className="flex items-center justify-between bg-secondary p-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative h-16 w-12 flex-shrink-0">
+                                                <Image src={game.image} alt={game.name} fill className="object-cover rounded-md" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl">{game.name}</CardTitle>
+                                                <p className="text-sm text-muted-foreground">Game ID: {game.id}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <CardTitle className="text-xl">{game.name}</CardTitle>
-                                            <p className="text-sm text-muted-foreground">Game ID: {game.id}</p>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4" />Add Plan</Button>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm" onClick={() => setEditingGame(game)}><Edit className="mr-2 h-4 w-4" />Edit Game</Button>
+                                            </DialogTrigger>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Game</Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the game "{game.name}" and all of its associated plans. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteGame(game.id!)} disabled={isPending}>
+                                                        {isPending ? "Deleting..." : "Delete"}
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4" />Add Plan</Button>
-                                        <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Edit Game</Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Game</Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the game "{game.name}" and all of its associated plans. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteGame(game.id!)} disabled={isPending}>
-                                                    {isPending ? "Deleting..." : "Delete"}
-                                                </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                </div>
 
-                                <div className="p-4 space-y-4">
-                                    <h4 className="font-semibold text-muted-foreground">Plans for {game.name}</h4>
-                                    {game.plans && game.plans.length > 0 ? (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            {game.plans.map(plan => (
-                                                <div key={plan.id} className="flex items-center justify-between rounded-md border p-4">
-                                                    <div className="font-medium">
-                                                        <p className="text-foreground">{plan.name}</p>
-                                                        <p className="text-sm text-muted-foreground">{plan.price}/mo</p>
+                                    <div className="p-4 space-y-4">
+                                        <h4 className="font-semibold text-muted-foreground">Plans for {game.name}</h4>
+                                        {game.plans && game.plans.length > 0 ? (
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                {game.plans.map(plan => (
+                                                    <div key={plan.id} className="flex items-center justify-between rounded-md border p-4">
+                                                        <div className="font-medium">
+                                                            <p className="text-foreground">{plan.name}</p>
+                                                            <p className="text-sm text-muted-foreground">{plan.price}/mo</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="ghost" size="sm" onClick={() => setEditingPlan(plan)}><Edit className="mr-2 h-4 w-4" />Edit</Button>
+                                                            </DialogTrigger>
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        This will permanently delete the plan "{plan.name}". This action cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleDeletePlan(plan.id!)} disabled={isPending}>
+                                                                        {isPending ? "Deleting..." : "Delete"}
+                                                                    </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button variant="ghost" size="sm"><Edit className="mr-2 h-4 w-4" />Edit</Button>
-                                                         <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This will permanently delete the plan "{plan.name}". This action cannot be undone.
-                                                                </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeletePlan(plan.id!)} disabled={isPending}>
-                                                                    {isPending ? "Deleting..." : "Delete"}
-                                                                </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ): (
-                                        <p className="text-sm text-muted-foreground">No plans found for this game.</p>
-                                    )}
-                                </div>
-                            </Card>
-                        ))
-                    ) : (
-                        <p>No games found in the database.</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+                                                ))}
+                                            </div>
+                                        ): (
+                                            <p className="text-sm text-muted-foreground">No plans found for this game.</p>
+                                        )}
+                                    </div>
+                                </Card>
+                            ))
+                        ) : (
+                            <p>No games found in the database.</p>
+                        )}
+                    </CardContent>
+                </Card>
+                
+                {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); refreshGames(); }} />}
+                {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); refreshGames(); }} />}
+
+            </div>
+        </Dialog>
     );
 }
 
@@ -526,5 +657,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

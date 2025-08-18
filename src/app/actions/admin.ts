@@ -41,6 +41,15 @@ const gameSchema = z.object({
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
+const updateGameSchema = gameSchema.omit({ plans: true }).extend({
+    id: z.number(),
+});
+
+const updatePlanSchema = planSchema.extend({
+    id: z.number(),
+});
+
+
 // We don't include 'image' here because it's fetched automatically.
 export type GameSchema = z.infer<typeof gameSchema>;
 export type PlanSchema = z.infer<typeof planSchema>;
@@ -147,6 +156,66 @@ export async function addGame(formData: GameSchema) {
   } finally {
       await connection.end();
   }
+}
+
+export async function updateGame(formData: z.infer<typeof updateGameSchema>) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const result = updateGameSchema.safeParse(formData);
+    if (!result.success) {
+        return { success: false, error: result.error.flatten() };
+    }
+
+    const { id, ...gameData } = result.data;
+    const connection = await getConnection();
+    try {
+        await connection.execute(
+            `UPDATE games SET name = ?, description = ?, hint = ?, pterodactylNestId = ?, pterodactylEggId = ? WHERE id = ?`,
+            [gameData.name, gameData.description, gameData.hint, gameData.pterodactylNestId, gameData.pterodactylEggId, id]
+        );
+        revalidatePath('/');
+        revalidatePath('/games');
+        revalidatePath('/admin');
+        return { success: true, message: 'Game updated successfully!' };
+    } catch (error) {
+        console.error("Failed to update game:", error);
+        return { success: false, error: "Database error occurred." };
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function updatePlan(formData: z.infer<typeof updatePlanSchema>) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const result = updatePlanSchema.safeParse(formData);
+    if (!result.success) {
+        return { success: false, error: result.error.flatten() };
+    }
+
+    const { id, ...planData } = result.data;
+    const connection = await getConnection();
+    try {
+        await connection.execute(
+            `UPDATE plans SET name = ?, price = ?, priceId = ?, features = ?, icon = ?, popular = ? WHERE id = ?`,
+            [planData.name, planData.price, planData.priceId || null, JSON.stringify(planData.features), planData.icon || null, planData.popular || false, id]
+        );
+        revalidatePath('/');
+        revalidatePath('/games');
+        revalidatePath('/admin');
+        return { success: true, message: 'Plan updated successfully!' };
+    } catch (error) {
+        console.error("Failed to update plan:", error);
+        return { success: false, error: "Database error occurred." };
+    } finally {
+        await connection.end();
+    }
 }
 
 export async function updateAllGameImages() {
