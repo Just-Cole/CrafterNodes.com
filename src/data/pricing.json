@@ -142,7 +142,7 @@
         {
             "name": "Rust",
             "description": "Survive the harsh, open world. Our Rust servers are built for stability and performance, even with large groups.",
-            "image": "https://placehold.co/600x400.png",
+            "image": "/Game-Card-icons/Rust.jpg",
             "hint": "rust apocalyptic",
             "pterodactylNestId": 1,
             "pterodactylEggId": 3,
