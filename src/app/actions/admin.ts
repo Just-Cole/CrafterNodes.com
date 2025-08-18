@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 import SteamGridDb from 'steamgriddb';
+import { getPricingData } from '@/lib/pricing';
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
@@ -56,10 +57,15 @@ async function getSteamGridDBImage(gameName: string): Promise<string> {
             return icons[0].url;
         } else {
              console.warn(`No 600x900 icon found for "${gameName}". Using placeholder.`);
+             const anyGrids = await client.getGrids({ type: 'game', id: searchResult.id });
+             if (anyGrids && anyGrids.length > 0) {
+                 console.warn(`Falling back to first available grid for "${gameName}".`);
+                 return anyGrids[0].url;
+             }
             return defaultImage;
         }
     } catch (error) {
-        console.error("Error fetching image from SteamGridDB:", error);
+        console.error(`Error fetching image from SteamGridDB for "${gameName}":`, error);
         return defaultImage;
     }
 }
@@ -79,7 +85,6 @@ export async function addGame(formData: GameSchema) {
   
   const newGameData = result.data;
 
-  // Fetch image from SteamGridDB
   const imageUrl = await getSteamGridDBImage(newGameData.name);
 
   const newGame = {
@@ -108,4 +113,36 @@ export async function addGame(formData: GameSchema) {
     }
     return { success: false, error: "An unknown error occurred." };
   }
+}
+
+export async function updateAllGameImages() {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        const pricingFilePath = path.join(process.cwd(), 'src', 'data', 'pricing.json');
+        const pricingData = await getPricingData();
+
+        for (const game of pricingData.supportedGames) {
+            console.log(`Fetching image for ${game.name}...`);
+            const imageUrl = await getSteamGridDBImage(game.name);
+            game.image = imageUrl;
+        }
+
+        await fs.writeFile(pricingFilePath, JSON.stringify(pricingData, null, 4));
+
+        revalidatePath('/');
+        revalidatePath('/games');
+
+        return { success: true, message: "All game images updated successfully!" };
+    } catch (error) {
+        console.error("Failed to update game images:", error);
+        if (error instanceof Error) {
+            return { success: false, error: error.message };
+        }
+        return { success: false, error: "An unknown error occurred while updating images." };
+    }
 }

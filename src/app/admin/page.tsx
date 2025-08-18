@@ -9,9 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addGame, type GameSchema } from '@/app/actions/admin';
+import { addGame, type GameSchema, updateAllGameImages } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, FilePlus2 } from 'lucide-react';
+import { PlusCircle, Trash2, FilePlus2, RefreshCw } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getPricingData, PricingData } from '@/lib/pricing';
@@ -78,7 +78,6 @@ function AddGameForm() {
         title: 'Success!',
         description: result.message,
       });
-      // Force a reload to ensure the new data from pricing.json is fetched.
       window.location.reload();
     } else {
       toast({
@@ -95,15 +94,15 @@ function AddGameForm() {
       if (minecraftTemplate) {
         const templateData = {
           ...minecraftTemplate,
-          name: '', // Clear name to avoid accidental duplicates
+          name: '', 
           description: minecraftTemplate.description,
-          image: '', // Image will be auto-fetched
+          image: '', 
           hint: minecraftTemplate.hint,
           pterodactylNestId: minecraftTemplate.pterodactylNestId,
           pterodactylEggId: minecraftTemplate.pterodactylEggId,
           plans: minecraftTemplate.plans.map(plan => ({
             ...plan,
-            features: plan.features.join(', '), // Convert features array to comma-separated string
+            features: plan.features.join(', '), 
           })),
         };
         form.reset(templateData);
@@ -318,6 +317,52 @@ function AddGameForm() {
   )
 }
 
+function ManageGamesTab() {
+    const { toast } = useToast();
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleUpdateImages = async () => {
+        setIsUpdating(true);
+        const result = await updateAllGameImages();
+        if (result.success) {
+            toast({
+                title: 'Success!',
+                description: result.message,
+            });
+             window.location.reload();
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: typeof result.error === 'string' ? result.error : 'An unknown error occurred.',
+            });
+        }
+        setIsUpdating(false);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Existing Games</CardTitle>
+                <CardDescription>Perform actions on all existing games in your catalog.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4">
+                    <Button onClick={handleUpdateImages} disabled={isUpdating}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                        {isUpdating ? 'Updating Images...' : 'Update All Game Images'}
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                        Fetches the latest 600x900 images from SteamGridDB for all games.
+                    </p>
+                </div>
+                 <p className="text-sm text-muted-foreground mt-8">More management functionality is coming soon!</p>
+            </CardContent>
+        </Card>
+    );
+}
+
+
 export default function AdminPage() {
   return (
     <div className="py-6">
@@ -337,15 +382,7 @@ export default function AdminPage() {
           <AddGameForm />
         </TabsContent>
         <TabsContent value="manage" className="mt-6">
-           <Card>
-             <CardHeader>
-               <CardTitle>Manage Existing Games</CardTitle>
-                <CardDescription>Edit or delete games from your pricing page.</CardDescription>
-             </CardHeader>
-             <CardContent>
-                <p>Functionality to manage existing games is coming soon!</p>
-             </CardContent>
-           </Card>
+           <ManageGamesTab />
         </TabsContent>
       </Tabs>
     </div>
