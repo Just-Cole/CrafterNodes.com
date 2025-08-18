@@ -109,6 +109,11 @@ export async function POST(req: Request) {
         const pterodactylUser = await getPterodactylUserByDiscordId({
           discordId: userId,
         });
+        
+        if (!pterodactylUser) {
+           throw new Error(`Pterodactyl user with Discord ID ${userId} not found. The user may need to log into the panel first.`);
+        }
+
         console.log(`Found Pterodactyl user ID: ${pterodactylUser.id}`);
 
         // 2. Create the server
