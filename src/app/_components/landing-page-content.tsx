@@ -112,7 +112,7 @@ function Footer() {
                         <Link href="/">
                             <Logo />
                         </Link>
-                        <p className="text-muted-foreground mt-4 text-sm max-w-xs">The ultimate open-source panel to manage your game servers, powered by Next.js and Google Genkit.</p>
+                        <p className="text-muted-foreground mt-4 text-sm max-w-xs">High-performance game server hosting with instant setup, DDoS protection, and 24/7 support.</p>
                     </div>
                     <div>
                         <h4 className="font-semibold mb-4 text-foreground">Company</h4>
