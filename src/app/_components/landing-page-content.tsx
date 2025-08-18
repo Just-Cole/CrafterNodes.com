@@ -23,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const ADMIN_DISCORD_ID = "949172257345921045";
+const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
+
 
 function Logo() {
     return (
@@ -183,7 +185,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
 
             const response = await checkoutFlow({
                 priceId: plan.priceId,
-                successUrl: `${window.location.origin}/billing?session_id={CHECKOUT_SESSION_ID}`,
+                successUrl: PTERODACTYL_PANEL_URL,
                 cancelUrl: window.location.href,
                 gameName: game.name,
                 planName: plan.name,
