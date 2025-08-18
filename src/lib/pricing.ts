@@ -32,15 +32,16 @@ export type PricingData = z.infer<typeof pricingDataSchema>;
 export type Game = z.infer<typeof gameSchema>;
 export type Plan = z.infer<typeof planSchema>;
 
+// IMPORTANT: Replace this with your actual database connection string.
+const DATABASE_URL = "mysql://crafteruser:#Tjc52302@172.93.108.112:3306/crafternodes";
 
 async function getConnection() {
-    if (!process.env.DATABASE_URL) {
+    if (!DATABASE_URL) {
         throw new Error(
-            'DATABASE_URL is not set in your environment variables. Please add it to your .env file.\n' +
-            'Example: DATABASE_URL="mysql://user:password@host:port/database"'
+            'DATABASE_URL is not set. Please add it directly in src/lib/pricing.ts'
         );
     }
-  const connection = await mysql.createConnection(process.env.DATABASE_URL);
+  const connection = await mysql.createConnection(DATABASE_URL);
   return connection;
 }
 
