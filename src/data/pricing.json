@@ -4,7 +4,7 @@
         {
             "name": "Minecraft",
             "description": "Build, create, and explore in your own dedicated world. Our plans are optimized for both Vanilla and Modded servers.",
-            "image": "https://placehold.co/600x400.png",
+            "image": "/Game-Card-icons/Minecraft.jpg",
             "hint": "minecraft scene",
             "pterodactylNestId": 1,
             "pterodactylEggId": 1,
