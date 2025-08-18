@@ -3,12 +3,22 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { getPterodactylUserByDiscordId } from '@/lib/pterodactyl';
+import mysql from 'mysql2/promise';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
 const PTERODACTYL_API_KEY = process.env.PTERODACTYL_API_KEY;
+const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
+
+async function getDbConnection() {
+    if (!DATABASE_URL) {
+        throw new Error('DATABASE_URL is not set.');
+    }
+    return mysql.createConnection(DATABASE_URL);
+}
+
 
 // This is a simplified example. In a real-world scenario, you would have a more
 // robust way to map Stripe Price IDs to Pterodactyl server configurations.
@@ -88,49 +98,81 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
+  const connection = await getDbConnection();
+
   // Handle the event
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
       
-      const { userId, userEmail, userName, ...metadata } = session.metadata || {};
+      const { userId: discordId, gameId, planId } = session.metadata || {};
 
-      if (!userId || !userEmail || !userName || !metadata.pterodactylNestId || !metadata.pterodactylEggId) {
+      if (!discordId || !session.subscription || !gameId || !planId) {
         console.error("Webhook received with missing metadata:", session.metadata);
         return NextResponse.json({ error: 'Missing required metadata for server provisioning.' }, { status: 400 });
       }
 
-      console.log('✅ Successful checkout for user:', userId);
-      console.log(`Plan: ${metadata.gameName} - ${metadata.planName}`);
+      console.log('✅ Successful checkout for user:', discordId);
       console.log("Attempting to provision server via Pterodactyl...");
 
       try {
-        // 1. Get the user in Pterodactyl using their Discord ID
-        const pterodactylUser = await getPterodactylUserByDiscordId({
-          discordId: userId,
-        });
-        
-        if (!pterodactylUser) {
-           throw new Error(`Pterodactyl user with Discord ID ${userId} not found. The user may need to log into the panel first.`);
+        await connection.beginTransaction();
+
+        const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
+            'SELECT id, pterodactylId FROM users WHERE discordId = ?',
+            [discordId]
+        );
+
+        if (userRows.length === 0) {
+            throw new Error(`Database user with Discord ID ${discordId} not found. The user may need to log into the panel first.`);
         }
+        const dbUser = userRows[0];
 
-        console.log(`Found Pterodactyl user ID: ${pterodactylUser.id}`);
+        console.log(`Found Pterodactyl user ID: ${dbUser.pterodactylId}`);
 
-        // 2. Create the server
-        const serverDetails = await createPterodactylServer(pterodactylUser.id, metadata);
+        const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata);
+        const pteroServerId = serverDetails.attributes.id;
         console.log("✅ Successfully created Pterodactyl server:", serverDetails.attributes.identifier);
+        
+        await connection.execute(
+            `INSERT INTO subscriptions (userId, pterodactylServerId, gameId, planId, stripeSubscriptionId, status)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [dbUser.id, pteroServerId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+        );
+        console.log(`✅ Successfully created subscription record in database.`);
+
+        await connection.commit();
 
       } catch (error) {
+        await connection.rollback();
         console.error("❌ Pterodactyl provisioning failed:", error);
-        // Here you would add logic to handle the failure, e.g., notify an admin,
-        // or queue a retry. For now, we'll just return an error.
-        return NextResponse.json({ error: 'Failed to provision the game server. The user may need to log into the panel first.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to provision the game server. Please ensure you have logged into the panel at least once.' }, { status: 500 });
       }
 
       break;
+    
+    case 'customer.subscription.deleted':
+    case 'customer.subscription.updated':
+        const subscription = event.data.object as Stripe.Subscription;
+        const subStatus = subscription.status; // e.g., 'active', 'canceled', 'past_due'
+
+        try {
+            await connection.execute(
+                'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
+                [subStatus, subscription.id]
+            );
+             console.log(`✅ Subscription ${subscription.id} status updated to ${subStatus}.`);
+        } catch (error) {
+            console.error(`❌ Failed to update subscription status for ${subscription.id}:`, error);
+            // Return 200 to Stripe so it doesn't retry, but log the error for manual intervention.
+        }
+        break;
+
     default:
       console.log(`Unhandled event type ${event.type}`);
   }
-
+  
+  await connection.end();
   return NextResponse.json({ received: true });
 }
+

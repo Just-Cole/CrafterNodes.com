@@ -191,6 +191,40 @@ CREATE TABLE `plans` (
   CONSTRAINT `plans_ibfk_1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `discordId` varchar(255) NOT NULL,
+  `pterodactylId` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `discordId` (`discordId`),
+  UNIQUE KEY `pterodactylId` (`pterodactylId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `subscriptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userId` int(11) NOT NULL,
+  `pterodactylServerId` int(11) NOT NULL,
+  `gameId` int(11) NOT NULL,
+  `planId` int(11) NOT NULL,
+  `stripeSubscriptionId` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pterodactylServerId` (`pterodactylServerId`),
+  UNIQUE KEY `stripeSubscriptionId` (`stripeSubscriptionId`),
+  KEY `userId` (`userId`),
+  KEY `gameId` (`gameId`),
+  KEY `planId` (`planId`),
+  CONSTRAINT `subscriptions_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`),
+  CONSTRAINT `subscriptions_ibfk_2` FOREIGN KEY (`gameId`) REFERENCES `games` (`id`),
+  CONSTRAINT `subscriptions_ibfk_3` FOREIGN KEY (`planId`) REFERENCES `plans` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 # --------------------------------------------------
 # Step 7: Run the Application with PM2
@@ -343,4 +377,3 @@ sudo apt purge -y mariadb-server
 sudo npm uninstall -g pm2
 sudo apt autoremove -y
 
-      

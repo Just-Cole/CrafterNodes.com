@@ -187,8 +187,8 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 priceId: plan.priceId,
                 successUrl: PTERODACTYL_PANEL_URL,
                 cancelUrl: window.location.href,
-                gameName: game.name,
-                planName: plan.name,
+                gameId: game.id!,
+                planId: plan.id!,
                 userId: session.user.id,
                 userEmail: session.user.email!,
                 userName: session.user.name!,
@@ -562,4 +562,3 @@ const GlobalStyles = () => (
     `}</style>
 );
 
-    

@@ -9,13 +9,14 @@ import { z } from 'zod';
 import Stripe from 'stripe';
 import {NextRequest} from 'next/server';
 import { headers } from 'next/headers';
+import mysql from 'mysql2/promise';
 
 const CheckoutInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe price.'),
   successUrl: z.string().describe('The URL to redirect to on success.'),
   cancelUrl: z.string().describe('The URL to redirect to on cancellation.'),
-  gameName: z.string().describe('The name of the game being purchased.'),
-  planName: z.string().describe('The name of the plan being purchased.'),
+  gameId: z.number().describe('The ID of the game being purchased.'),
+  planId: z.number().describe('The ID of the plan being purchased.'),
   userId: z.string().describe('The ID of the user making the purchase.'),
   userEmail: z.string().describe("The email of the user making the purchase."),
   userName: z.string().describe("The name of the user making the purchase."),
@@ -49,14 +50,15 @@ async function createCheckoutSession(
     cancel_url: input.cancelUrl,
     customer_email: input.userEmail,
     metadata: {
-      userId: input.userId,
-      userName: input.userName,
-      userEmail: input.userEmail,
+      userId: input.userId, // This is the Discord ID
+      gameId: input.gameId,
+      planId: input.planId,
+      // Pass Ptero info for server creation in webhook
+      pterodactylNestId: input.pterodactylNestId,
+      pterodactylEggId: input.pterodactylEggId,
       gameName: input.gameName,
       planName: input.planName,
       priceId: input.priceId,
-      pterodactylNestId: input.pterodactylNestId,
-      pterodactylEggId: input.pterodactylEggId,
     },
   });
 
@@ -75,3 +77,4 @@ export const checkoutFlow = ai.defineFlow(
   },
   createCheckoutSession
 );
+
