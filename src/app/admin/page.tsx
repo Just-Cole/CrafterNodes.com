@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -416,7 +415,25 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="popular" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"> <FormControl> <Checkbox checked={field.value} onCheckedChange={field.onChange} /> </FormControl> <div className="space-y-1 leading-none"> <FormLabel> Mark as Popular </FormLabel> </div> </FormItem> )} />
+                       <FormField
+                            control={form.control}
+                            name="popular"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Mark as Popular
+                                        </FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
                     </div>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
@@ -473,7 +490,25 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="popular" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"> <FormControl> <Checkbox checked={field.value} onCheckedChange={field.onChange} /> </FormControl> <div className="space-y-1 leading-none"> <FormLabel> Mark as Popular </FormLabel> </div> </FormItem> )} />
+                        <FormField
+                            control={form.control}
+                            name="popular"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Mark as Popular
+                                        </FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
                     </div>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Adding..." : "Add Plan"}
@@ -731,3 +766,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
