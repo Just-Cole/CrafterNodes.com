@@ -24,13 +24,13 @@ const planSchema = z.object({
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
-  image: z.string().optional(),
   hint: z.string().min(1, "AI hint is required."),
   pterodactylNestId: z.coerce.number().min(1, "Pterodactyl Nest ID is required."),
   pterodactylEggId: z.coerce.number().min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
+// We don't include 'image' here because it's fetched automatically.
 export type GameSchema = z.infer<typeof gameSchema>;
 export type PlanSchema = z.infer<typeof planSchema>;
 
@@ -51,15 +51,14 @@ async function getSteamGridDBImage(gameName: string): Promise<string> {
             return defaultImage;
         }
 
-        const icons = await client.getGrids({ type: 'game', id: searchResult.id, styles: ['alternate'], dimensions: ['600x900'] });
+        const grids = await client.getGrids({ type: 'game', id: searchResult.id, styles: ['alternate'], dimensions: ['600x900'] });
 
-        if (icons && icons.length > 0) {
-            return icons[0].url;
+        if (grids && grids.length > 0) {
+            return grids[0].url;
         } else {
-             console.warn(`No 600x900 icon found for "${gameName}". Trying any grid.`);
+             console.warn(`No 600x900 grid found for "${gameName}". Trying any grid as a fallback.`);
              const anyGrids = await client.getGrids({ type: 'game', id: searchResult.id });
              if (anyGrids && anyGrids.length > 0) {
-                 console.warn(`Falling back to first available grid for "${gameName}".`);
                  return anyGrids[0].url;
              }
              console.warn(`No grids found at all for "${gameName}". Using placeholder.`);

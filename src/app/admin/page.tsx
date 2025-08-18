@@ -30,7 +30,7 @@ const planSchema = z.object({
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
-  image: z.string().optional(),
+  // Image is removed from the form schema as it's handled by the server action
   hint: z.string().min(1, "AI hint is required."),
   pterodactylNestId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Nest ID is required."),
   pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
@@ -52,7 +52,6 @@ function AddGameForm() {
     defaultValues: {
       name: '',
       description: '',
-      image: '',
       hint: '',
       pterodactylNestId: 1,
       pterodactylEggId: 1,
@@ -66,10 +65,9 @@ function AddGameForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof gameSchema>) => {
-    // We can omit the image from the form data as the action will fetch it.
-    const { image, ...restOfData } = data;
+    // The type from the server action doesn't expect `image`
     const dataForAction: GameSchema = {
-      ...restOfData,
+      ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
       pterodactylEggId: Number(data.pterodactylEggId),
     };
@@ -94,11 +92,11 @@ function AddGameForm() {
     if (pricingData) {
       const minecraftTemplate = pricingData.supportedGames.find(game => game.name === 'Minecraft');
       if (minecraftTemplate) {
+        const { image, ...templateDataWithoutImage } = minecraftTemplate;
         const templateData = {
-          ...minecraftTemplate,
-          name: '', 
+          ...templateDataWithoutImage,
+          name: '',
           description: minecraftTemplate.description,
-          image: '', 
           hint: minecraftTemplate.hint,
           pterodactylNestId: minecraftTemplate.pterodactylNestId,
           pterodactylEggId: minecraftTemplate.pterodactylEggId,
@@ -314,6 +312,10 @@ function ManageGamesTab() {
 
     const handleUpdateImages = async () => {
         setIsUpdating(true);
+        toast({
+            title: 'Updating Images...',
+            description: 'This may take a few moments. Please wait.',
+        });
         const result = await updateAllGameImages();
         if (result.success) {
             toast({
