@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getServerSession } from "next-auth/server";
+import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import mysql from 'mysql2/promise';
 
@@ -54,4 +54,3 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
         await connection.end();
     }
 }
-
