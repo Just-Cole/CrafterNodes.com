@@ -342,6 +342,34 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
     )
 }
 
+function ContactForm() {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [subject, setSubject] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const mailtoLink = `mailto:support@crafternodes.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
+        window.location.href = mailtoLink;
+    };
+
+    return (
+        <Card className="bg-background border-border/60 p-8">
+            <h3 className="text-2xl font-bold text-foreground mb-4">Send Us a Message</h3>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-2 gap-4">
+                    <Input placeholder="Name" className="bg-secondary border-border/60 focus:ring-primary" value={name} onChange={(e) => setName(e.target.value)} required />
+                    <Input placeholder="Email" type="email" className="bg-secondary border-border/60 focus:ring-primary" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+                </div>
+                <Input placeholder="Subject" className="bg-secondary border-border/60 focus:ring-primary" value={subject} onChange={(e) => setSubject(e.target.value)} required/>
+                <Textarea placeholder="Your Message..." rows={5} className="bg-secondary border-border/60 focus:ring-primary" value={message} onChange={(e) => setMessage(e.target.value)} required/>
+                <Button type="submit" className="w-full">Send Message</Button>
+            </form>
+        </Card>
+    );
+}
+
 export function LandingPageContent({ supportedGames }: { supportedGames: PricingData['supportedGames']}) {
 
     const testimonials: {
@@ -492,18 +520,7 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
                             </div>
                         </div>
                         <div>
-                           <Card className="bg-background border-border/60 p-8">
-                               <h3 className="text-2xl font-bold text-foreground mb-4">Send Us a Message</h3>
-                               <form className="space-y-4">
-                                   <div className="grid grid-cols-2 gap-4">
-                                       <Input placeholder="Name" className="bg-secondary border-border/60 focus:ring-primary"/>
-                                       <Input placeholder="Email" type="email" className="bg-secondary border-border/60 focus:ring-primary"/>
-                                   </div>
-                                   <Input placeholder="Subject" className="bg-secondary border-border/60 focus:ring-primary"/>
-                                   <Textarea placeholder="Your Message..." rows={5} className="bg-secondary border-border/60 focus:ring-primary"/>
-                                   <Button type="submit" className="w-full">Send Message</Button>
-                               </form>
-                           </Card>
+                           <ContactForm />
                         </div>
                     </div>
                 </div>
