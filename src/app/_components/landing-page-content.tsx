@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { loadStripe } from "@stripe/stripe-js";
-import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, LifeBuoy, Mail, MessageSquare } from "lucide-react";
+import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, LifeBuoy, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -320,7 +320,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     <Button 
                                         className="w-full mt-6"
                                         onClick={() => handleCheckout(plan)}
-                                        disabled={loading !== null || !plan.priceId}
+                                        disabled={loading === plan.priceId || plan.priceId === null || plan.priceId === ''}
                                     >
                                         {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
                                     </Button>
@@ -369,7 +369,7 @@ function ContactForm() {
     );
 }
 
-export function LandingPageContent({ supportedGames }: { supportedGames: PricingData['supportedGames']}) {
+export function LandingPageContent({ supportedGames, heroImage }: { supportedGames: PricingData['supportedGames'], heroImage: string }) {
 
     const testimonials: {
         name: string,
@@ -408,20 +408,24 @@ export function LandingPageContent({ supportedGames }: { supportedGames: Pricing
         <div className="flex flex-col min-h-screen bg-background">
         <Header />
         <main className="flex-1">
-            <section className="w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28 bg-grid">
-                <div className="container mx-auto px-4">
+            <section className="relative w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28">
+                <div className="absolute inset-0 z-0">
+                    <Image src={heroImage} alt="Star Citizen hero image" fill className="object-cover" />
+                    <div className="absolute inset-0 bg-black/60" />
+                </div>
+                <div className="container relative z-10 mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
-                        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+                        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
                             Premium Game Hosting for Serious Gamers
                         </h1>
-                        <p className="mt-6 text-lg leading-8 text-muted-foreground">
+                        <p className="mt-6 text-lg leading-8 text-gray-300">
                             Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
                         </p>
                         <div className="mt-10 flex items-center justify-start gap-x-4">
                             <Button size="lg" asChild>
                                 <Link href="#games">Get Started</Link>
                             </Button>
-                            <Button size="lg" variant="outline">
+                            <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-black">
                                 Watch Video
                             </Button>
                         </div>
@@ -615,3 +619,5 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
+
+    
