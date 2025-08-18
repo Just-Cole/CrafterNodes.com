@@ -1,7 +1,6 @@
 
 import NextAuth, { type AuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
-import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -19,23 +18,6 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  events: {
-    async signIn({ user, account, profile }) {
-      if (user.id && user.email && user.name) {
-        try {
-          const pteroUser = await getOrCreatePterodactylUser({
-            discordId: user.id,
-            email: user.email,
-            name: user.name
-          });
-          console.log(`Successfully synced user ${user.id} with Pterodactyl user ${pteroUser.id}`);
-        } catch (error) {
-          console.error(`Failed to sync user ${user.id} with Pterodactyl:`, error);
-          // Decide if you want to block sign-in on failure. For now, we allow it.
-        }
-      }
-    }
-  }
 }
 
 const handler = NextAuth(authOptions)

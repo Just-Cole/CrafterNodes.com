@@ -2,7 +2,7 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { getOrCreatePterodactylUser } from '@/lib/pterodactyl';
+import { getPterodactylUserByDiscordId } from '@/lib/pterodactyl';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -105,13 +105,11 @@ export async function POST(req: Request) {
       console.log("Attempting to provision server via Pterodactyl...");
 
       try {
-        // 1. Get or create the user in Pterodactyl using their Discord ID
-        const pterodactylUser = await getOrCreatePterodactylUser({
+        // 1. Get the user in Pterodactyl using their Discord ID
+        const pterodactylUser = await getPterodactylUserByDiscordId({
           discordId: userId,
-          email: userEmail,
-          name: userName,
         });
-        console.log(`Pterodactyl user ID: ${pterodactylUser.id}`);
+        console.log(`Found Pterodactyl user ID: ${pterodactylUser.id}`);
 
         // 2. Create the server
         const serverDetails = await createPterodactylServer(pterodactylUser.id, metadata);
@@ -121,7 +119,7 @@ export async function POST(req: Request) {
         console.error("❌ Pterodactyl provisioning failed:", error);
         // Here you would add logic to handle the failure, e.g., notify an admin,
         // or queue a retry. For now, we'll just return an error.
-        return NextResponse.json({ error: 'Failed to provision the game server.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to provision the game server. The user may need to log into the panel first.' }, { status: 500 });
       }
 
       break;

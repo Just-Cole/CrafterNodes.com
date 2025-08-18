@@ -23,27 +23,24 @@ interface PteroUserAttributes {
 
 interface GetPteroUserInput {
     discordId: string;
-    email: string;
-    name: string;
 }
 
 /**
- * Finds a Pterodactyl user by their external ID (Discord ID) or creates one if not found.
- * This is the preferred method for syncing users.
- * @param {GetPteroUserInput} input - The user's information.
+ * Finds a Pterodactyl user by their external ID (which should be their Discord ID).
+ * This function assumes the user has already been created on the Pterodactyl panel
+ * via a Discord SSO addon.
+ * @param {GetPteroUserInput} input - The user's Discord ID.
  * @returns {Promise<PteroUserAttributes>} The Pterodactyl user object.
+ * @throws Will throw an error if the user is not found.
  */
-export async function getOrCreatePterodactylUser(input: GetPteroUserInput): Promise<PteroUserAttributes> {
+export async function getPterodactylUserByDiscordId(input: GetPteroUserInput): Promise<PteroUserAttributes> {
     if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
         throw new Error("Pterodactyl environment variables are not set.");
     }
     
-    const { discordId, email, name } = input;
-    const [firstName, ...lastNameParts] = name.split(' ');
-    const lastName = lastNameParts.join(' ') || firstName;
+    const { discordId } = input;
 
     try {
-        // 1. Try to fetch the user by their external_id (Discord ID)
         const response = await fetch(`${PTERODACTYL_URL}/api/application/users/external/${discordId}`, {
             headers: {
                 'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
@@ -56,51 +53,15 @@ export async function getOrCreatePterodactylUser(input: GetPteroUserInput): Prom
             return userData.attributes;
         }
 
-        // If user is not found (404), we'll proceed to create them.
-        if (response.status !== 404) {
-            const errorBody = await response.text();
-            throw new Error(`Failed to fetch Pterodactyl user. Status: ${response.status}, Body: ${errorBody}`);
+        if (response.status === 404) {
+            throw new Error(`Pterodactyl user with Discord ID ${discordId} not found. The user may need to log into the panel first.`);
         }
-
-    } catch (error: any) {
-         if (error.response?.status !== 404) {
-            console.error("Error fetching Pterodactyl user by external ID:", error);
-            throw error;
-         }
-         // if 404, we continue to creation
-    }
-
-
-    // 2. If not found, create the user
-    console.log(`User with Discord ID ${discordId} not found. Creating new Pterodactyl user.`);
-    try {
-        const createResponse = await fetch(`${PTERODA_PANEL_URL}/api/application/users`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                external_id: discordId,
-                email: email,
-                username: name.replace(/\s+/g, '_') + `_${discordId.slice(-4)}`, // Ensure username is unique
-                first_name: firstName,
-                last_name: lastName,
-                password: null, // Let the panel handle password creation/invites
-            }),
-        });
-
-        if (!createResponse.ok) {
-             const errorBody = await createResponse.text();
-             throw new Error(`Failed to create Pterodactyl user. Status: ${createResponse.status}, Body: ${errorBody}`);
-        }
-
-        const newUser = await createResponse.json();
-        return newUser.attributes;
+        
+        const errorBody = await response.text();
+        throw new Error(`Failed to fetch Pterodactyl user. Status: ${response.status}, Body: ${errorBody}`);
 
     } catch (error) {
-        console.error("Error creating Pterodactyl user:", error);
+        console.error("Error fetching Pterodactyl user by external ID:", error);
         throw error;
     }
 }
