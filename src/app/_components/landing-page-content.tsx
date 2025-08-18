@@ -44,65 +44,6 @@ function Logo() {
     );
 }
 
-function MinecraftServerConsole() {
-    const [lines, setLines] = useState<string[]>([]);
-    const consoleLines = [
-        '[INFO] Starting Minecraft server version 1.20.1',
-        '[INFO] Loading properties',
-        '[INFO] Default game type: SURVIVAL',
-        '[INFO] Generating keypair',
-        '[INFO] Starting Minecraft server on *:25565',
-        '[INFO] Using default channel type',
-        '[INFO] Preparing level "world"',
-        '[INFO] Preparing start region for dimension minecraft:overworld',
-        '[INFO] Preparing spawn area: 0%',
-        '[INFO] Preparing spawn area: 25%',
-        '[INFO] Preparing spawn area: 50%',
-        '[INFO] Preparing spawn area: 75%',
-        '[INFO] Preparing spawn area: 100%',
-        '[INFO] Time elapsed: 5423 ms',
-        '[INFO] Done (10.123s)! For help, type "help" or "?"',
-        '[SUCCESS] Server startup complete!'
-    ];
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setLines(prevLines => {
-                if (prevLines.length < consoleLines.length) {
-                    return [...prevLines, consoleLines[prevLines.length]];
-                }
-                clearInterval(interval);
-                return prevLines;
-            });
-        }, 300);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-        <div className="bg-[#0c0c0c] rounded-lg shadow-2xl overflow-hidden border border-border/20 max-w-4xl w-full mx-auto mt-12">
-            <div className="bg-[#1a1a1a] px-4 py-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 bg-red-500 rounded-full"></span>
-                    <span className="h-3 w-3 bg-yellow-500 rounded-full"></span>
-                    <span className="h-3 w-3 bg-green-500 rounded-full"></span>
-                </div>
-                <p className="text-sm text-gray-400">/bin/bash</p>
-                <div></div>
-            </div>
-            <div className="p-4 h-64 overflow-y-auto font-mono text-sm text-white">
-                {lines.map((line, index) => (
-                    <p key={index} className={line.startsWith('[SUCCESS]') ? 'text-green-400' : 'text-gray-300'}>
-                        <span className="text-gray-500 mr-2">{`>`}</span>
-                        {line}
-                    </p>
-                ))}
-                 {lines.length === consoleLines.length && <span className="animate-pulse">█</span>}
-            </div>
-        </div>
-    );
-}
-
 const features = [
     { icon: <Rocket className="h-8 w-8 text-primary" />, title: "Instant Deployment", description: "All servers are set up instantly upon purchase, so you can get started right away without any waiting." },
     { icon: <Zap className="h-8 w-8 text-primary" />, title: "Great Performance", description: "We use the latest hardware to ensure your game server runs smoothly with no lag." },
@@ -321,7 +262,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     <Button
                                         className="w-full mt-6"
                                         onClick={() => handleCheckout(plan)}
-                                        disabled={loading === plan.priceId || plan.priceId === null || plan.priceId === ''}
+                                        disabled={loading === plan.priceId || !plan.priceId}
                                     >
                                         {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
                                     </Button>
@@ -409,20 +350,20 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
         <div className="flex flex-col min-h-screen bg-background">
         <Header />
         <main className="flex-1">
-            <section className="relative w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28">
+            <section className="relative w-full pt-20 md:pt-24 lg:pt-32 pb-20 md:pb-28 lg:pb-36">
                 <div className="absolute inset-0 z-0">
                     <Image src={heroImage} alt="Star Citizen hero image" fill className="object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 </div>
                 <div className="container relative z-10 mx-auto px-4">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-4xl mx-auto text-center">
                         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
                             Premium Game Hosting for Serious Gamers
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-gray-300">
                             Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
                         </p>
-                        <div className="mt-10 flex items-center justify-start gap-x-4">
+                        <div className="mt-10 flex items-center justify-center gap-x-4">
                             <Button size="lg" asChild>
                                 <Link href="#games">Get Started</Link>
                             </Button>
@@ -431,7 +372,6 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
                             </Button>
                         </div>
                     </div>
-                    <MinecraftServerConsole />
                 </div>
             </section>
             
@@ -617,4 +557,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
