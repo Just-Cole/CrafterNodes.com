@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { PricingData } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -317,7 +318,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                             </li>
                                         ))}
                                     </ul>
-                                    <Button 
+                                    <Button
                                         className="w-full mt-6"
                                         onClick={() => handleCheckout(plan)}
                                         disabled={loading === plan.priceId || plan.priceId === null || plan.priceId === ''}
@@ -411,7 +412,7 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
             <section className="relative w-full pt-20 md:pt-24 lg:pt-32 pb-10 md:pb-20 lg:pb-28">
                 <div className="absolute inset-0 z-0">
                     <Image src={heroImage} alt="Star Citizen hero image" fill className="object-cover" />
-                    <div className="absolute inset-0 bg-black/60" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-background/80 to-background" />
                 </div>
                 <div className="container relative z-10 mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
@@ -595,9 +596,6 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
 }
 
 // Minimal stub for Textarea to avoid breaking changes.
-const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea {...props} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-);
 
 // Add this CSS to your globals.css or a style tag if you prefer
 const GlobalStyles = () => (
@@ -619,5 +617,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
-    
