@@ -33,7 +33,7 @@ export type Game = z.infer<typeof gameSchema>;
 export type Plan = z.infer<typeof planSchema>;
 
 // IMPORTANT: Replace this with your actual database connection string.
-const DATABASE_URL = "mysql://crafteruser:#Tjc52302@172.93.108.112:3306/crafternodes";
+const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
 async function getConnection() {
     if (!DATABASE_URL) {

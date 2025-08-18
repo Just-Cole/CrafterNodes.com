@@ -12,7 +12,7 @@ This guide provides the necessary commands to deploy your Next.js application on
 # Step 1: Update Server and Install Dependencies
 # --------------------------------------------------
 
-# Update package lists
+# Update package lists and upgrade existing packages
 sudo apt update && sudo apt upgrade -y
 
 # Install Nginx (web server), Git (for pulling code), and UFW (firewall)
@@ -22,7 +22,7 @@ sudo apt install -y nginx git ufw
 # Step 2: Install Node.js and PM2
 # --------------------------------------------------
 
-# We will use NodeSource to install a modern version of Node.js (e.g., Node.js 20.x)
+# We will use NodeSource to install a modern version of Node.js (Node.js 20.x)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
@@ -42,19 +42,26 @@ sudo npm install pm2 -g
 sudo apt install -y mariadb-server
 
 # 2. Run the secure installation script.
-# This will guide you through setting a root password, removing anonymous users,
-# and other important security settings. This step is highly recommended.
+# This will guide you through setting a root password and other security settings.
 sudo mysql_secure_installation
 # --- Prompts and Recommended Answers: ---
-# - Enter current password for root (enter for none): Press Enter (there is no password yet)
-# - Set root password? [Y/n]: Y, then enter a strong password twice.
+# - Enter current password for root (enter for none): Press Enter
+# - Switch to unix_socket authentication [Y/n]: n (Crucial for remote access)
+# - Set root password? [Y/n]: Y, then enter a strong password.
 # - Remove anonymous users? [Y/n]: Y
-# - Disallow root login remotely? [Y/n]: Y
+# - Disallow root login remotely? [Y/n]: n (Important for remote management)
 # - Remove test database and access to it? [Y/n]: Y
 # - Reload privilege tables now? [Y/n]: Y
 
-# 3. Log in to MariaDB as the root user to set up your database.
-# You will be prompted for the root password you just created.
+# 3. Configure MariaDB to listen on all IP addresses for remote connections.
+#    Open the configuration file with a text editor:
+sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+#    Inside the file, find the line `bind-address = 127.0.0.1` and
+#    put a `#` at the beginning to comment it out, so it looks like this:
+#    #bind-address = 127.0.0.1
+#    Save the file and exit (Ctrl+X, then Y, then Enter).
+
+# 4. Log in to MariaDB as the root user to set up your database.
 sudo mysql -u root -p
 
 # --- Run the following commands inside the MariaDB prompt ---
@@ -62,69 +69,102 @@ sudo mysql -u root -p
 # 1. Create a database for your application.
 CREATE DATABASE crafternodes;
 
-# 2. Create a dedicated user for your application.
+# 2. Create a dedicated user for your application that can connect from localhost.
 #    Replace 'your_strong_password' with the password you want for this user.
-#    This user will initially only be able to connect from the server itself.
 CREATE USER 'crafteruser'@'localhost' IDENTIFIED BY 'your_strong_password';
 
-# 3. Grant the new user privileges on your application's database.
+# 3. Grant privileges to the localhost user.
 GRANT ALL PRIVILEGES ON crafternodes.* TO 'crafteruser'@'localhost';
 
-# 4. Apply the changes.
-FLUSH PRIVILEGES;
+# 4. Now, create the same user, but allow it to connect from any remote IP ('%').
+#    This is the user your remote tool (HeidiSQL) and deployed app will use.
+GRANT ALL PRIVILEGES ON crafternodes.* TO 'crafteruser'@'%' IDENTIFIED BY 'your_strong_password';
 
-# 5. Exit the MariaDB prompt.
+# 5. Apply the changes and exit.
+FLUSH PRIVILEGES;
 EXIT;
 
 # --- End of MariaDB prompt commands ---
 
-
-# --------------------------------------------------
-# Step 4: Enabling Remote Database Access (for HeidiSQL)
-# --------------------------------------------------
-
-# By default, your database only allows connections from your VPS itself.
-# To connect with a tool like HeidiSQL from your home computer, you must
-# enable remote access.
-
-# 1. Allow MariaDB to listen on all IP addresses.
-#    Open the configuration file with a text editor:
-sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
-
-#    Inside the file, find the line that says `bind-address = 127.0.0.1` and
-#    put a `#` at the beginning to comment it out. It should look like this:
-#    #bind-address = 127.0.0.1
-#    Save the file and exit (Ctrl+X, then Y, then Enter).
-
-# 2. Grant remote privileges to your user.
-#    Log back into MariaDB as the root user.
-sudo mysql -u root -p
-
-#    --- Run the following command inside the MariaDB prompt ---
-#    This command allows your 'crafteruser' to connect from any IP address ('%').
-#    Replace 'your_strong_password' with the SAME password you set for the user in Step 3.
-GRANT ALL PRIVILEGES ON crafternodes.* TO 'crafteruser'@'%' IDENTIFIED BY 'your_strong_password';
-FLUSH PRIVILEGES;
-EXIT;
-#    --- End of MariaDB prompt commands ---
-
-# 3. Open the firewall port for MariaDB.
-sudo ufw allow 3306/tcp
-
-# 4. Restart MariaDB to apply all the configuration changes.
+# 5. Restart MariaDB to apply the configuration changes.
 sudo systemctl restart mariadb
 
-# At this point, your database is configured for remote connections.
-# You can now use HeidiSQL with your VPS IP, 'crafteruser', and your password.
 
 # --------------------------------------------------
-# Step 5: Create Application Tables
+# Step 4: Configure Firewall
 # --------------------------------------------------
 
-# Now that you can connect with HeidiSQL, you must create the tables for the app.
-# 1. Connect to your database using HeidiSQL.
+# It is crucial to configure the firewall to allow the necessary traffic.
+
+# 1. Allow OpenSSH so you don't get locked out of your server.
+sudo ufw allow 'OpenSSH'
+
+# 2. Allow Nginx HTTP and HTTPS traffic.
+sudo ufw allow 'Nginx Full'
+
+# 3. Allow remote connections to the MariaDB port.
+sudo ufw allow 3306/tcp
+
+# 4. Enable the firewall.
+sudo ufw enable
+# (Press 'y' and Enter to confirm)
+
+# You can check the status of your firewall at any time with:
+sudo ufw status
+
+
+# --------------------------------------------------
+# Step 5: Clone and Build Your Application
+# --------------------------------------------------
+
+# Clone your project from your Git repository
+git clone https://github.com/Just-Cole/CrafterNodes.com.git
+cd CrafterNodes.com
+
+# Install project dependencies
+npm install
+
+# Create and fill in your .env.local file for production secrets.
+# IMPORTANT: You must fill this file with your actual secrets.
+cat > .env.local << EOF
+# Database
+# Use the credentials for the 'crafteruser' you created in Step 3.
+# The format is: mysql://user:password@host:port/database
+# The host should be your server's public IP address or 127.0.0.1
+DATABASE_URL="mysql://crafteruser:your_strong_password@127.0.0.1:3306/crafternodes"
+
+# SteamGridDB
+STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
+
+# Pterodactyl Environment Variables
+PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
+PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
+
+# Stripe Environment Variables
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+
+# NextAuth Environment Variables
+NEXTAUTH_SECRET=generate_a_strong_secret_here # You can generate one with `openssl rand -base64 32`
+NEXTAUTH_URL=https://your-domain.com
+
+# Discord OAuth Environment Variables
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+EOF
+
+# Build your Next.js app for production
+npm run build
+
+# --------------------------------------------------
+# Step 6: Create Application Tables
+# --------------------------------------------------
+
+# With your firewall configured, you should now be able to connect with HeidiSQL.
+# 1. Connect to your database using HeidiSQL (Server IP, 'crafteruser', your password).
 # 2. Open the "Query" tab.
-# 3. Copy and paste the SQL commands below into the query window and run them.
+# 3. Copy, paste, and run the SQL commands below to create the app's tables.
 
 CREATE TABLE `games` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -153,51 +193,6 @@ CREATE TABLE `plans` (
 
 
 # --------------------------------------------------
-# Step 6: Clone and Build Your Application
-# --------------------------------------------------
-
-# Clone your project from your Git repository
-git clone https://github.com/Just-Cole/CrafterNodes.com.git
-cd CrafterNodes.com
-
-# Install project dependencies
-npm install
-
-# Build your Next.js app for production
-npm run build
-
-# Create a .env.local file for your production environment variables
-# IMPORTANT: You must fill this file with your actual secrets.
-cat > .env.local << EOF
-# Database
-# Use the credentials for the 'crafteruser' you created in Step 3.
-# The format is: mysql://user:password@host:port/database
-# Example: DATABASE_URL="mysql://crafteruser:your_strong_password@127.0.0.1:3306/crafternodes"
-# NOTE: The host is 127.0.0.1 because the app is running on the same server as the database.
-DATABASE_URL="your_database_connection_string"
-
-# SteamGridDB
-STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
-
-# Pterodactyl Environment Variables
-PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
-PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
-
-# Stripe Environment Variables
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-
-# NextAuth Environment Variables
-NEXTAUTH_SECRET=generate_a_strong_secret_here # You can generate one with `openssl rand -base64 32`
-NEXTAUTH_URL=https://your-domain.com
-
-# Discord OAuth Environment Variables
-DISCORD_CLIENT_ID=your_discord_client_id
-DISCORD_CLIENT_SECRET=your_discord_client_secret
-EOF
-
-# --------------------------------------------------
 # Step 7: Run the Application with PM2
 # --------------------------------------------------
 
@@ -221,18 +216,14 @@ pm2 save
 sudo nano /etc/nginx/sites-available/your-domain.com
 
 # Paste the following configuration into the file.
-# This tells Nginx to listen for traffic on port 80 and forward it
-# to your Next.js app running on port 3000.
-#
-# Again, replace 'your-domain.com' with your actual domain.
-
+# Replace 'your-domain.com' with your actual domain.
 server {
     listen 80;
     server_name your-domain.com www.your-domain.com;
 
     location / {
         proxy_pass http://localhost:3000;
-        proxy__version 1.1;
+        proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
@@ -251,114 +242,103 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 # --------------------------------------------------
-# Step 9: Configure Firewall
-# --------------------------------------------------
-
-# Allow OpenSSH
-sudo ufw allow 'OpenSSH'
-
-# Allow Nginx HTTP traffic
-sudo ufw allow 'Nginx Full'
-
-# Enable the firewall
-sudo ufw enable
-# (Press 'y' to confirm)
-
-# --------------------------------------------------
-# Step 10: Secure Your Site with SSL (Let's Encrypt)
+# Step 9: Secure Your Site with SSL (Let's Encrypt)
 # --------------------------------------------------
 
 # Install Certbot, the client for Let's Encrypt
 sudo apt install -y certbot python3-certbot-nginx
 
 # Obtain and install the SSL certificate.
-# Certbot will automatically edit your Nginx configuration to handle HTTPS.
 # Replace 'your-domain.com' with your domain.
 sudo certbot --nginx -d your-domain.com -d www.your-domain.com
 
 # Certbot will ask for your email and to agree to the terms of service.
-# It will then automatically configure SSL.
-
-# Your site should now be live and accessible via HTTPS!
-# You can check the status of the certbot renewal timer with:
-sudo systemctl status certbot.timer
+# It will then automatically configure SSL for you.
 
 # --------------------------------------------------
-# Step 11: Updating Your Application
+# Step 10: Updating Your Application
 # --------------------------------------------------
 
-# When you make changes to your application and push them to your GitHub repository,
-# you'll need to pull those changes down to your server to make them live.
+# To update your live application with changes from your Git repository:
 
-# First, connect to your server and navigate to your project directory:
+# 1. Navigate to your project directory:
 cd ~/CrafterNodes.com
 
-# Pull the latest changes from the 'main' branch (or whichever branch you use)
+# 2. Pull the latest changes from your main branch
 git pull
 
-# Install any new dependencies that might have been added
+# 3. Install any new dependencies
 npm install
 
-# Re-build the application with the new changes
+# 4. Re-build the application
 npm run build
 
-# Restart the application using PM2 to apply the changes
+# 5. Restart the app with PM2 to apply the changes
 pm2 restart next-app
 
-# You can check the status of your application with:
-pm2 status
+# --------------------------------------------------
+# Step 11: Troubleshooting
+# --------------------------------------------------
+
+# **Error: `connect ETIMEDOUT` when connecting to the database**
+# This error means your application is trying to connect, but a firewall is blocking it.
+# You must check TWO firewalls:
+
+# 1. **Cloud Provider Firewall (Most Common Issue):**
+#    - Log in to your cloud provider's website (Vultr, DigitalOcean, AWS, etc.).
+#    - Find the "Networking" or "Firewall" section for your server.
+#    - **You MUST add a new rule to ALLOW inbound traffic on TCP Port 3306 from all IPs (0.0.0.0/0).**
+#    - This is the most common reason for a timeout error.
+
+# 2. **Server's Firewall (UFW):**
+#    - Ensure you have run the `sudo ufw allow 3306/tcp` command from Step 4.
+#    - To temporarily test if UFW is the problem, you can disable it with `sudo ufw disable`.
+#    - If the connection works after disabling it, you know the UFW rule is wrong.
+#    - **Remember to re-enable it** with `sudo ufw enable` afterwards for security.
+
 
 # --------------------------------------------------
 # How to Uninstall
 # --------------------------------------------------
 
-# This section provides the steps to remove the application and its components from your server.
-# Run these commands from your server's terminal.
+# This section provides the steps to remove the application and its components.
 
 # 1. Stop and remove the application from PM2
 pm2 stop next-app
 pm2 delete next-app
 pm2 save
-
-# 2. Remove the PM2 startup service
 pm2 unstartup
 
-# 3. Remove the Nginx configuration
+# 2. Remove the Nginx configuration and SSL certificate
 #    Replace 'your-domain.com' with your actual domain name.
 sudo rm /etc/nginx/sites-enabled/your-domain.com
 sudo rm /etc/nginx/sites-available/your-domain.com
+sudo certbot delete --cert-name your-domain.com
 sudo systemctl restart nginx
 
-# 4. Remove the SSL certificate
-#    Replace 'your-domain.com' with your actual domain name.
-sudo certbot delete --cert-name your-domain.com
-
-# 5. Remove the application files
-#    Navigate out of the project directory first.
+# 3. Remove the application files
 cd ~
 rm -rf CrafterNodes.com
 
-# 6. Revert firewall changes
+# 4. Revert firewall changes
 sudo ufw delete allow 'Nginx Full'
 sudo ufw delete allow 3306/tcp
 
-# 7. Remove the database and user
+# 5. Remove the database and user
 #    Log in to MariaDB as the root user.
 sudo mysql -u root -p
-
 #    --- Run the following commands inside the MariaDB prompt ---
 DROP DATABASE crafternodes;
 DROP USER 'crafteruser'@'localhost';
-DROP USER 'crafteruser'@'%'; # This command will only work if you enabled remote access
+DROP USER 'crafteruser'@'%';
 FLUSH PRIVILEGES;
 EXIT;
 #    --- End of MariaDB prompt commands ---
 
-# 8. (Optional) Uninstall the main packages
-#    If you no longer need Nginx, Node.js, or MariaDB for any other applications,
-#    you can remove them.
+# 6. (Optional) Uninstall the main packages if no longer needed
 # sudo apt purge -y nginx nginx-common certbot python3-certbot-nginx
 # sudo apt purge -y nodejs
 # sudo apt purge -y mariadb-server
 # sudo npm uninstall -g pm2
 # sudo apt autoremove -y
+

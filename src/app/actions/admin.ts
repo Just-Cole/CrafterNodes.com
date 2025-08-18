@@ -11,7 +11,7 @@ import mysql from 'mysql2/promise';
 const ADMIN_DISCORD_ID = "949172257345921045";
 
 // IMPORTANT: Replace this with your actual database connection string.
-const DATABASE_URL = "mysql://crafteruser:#Tjc52302@172.93.108.112:3306/crafternodes";
+const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
 async function getConnection() {
     if (!DATABASE_URL) {
