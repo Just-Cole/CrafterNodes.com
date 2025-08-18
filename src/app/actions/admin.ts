@@ -49,6 +49,10 @@ const updatePlanSchema = planSchema.extend({
     id: z.number(),
 });
 
+const addPlanSchema = planSchema.extend({
+    game_id: z.number(),
+});
+
 
 // We don't include 'image' here because it's fetched automatically.
 export type GameSchema = z.infer<typeof gameSchema>;
@@ -156,6 +160,45 @@ export async function addGame(formData: GameSchema) {
   } finally {
       await connection.end();
   }
+}
+
+export async function addPlan(formData: z.infer<typeof addPlanSchema>) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const result = addPlanSchema.safeParse(formData);
+    if (!result.success) {
+        return { success: false, error: result.error.flatten() };
+    }
+
+    const plan = result.data;
+    const connection = await getConnection();
+
+    try {
+        await connection.execute(
+            `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                plan.game_id,
+                plan.name,
+                plan.price,
+                plan.priceId || null,
+                JSON.stringify(plan.features),
+                plan.icon || null,
+                plan.popular || false,
+            ]
+        );
+        revalidatePath('/');
+        revalidatePath('/games');
+        revalidatePath('/admin');
+        return { success: true, message: 'Plan added successfully!' };
+    } catch (error) {
+        console.error("Failed to add plan:", error);
+        return { success: false, error: "Database error occurred." };
+    } finally {
+        await connection.end();
+    }
 }
 
 export async function updateGame(formData: z.infer<typeof updateGameSchema>) {

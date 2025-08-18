@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, type PlanSchema as DbPlanSchema, type GameSchema as DbGameSchema } from '@/app/actions/admin';
+import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, addPlan, type PlanSchema as DbPlanSchema, type GameSchema as DbGameSchema } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -43,6 +43,7 @@ const gameSchema = z.object({
 // For updates
 const updatePlanSchema = planSchema.extend({ id: z.number() });
 const updateGameSchema = gameSchema.omit({ plans: true }).extend({ id: z.number() });
+const addPlanSchema = planSchema.extend({ game_id: z.number() });
 
 
 function AddGameForm() {
@@ -72,7 +73,7 @@ function AddGameForm() {
     name: 'plans',
   });
 
-  const onSubmit = async (data: z.infer<typeof gameSchema>) => {
+  const onSubmit = async (data: z.infer<typeof gameSchema>>) => {
     const dataForAction: GameSchema = {
       ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
@@ -423,6 +424,60 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
     )
 }
 
+function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => void }) {
+    const { toast } = useToast();
+    const form = useForm<z.infer<typeof addPlanSchema>>({
+        resolver: zodResolver(addPlanSchema),
+        defaultValues: {
+            game_id: game.id,
+            name: '',
+            price: '',
+            priceId: '',
+            features: '',
+            icon: '',
+            popular: false,
+        },
+    });
+
+    const onSubmit = async (data: z.infer<typeof addPlanSchema>) => {
+        const result = await addPlan(data);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            onFinished();
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error adding plan',
+                description: typeof result.error === 'string' ? result.error : JSON.stringify(result.error),
+            });
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Add New Plan to {game.name}</DialogTitle>
+                <DialogDescription>Create a new pricing plan for this game.</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Plan Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="popular" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"> <FormControl> <Checkbox checked={field.value} onCheckedChange={field.onChange} /> </FormControl> <div className="space-y-1 leading-none"> <FormLabel> Mark as Popular </FormLabel> </div> </FormItem> )} />
+                    </div>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Adding..." : "Add Plan"}
+                    </Button>
+                </form>
+            </Form>
+        </DialogContent>
+    )
+}
+
 function ManageGamesTab() {
     const { toast } = useToast();
     const [isUpdating, setIsUpdating] = useState(false);
@@ -433,6 +488,7 @@ function ManageGamesTab() {
     // State for modals
     const [editingGame, setEditingGame] = useState<GameData | null>(null);
     const [editingPlan, setEditingPlan] = useState<PlanData | null>(null);
+    const [addingPlanToGame, setAddingPlanToGame] = useState<GameData | null>(null);
 
     const refreshGames = () => {
         setIsLoading(true);
@@ -455,6 +511,14 @@ function ManageGamesTab() {
     useEffect(() => {
         refreshGames();
     }, [toast]);
+
+    const onModalOpenChange = (open: boolean) => {
+        if (!open) {
+            setEditingGame(null);
+            setEditingPlan(null);
+            setAddingPlanToGame(null);
+        }
+    }
 
 
     const handleUpdateImages = async () => {
@@ -506,7 +570,7 @@ function ManageGamesTab() {
 
 
     return (
-        <Dialog onOpenChange={(open) => { if (!open) { setEditingGame(null); setEditingPlan(null); }}}>
+        <Dialog onOpenChange={onModalOpenChange}>
             <div className="space-y-8">
                 <Card>
                     <CardHeader>
@@ -548,7 +612,9 @@ function ManageGamesTab() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4" />Add Plan</Button>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm" onClick={() => setAddingPlanToGame(game)}><Plus className="mr-2 h-4 w-4" />Add Plan</Button>
+                                            </DialogTrigger>
                                             <DialogTrigger asChild>
                                                 <Button variant="outline" size="sm" onClick={() => setEditingGame(game)}><Edit className="mr-2 h-4 w-4" />Edit Game</Button>
                                             </DialogTrigger>
@@ -625,6 +691,7 @@ function ManageGamesTab() {
                 
                 {editingGame && <EditGameForm game={editingGame} onFinished={() => { setEditingGame(null); refreshGames(); }} />}
                 {editingPlan && <EditPlanForm plan={editingPlan} onFinished={() => { setEditingPlan(null); refreshGames(); }} />}
+                {addingPlanToGame && <AddPlanForm game={addingPlanToGame} onFinished={() => { setAddingPlanToGame(null); refreshGames(); }} />}
 
             </div>
         </Dialog>
