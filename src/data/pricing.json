@@ -208,7 +208,7 @@
         {
             "name": "7 Days to Die",
             "description": "Team up with friends to survive the zombie horde. Our servers ensure a smooth, lag-free apocalyptic experience.",
-            "image": "https://placehold.co/600x400.png",
+            "image": "/Game-Card-icons/7DTD.jpg",
             "hint": "zombie survival",
             "pterodactylNestId": 1,
             "pterodactylEggId": 4,
