@@ -2,6 +2,7 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { getOrCreatePterodactylUser } from '@/lib/pterodactyl';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -17,43 +18,6 @@ const planToPterodactylSpec: { [key: string]: { cpu: number; ram: number; disk: 
   "price_1RwDdDGiQmXe4wKvj0RexV7n": { cpu: 100, ram: 2048, disk: 5120 }, // Coal Plan
   // ... add other plan mappings here
 };
-
-async function createPterodactylUser(email: string, userName: string) {
-  // In a real app, you might want to generate a random password and email it to the user,
-  // or use a temporary password.
-  const [firstName, lastName] = userName.split(' ');
-  const response = await fetch(`${PTERODACTYL_URL}/api/application/users`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      email: email,
-      username: userName.replace(/\s+/g, '_'), // Pterodactyl usernames can't have spaces
-      first_name: firstName || userName,
-      last_name: lastName || 'User',
-      password: Math.random().toString(36).slice(-12), // WARNING: Insecure, for example only
-    }),
-  });
-  if (response.status === 422) {
-    // User might already exist, try to find them
-    const usersResponse = await fetch(`${PTERODACTYL_URL}/api/application/users?filter[email]=${email}`, {
-        headers: { 'Authorization': `Bearer ${PTERODACTYL_API_KEY}`, 'Accept': 'application/json' }
-    });
-    const usersData = await usersResponse.json();
-    if (usersData.data && usersData.data.length > 0) {
-      return usersData.data[0].attributes.id;
-    }
-  }
-  const data = await response.json();
-  if (data.object === 'user') {
-    return data.attributes.id;
-  }
-  console.error("Pterodactyl user creation failed:", data);
-  throw new Error("Failed to create or find Pterodactyl user.");
-}
 
 async function createPterodactylServer(userId: number, metadata: Stripe.Metadata) {
   const { gameName, pterodactylNestId, pterodactylEggId, planName, priceId } = metadata;
@@ -129,24 +93,28 @@ export async function POST(req: Request) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
       
-      const { userEmail, userName, ...metadata } = session.metadata || {};
+      const { userId, userEmail, userName, ...metadata } = session.metadata || {};
 
-      if (!userEmail || !userName || !metadata.pterodactylNestId || !metadata.pterodactylEggId) {
+      if (!userId || !userEmail || !userName || !metadata.pterodactylNestId || !metadata.pterodactylEggId) {
         console.error("Webhook received with missing metadata:", session.metadata);
         return NextResponse.json({ error: 'Missing required metadata for server provisioning.' }, { status: 400 });
       }
 
-      console.log('✅ Successful checkout for user:', metadata.userId);
+      console.log('✅ Successful checkout for user:', userId);
       console.log(`Plan: ${metadata.gameName} - ${metadata.planName}`);
       console.log("Attempting to provision server via Pterodactyl...");
 
       try {
-        // 1. Create or find the user in Pterodactyl
-        const pterodactylUserId = await createPterodactylUser(userEmail, userName);
-        console.log(`Pterodactyl user ID: ${pterodactylUserId}`);
+        // 1. Get or create the user in Pterodactyl using their Discord ID
+        const pterodactylUser = await getOrCreatePterodactylUser({
+          discordId: userId,
+          email: userEmail,
+          name: userName,
+        });
+        console.log(`Pterodactyl user ID: ${pterodactylUser.id}`);
 
         // 2. Create the server
-        const serverDetails = await createPterodactylServer(pterodactylUserId, metadata);
+        const serverDetails = await createPterodactylServer(pterodactylUser.id, metadata);
         console.log("✅ Successfully created Pterodactyl server:", serverDetails.attributes.identifier);
 
       } catch (error) {

@@ -22,11 +22,15 @@ const nextConfig: NextConfig = {
         hostname: 'cdn2.steamgriddb.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
 };
 
 export default nextConfig;
-
-    
