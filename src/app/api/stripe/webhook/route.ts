@@ -2,14 +2,12 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { getPterodactylUserByDiscordId } from '@/lib/pterodactyl';
+import { getPterodactylUserByDiscordId, createPterodactylServer as createPteroServer } from '@/lib/pterodactyl';
 import mysql from 'mysql2/promise';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
-const PTERODACTYL_API_KEY = process.env.PTERODACTYL_API_KEY;
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
 async function getDbConnection() {
@@ -35,52 +33,42 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
   // You would expand this logic to map plans to Pterodactyl resource limits
   const spec = planToPterodactylSpec[priceId] || { cpu: 100, ram: 1024, disk: 5120 };
 
-  const response = await fetch(`${PTERODACTYL_URL}/api/application/servers`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
+  const serverDetails = await createPteroServer({
       name: `${gameName} Server - ${planName}`,
-      user: userId,
-      nest: Number(pterodactylNestId),
-      egg: Number(pterodactylEggId),
+      user_id: userId,
+      nest_id: Number(pterodactylNestId),
+      egg_id: Number(pterodactylEggId),
       docker_image: `ghcr.io/pterodactyl/yolks:java_17`, // This might need to be dynamic based on the egg
-      startup: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
-      limits: {
-        memory: spec.ram,
-        swap: 0,
-        disk: spec.disk,
-        io: 500,
-        cpu: spec.cpu,
-      },
-      feature_limits: {
-        databases: 1,
-        allocations: 1,
-        backups: 2,
-      },
-      // You need to have locations configured in Pterodactyl
-      // and have allocated IPs to them.
-      allocation: {
-        default: 1 // This is the ID of the allocation
+      startup_command: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
+      ram: spec.ram,
+      disk: spec.disk,
+      cpu: spec.cpu,
+      swap: 0,
+      io: 500,
+      databases: 1,
+      allocations: 1,
+      backups: 2,
+      // Default allocation is required
+      default_allocation: {
+        auto: true,
+        // You might need to specify location IDs if you don't want auto-selection
+        // location_ids: [1] 
       }
-    }),
   });
 
-  const data = await response.json();
 
-  if (response.status > 299) {
-    console.error("Pterodactyl server creation failed:", data);
-    throw new Error(`Failed to create Pterodactyl server. Status: ${response.status}`);
+  if (!serverDetails) {
+    throw new Error(`Failed to create Pterodactyl server.`);
   }
 
-  return data;
+  return serverDetails;
 }
 
 
 export async function POST(req: Request) {
+  const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
+  const PTERODACTYL_API_KEY = process.env.PTERODACTYL_API_KEY;
+
   if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
       console.error("Pterodactyl environment variables are not set.");
       return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
@@ -131,8 +119,8 @@ export async function POST(req: Request) {
         console.log(`Found Pterodactyl user ID: ${dbUser.pterodactylId}`);
 
         const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata);
-        const pteroServerId = serverDetails.attributes.id;
-        console.log("✅ Successfully created Pterodactyl server:", serverDetails.attributes.identifier);
+        const pteroServerId = serverDetails.id;
+        console.log("✅ Successfully created Pterodactyl server:", serverDetails.identifier);
         
         await connection.execute(
             `INSERT INTO subscriptions (userId, pterodactylServerId, gameId, planId, stripeSubscriptionId, status)
@@ -175,4 +163,3 @@ export async function POST(req: Request) {
   await connection.end();
   return NextResponse.json({ received: true });
 }
-

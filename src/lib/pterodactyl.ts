@@ -1,13 +1,17 @@
 
 'use server';
 
-import fetch from 'node-fetch';
 import { randomBytes } from 'crypto';
 import mysql from 'mysql2/promise';
+import fetch from 'node-fetch';
 
 const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
 const PTERODACTYL_API_KEY = process.env.PTERODACTYL_API_KEY;
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
+
+if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
+    throw new Error("Pterodactyl environment variables are not set.");
+}
 
 async function getDbConnection() {
     if (!DATABASE_URL) {
@@ -16,7 +20,36 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
-interface PteroUserAttributes {
+const pteroFetch = async (endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body: object | null = null) => {
+    const url = `${PTERODACTYL_URL}/api/application${endpoint}`;
+    const options: any = {
+        method,
+        headers: {
+            'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+    };
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+    const response = await fetch(url, options);
+
+    if (response.status === 204) { // No Content
+        return null;
+    }
+    
+    const data = await response.json();
+
+    if (!response.ok) {
+        const errorMessage = data.errors ? JSON.stringify(data.errors) : `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
+    }
+    return data;
+};
+
+
+interface PteroUser {
     id: number;
     external_id: string | null;
     uuid: string;
@@ -41,53 +74,22 @@ interface GetOrCreatePteroUserInput {
   name: string;
 }
 
-/**
- * Finds a Pterodactyl user by their external ID (which should be their Discord ID).
- * This is used during the checkout process to find the user to provision the server for.
- * @param {GetPteroUserInput} input - The user's Discord ID.
- * @returns {Promise<PteroUserAttributes | null>} The Pterodactyl user object, or null if not found.
- */
-export async function getPterodactylUserByDiscordId(input: GetPteroUserInput): Promise<PteroUserAttributes | null> {
-    if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
-        throw new Error("Pterodactyl environment variables are not set.");
-    }
-    
+export async function getPterodactylUserByDiscordId(input: GetPteroUserInput): Promise<PteroUser | null> {
     const { discordId } = input;
-
     try {
-        const response = await fetch(`${PTERODACTYL_URL}/api/application/users/external/${discordId}`, {
-            headers: {
-                'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-                'Accept': 'application/json',
-            },
-        });
-
-        if (response.ok) {
-            const userData = await response.json();
-            return userData.attributes;
+        const response = await pteroFetch(`/users/external/${discordId}`);
+        return response.attributes;
+    } catch (error: any) {
+        // A 404 error is expected if the user doesn't exist yet
+        if (error.message.includes('404')) {
+            return null;
         }
-
-        if (response.status === 404) {
-            return null; // User not found
-        }
-        
-        const errorBody = await response.text();
-        throw new Error(`Failed to fetch Pterodactyl user. Status: ${response.status}, Body: ${errorBody}`);
-
-    } catch (error) {
         console.error("Error fetching Pterodactyl user by external ID:", error);
         throw error;
     }
 }
 
-
-/**
- * Fetches a Pterodactyl user by their Discord ID, or creates one if they don't exist.
- * This is called on every sign-in to ensure a Pterodactyl account exists.
- * @param {GetOrCreatePteroUserInput} input - User details from Discord.
- * @returns {Promise<PteroUserAttributes>} The existing or newly created Pterodactyl user.
- */
-export async function getOrCreatePterodactylUser(input: GetOrCreatePteroUserInput): Promise<PteroUserAttributes> {
+export async function getOrCreatePterodactylUser(input: GetOrCreatePteroUserInput): Promise<PteroUser> {
     const existingUser = await getPterodactylUserByDiscordId({ discordId: input.discordId });
     if (existingUser) {
         return existingUser;
@@ -97,66 +99,60 @@ export async function getOrCreatePterodactylUser(input: GetOrCreatePteroUserInpu
 
     const { name, email, discordId } = input;
     const [firstName, ...lastNameParts] = name.split(' ');
-    const lastName = lastNameParts.join(' ') || firstName; // Handle names without spaces
-
-    // Generate a secure random password. The user will use "Forgot Password" to set their own.
+    const lastName = lastNameParts.join(' ') || firstName;
     const password = randomBytes(16).toString('hex');
-    
-    const pteroResponse = await fetch(`${PTERODACTYL_URL}/api/application/users`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({
+
+    try {
+        const createUserData = {
             external_id: discordId,
             email: email,
-            username: name.replace(/\s+/g, '_') + `_${discordId.slice(-4)}`, // Create a unique username
+            username: name.replace(/\s+/g, '_') + `_${discordId.slice(-4)}`,
             first_name: firstName,
             last_name: lastName,
             password: password,
-            root_admin: false,
-            language: 'en',
-        }),
-    });
+        };
 
-    if (!pteroResponse.ok) {
-        const errorData = await pteroResponse.json();
-        if (pteroResponse.status === 422 && errorData.errors?.some((e: any) => e.code === 'UnprocessableEntityHttpException' && e.detail.includes('email'))) {
-             console.warn(`Pterodactyl user with email ${email} already exists but is not linked to Discord ID ${discordId}.`);
-             throw new Error(`An account with the email ${email} already exists on the panel. Please log in with your email and password and link your Discord account in your account settings.`);
+        const response = await pteroFetch('/users', 'POST', createUserData);
+        const newUser = response.attributes;
+
+        console.log(`Successfully created Pterodactyl user ${newUser.id} for Discord user ${discordId}`);
+
+        let connection;
+        try {
+            connection = await getDbConnection();
+            await connection.execute(
+                'INSERT INTO users (discordId, pterodactylId, email, name) VALUES (?, ?, ?, ?)',
+                [discordId, newUser.id, email, name]
+            );
+             console.log(`Successfully created database user record for Discord ID ${discordId}`);
+        } catch(dbError) {
+            console.error("Database error while creating user record:", dbError);
+            // Roll back Pterodactyl user creation if the database insert fails
+            await pteroFetch(`/users/${newUser.id}`, 'DELETE');
+            console.error(`Rolled back Pterodactyl user creation for ID ${newUser.id} due to DB error.`);
+            throw new Error("Failed to save user to the database after creating Pterodactyl user.");
+        } finally {
+            await connection?.end();
         }
-        throw new Error(`Failed to create Pterodactyl user. Status: ${pteroResponse.status}, Body: ${JSON.stringify(errorData)}`);
-    }
-    
-    const newUser = (await pteroResponse.json()).attributes as PteroUserAttributes;
-    console.log(`Successfully created Pterodactyl user ${newUser.id} for Discord user ${discordId}`);
 
-    let connection;
-    try {
-        connection = await getDbConnection();
-        await connection.execute(
-            'INSERT INTO users (discordId, pterodactylId, email, name) VALUES (?, ?, ?, ?)',
-            [discordId, newUser.id, email, name]
-        );
-         console.log(`Successfully created database user record for Discord ID ${discordId}`);
-    } catch(dbError) {
-        console.error("Database error while creating user record:", dbError);
-        // If the DB write fails, we should ideally delete the Pterodactyl user to avoid inconsistency.
-        // This is a compensating transaction.
-        await fetch(`${PTERODACTYL_URL}/api/application/users/${newUser.id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-            },
-        });
-        console.error(`Rolled back Pterodactyl user creation for ID ${newUser.id} due to DB error.`);
-        throw new Error("Failed to save user to the database after creating Pterodactyl user.");
-    } finally {
-        await connection?.end();
-    }
+        return newUser;
 
-    return newUser;
+    } catch (error: any) {
+        if (error.message.includes('already been taken')) {
+             console.warn(`Pterodactyl user with email ${email} or username already exists but is not linked to Discord ID ${discordId}.`);
+             throw new Error(`An account with this email or username already exists on the panel. Please log in and link your Discord account in your account settings, or contact support.`);
+        }
+        console.error('Failed to create Pterodactyl user:', error);
+        throw error;
+    }
 }
 
+export async function createPterodactylServer(serverConfig: object) {
+    try {
+        const response = await pteroFetch('/servers', 'POST', serverConfig);
+        return response.attributes;
+    } catch (error) {
+        console.error('Failed to create Pterodactyl server:', error);
+        throw error;
+    }
+}
