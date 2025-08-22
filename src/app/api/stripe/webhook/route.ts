@@ -52,9 +52,9 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
           allocations: 1,
           backups: 2,
       },
-      // Default allocation is required
+      // This is now an object, not a single value
       allocation: {
-        default: 0, // This is a placeholder, nodeactyl requires an allocation ID or auto. Let's try to get auto working.
+        default: 1, // You need an actual allocation ID here. Pterodactyl requires this. Or you can implement logic to find a free one.
       },
       deploy: {
           locations: [1], // Auto-select from location ID 1. This might need to be configured.
@@ -118,8 +118,8 @@ export async function POST(req: Request) {
             [discordId]
         );
 
-        if (userRows.length === 0) {
-            throw new Error(`Database user with Discord ID ${discordId} not found. The user may need to log into the panel first.`);
+        if (userRows.length === 0 || !userRows[0].pterodactylId) {
+            throw new Error(`Database user with Discord ID ${discordId} not found or not linked to Pterodactyl. The user may need to log into the panel first.`);
         }
         const dbUser = userRows[0];
 
