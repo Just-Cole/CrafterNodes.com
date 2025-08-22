@@ -1,7 +1,17 @@
 
 import NextAuth, { type AuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
-import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
+import mysql from 'mysql2/promise';
+
+const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
+
+async function getDbConnection() {
+    if (!DATABASE_URL) {
+        throw new Error('DATABASE_URL is not set.');
+    }
+    return mysql.createConnection(DATABASE_URL);
+}
+
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -22,17 +32,24 @@ export const authOptions: AuthOptions = {
   events: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'discord' && user.id && user.email && user.name) {
+        // When a user signs in with Discord, we'll create a record for them in our DB
+        // if one doesn't already exist. The Pterodactyl account creation is now handled
+        // separately during the first checkout.
+        let connection;
         try {
-          console.log(`[Auth] User ${user.name} signed in. Syncing with Pterodactyl...`);
-          const pteroUser = await getOrCreatePterodactylUser({
-            discordId: user.id,
-            email: user.email,
-            name: user.name,
-          });
-          console.log(`[Auth] Successfully synced user. Pterodactyl ID: ${pteroUser.id}`);
+          connection = await getDbConnection();
+          // Use INSERT ... ON DUPLICATE KEY UPDATE to avoid errors if the user already exists
+          await connection.execute(
+            `INSERT INTO users (discordId, email, name)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE email = VALUES(email), name = VALUES(name)`,
+            [user.id, user.email, user.name]
+          );
+          console.log(`[Auth] User ${user.name} signed in. Ensured database record exists.`);
         } catch (error) {
-          console.error('[Auth] Failed to sync user with Pterodactyl on sign-in:', error);
-          // Decide if you want to block sign-in on failure. For now, we'll just log it.
+          console.error('[Auth] Failed to create or update user record on sign-in:', error);
+        } finally {
+            await connection?.end();
         }
       }
     }

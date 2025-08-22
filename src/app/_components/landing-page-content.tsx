@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { loadStripe } from "@stripe/stripe-js";
-import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, LifeBuoy, MessageSquare } from "lucide-react";
+import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, LifeBuoy, MessageSquare, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -18,6 +18,12 @@ import type { PricingData } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { completeAccountSetup, checkIfPterodactylUserExists } from "../actions/user";
+
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -148,31 +154,115 @@ function Footer() {
     );
 }
 
+const accountSetupSchema = z.object({
+    password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
+    confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+});
+
+
+function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boolean, onOpenChange: (open: boolean) => void, onSetupComplete: () => void }) {
+    const { data: session } = useSession();
+    const { toast } = useToast();
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const form = useForm<z.infer<typeof accountSetupSchema>>({
+        resolver: zodResolver(accountSetupSchema),
+        defaultValues: { password: '', confirmPassword: '' },
+    });
+
+    const onSubmit = async (data: z.infer<typeof accountSetupSchema>) => {
+        if (!session?.user) {
+            toast({ variant: "destructive", title: "Error", description: "You are not logged in." });
+            return;
+        }
+
+        const result = await completeAccountSetup({
+            discordId: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            password: data.password,
+        });
+
+        if (result.success) {
+            toast({ title: "Success!", description: "Your account is set up. You can now proceed to checkout." });
+            onSetupComplete();
+        } else {
+            toast({ variant: "destructive", title: "Setup Failed", description: result.error });
+        }
+    };
+    
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Up Your Panel Account</DialogTitle>
+                    <DialogDescription>
+                        Create a password for the game control panel. You will use your email ({session?.user?.email}) and this password to log in.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
+                                                {showPassword ? <EyeOff /> : <Eye />}
+                                            </Button>
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="confirmPassword"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Confirm Password</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                                {showConfirmPassword ? <EyeOff /> : <Eye />}
+                                            </Button>
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting ? "Creating Account..." : "Complete Setup"}
+                        </Button>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
 export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
     const { data: session } = useSession();
     const { toast } = useToast();
+    const [isAccountSetupOpen, setAccountSetupOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<typeof game.plans[0] | null>(null);
 
-    const handleCheckout = async (plan: typeof game.plans[0]) => {
-        if (!session || !session.user) {
-            toast({
-                title: "Authentication Required",
-                description: "Please log in to purchase a plan.",
-                variant: "destructive",
-            })
-            signIn('discord');
-            return;
-        }
 
-        if (!plan.priceId) {
-            toast({
-                title: "Price ID Missing",
-                description: "This plan is not available for purchase yet.",
-                variant: "destructive",
-            })
-            return;
-        }
+    const startCheckout = async (plan: typeof game.plans[0]) => {
+         if (!session || !session.user || !plan.priceId) return;
 
         setLoading(plan.priceId);
         try {
@@ -220,7 +310,49 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
         }
     };
 
+    const handlePurchaseClick = async (plan: typeof game.plans[0]) => {
+        if (!session || !session.user) {
+            toast({
+                title: "Authentication Required",
+                description: "Please log in to purchase a plan.",
+                variant: "destructive",
+            });
+            signIn('discord');
+            return;
+        }
+
+        if (!plan.priceId) {
+            toast({
+                title: "Price ID Missing",
+                description: "This plan is not available for purchase yet.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setSelectedPlan(plan);
+
+        // Check if the user has a Pterodactyl account linked
+        const hasPteroAccount = await checkIfPterodactylUserExists(session.user.id);
+
+        if (hasPteroAccount) {
+            await startCheckout(plan);
+        } else {
+            // If not, open the account setup dialog
+            setAccountSetupOpen(true);
+        }
+    };
+    
+    const onSetupComplete = () => {
+        setAccountSetupOpen(false);
+        if (selectedPlan) {
+            startCheckout(selectedPlan);
+        }
+    };
+
+
     return (
+        <>
         <Dialog>
             <DialogTrigger asChild>
                 {children}
@@ -263,7 +395,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     </ul>
                                     <Button
                                         className="w-full mt-6"
-                                        onClick={() => handleCheckout(plan)}
+                                        onClick={() => handlePurchaseClick(plan)}
                                         disabled={loading === plan.priceId || !plan.priceId}
                                     >
                                         {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
@@ -282,6 +414,12 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 </div>
             </DialogContent>
         </Dialog>
+         <AccountSetupDialog
+            open={isAccountSetupOpen}
+            onOpenChange={setAccountSetupOpen}
+            onSetupComplete={onSetupComplete}
+        />
+        </>
     )
 }
 
@@ -561,4 +699,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
