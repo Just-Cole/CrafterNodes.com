@@ -59,15 +59,21 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
 
         if (userRows.length > 0 && userRows[0].pterodactylId) {
             // User and Pterodactyl account already exist and are linked
-            const pteroUser = await pteroClient.getUserDetails(userRows[0].pterodactylId);
+            const pteroUser = await pteroClient.users.getDetails(userRows[0].pterodactylId);
             return pteroUser;
         }
 
         // 2. Check Pterodactyl for existing user by external ID just in case
         let existingPteroUser;
         try {
-            existingPteroUser = await pteroClient.getUserDetails(0, { filter: { external_id: input.discordId } });
+            // The library may throw if no user is found with that external ID.
+            const pteroUsers = await pteroClient.users.list({ filter: { external_id: input.discordId }});
+            if (pteroUsers.data.length > 0) {
+              existingPteroUser = pteroUsers.data[0].attributes;
+            }
         } catch (error: any) {
+            // It's okay if it's a 404 not found, just means we need to create it.
+            // Any other error should be thrown.
             if (error.message && !error.message.includes('Not Found')) {
                 throw error;
             }
@@ -90,7 +96,7 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
         const lastName = lastNameParts.join(' ') || firstName;
         const password = input.password || randomBytes(16).toString('hex');
 
-        const newPteroUser = await pteroClient.createUser({
+        const newPteroUser = await pteroClient.users.create({
             externalId: discordId,
             email: email,
             username: name.replace(/\s+/g, '_') + `_${discordId.slice(-4)}`,
@@ -131,7 +137,7 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
 
 export async function createPterodactylServer(serverConfig: Nodeactyl.CreateServerOptions) {
     try {
-        const server = await pteroClient.createServer(serverConfig);
+        const server = await pteroClient.servers.create(serverConfig);
         return server.attributes;
     } catch (error) {
         console.error('Failed to create Pterodactyl server:', error);
