@@ -2,7 +2,7 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { getPterodactylUserByDiscordId, createPterodactylServer as createPteroServer } from '@/lib/pterodactyl';
+import { createPterodactylServer as createPteroServer } from '@/lib/pterodactyl';
 import mysql from 'mysql2/promise';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -35,24 +35,31 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
 
   const serverDetails = await createPteroServer({
       name: `${gameName} Server - ${planName}`,
-      user_id: userId,
-      nest_id: Number(pterodactylNestId),
-      egg_id: Number(pterodactylEggId),
+      user: userId,
+      nest: Number(pterodactylNestId),
+      egg: Number(pterodactylEggId),
       docker_image: `ghcr.io/pterodactyl/yolks:java_17`, // This might need to be dynamic based on the egg
-      startup_command: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
-      ram: spec.ram,
-      disk: spec.disk,
-      cpu: spec.cpu,
-      swap: 0,
-      io: 500,
-      databases: 1,
-      allocations: 1,
-      backups: 2,
+      startup: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
+      limits: {
+        memory: spec.ram,
+        disk: spec.disk,
+        cpu: spec.cpu,
+        swap: 0,
+        io: 500,
+      },
+      feature_limits: {
+          databases: 1,
+          allocations: 1,
+          backups: 2,
+      },
       // Default allocation is required
-      default_allocation: {
-        auto: true,
-        // You might need to specify location IDs if you don't want auto-selection
-        // location_ids: [1] 
+      allocation: {
+        default: 0, // This is a placeholder, nodeactyl requires an allocation ID or auto. Let's try to get auto working.
+      },
+      deploy: {
+          locations: [1], // Auto-select from location ID 1. This might need to be configured.
+          dedicated_ip: false,
+          port_range: [],
       }
   });
 
