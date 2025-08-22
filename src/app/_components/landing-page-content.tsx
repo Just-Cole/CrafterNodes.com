@@ -503,7 +503,7 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
                 <div className="container relative z-10 mx-auto px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-                            Premium Game Hosting for Serious Gamers
+                            Premium Game Hosting
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-gray-300">
                             Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
