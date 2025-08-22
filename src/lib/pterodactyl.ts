@@ -116,7 +116,7 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
             root_admin: false,
         };
         
-        const newPteroUser = await pteroRequest('/users', 'POST', newUserPayload);
+        const newPteroUser = await pteroRequest('/users/', 'POST', newUserPayload);
         console.log(`Successfully created Pterodactyl user ${newPteroUser.attributes.id} for Discord user ${discordId}`);
 
         await connection.execute(
