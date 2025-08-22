@@ -9,6 +9,9 @@ const planSchema = z.object({
   price: z.string(),
   priceId: z.string().optional().nullable(),
   features: z.array(z.string()),
+  cpu: z.number(),
+  ram: z.number(),
+  disk: z.number(),
   icon: z.string().optional().nullable(),
   popular: z.boolean().optional(),
 });
@@ -97,3 +100,5 @@ export async function createPricingApiRoute() {
         headers: { 'Content-Type': 'application/json' },
     });
 }
+
+    

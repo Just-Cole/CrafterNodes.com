@@ -284,6 +284,11 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 userName: session.user.name!,
                 pterodactylNestId: game.pterodactylNestId,
                 pterodactylEggId: game.pterodactylEggId,
+                gameName: game.name,
+                planName: plan.name,
+                cpu: plan.cpu,
+                ram: plan.ram,
+                disk: plan.disk,
             });
 
             const { error } = await stripe.redirectToCheckout({
@@ -699,3 +704,5 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
+
+    

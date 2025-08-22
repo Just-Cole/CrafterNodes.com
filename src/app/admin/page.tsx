@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { addGame, type GameSchema, updateAllGameImages, deleteGame, deletePlan, updateGame, updatePlan, addPlan } from '@/app/actions/admin';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus } from 'lucide-react';
+import { PlusCircle, Trash2, FilePlus2, RefreshCw, Edit, Gamepad, DollarSign, Plus, Cpu, HardDrive, MemoryStick } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { PricingData, Game as GameData, Plan as PlanData } from '@/lib/pricing';
@@ -27,6 +27,9 @@ const planSchema = z.object({
   price: z.string().min(1, "Price is required."),
   priceId: z.string().optional(),
   features: z.string().min(1, "Features are required."),
+  cpu: z.coerce.number({invalid_type_error: "Must be a number"}).min(0, "CPU must be a positive number."),
+  ram: z.coerce.number({invalid_type_error: "Must be a number"}).min(0, "RAM must be a positive number."),
+  disk: z.coerce.number({invalid_type_error: "Must be a number"}).min(0, "Disk must be a positive number."),
   icon: z.string().optional(),
   popular: z.boolean().default(false),
 });
@@ -64,7 +67,7 @@ function AddGameForm() {
       hint: '',
       pterodactylNestId: 1,
       pterodactylEggId: 1,
-      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
+      plans: [{ name: '', price: '', features: '', cpu: 100, ram: 2048, disk: 5120, popular: false, priceId: '', icon: '' }],
     },
   });
 
@@ -78,7 +81,13 @@ function AddGameForm() {
       ...data,
       pterodactylNestId: Number(data.pterodactylNestId),
       pterodactylEggId: Number(data.pterodactylEggId),
-      plans: data.plans.map(p => ({...p, features: p.features.split(',').map(s => s.trim())}))
+      plans: data.plans.map(p => ({
+          ...p,
+          features: p.features.split(',').map(s => s.trim()),
+          cpu: Number(p.cpu),
+          ram: Number(p.ram),
+          disk: Number(p.disk),
+        }))
     };
     const result = await addGame(dataForAction);
 
@@ -92,7 +101,7 @@ function AddGameForm() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: typeof result.error === 'string' ? result.error : 'There was an error submitting the form.',
+        description: typeof result.error === 'string' ? result.error : JSON.stringify(result.error),
       });
     }
   };
@@ -209,7 +218,7 @@ function AddGameForm() {
                 <div className="space-y-6">
                   {fields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <FormField
                             control={form.control}
                             name={`plans.${index}.name`}
@@ -245,28 +254,48 @@ function AddGameForm() {
                           />
                            <FormField
                             control={form.control}
-                            name={`plans.${index}.icon`}
+                            name={`plans.${index}.cpu`}
                             render={({ field }) => (
                               <FormItem>
+                                <FormLabel>CPU Limit (%)</FormLabel>
+                                <FormControl><Input type="number" placeholder="100" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.ram`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>RAM (MiB)</FormLabel>
+                                <FormControl><Input type="number" placeholder="2048" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name={`plans.${index}.disk`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Disk (MiB)</FormLabel>
+                                <FormControl><Input type="number" placeholder="5120" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name={`plans.${index}.icon`}
+                            render={({ field }) => (
+                              <FormItem className="lg:col-span-2">
                                 <FormLabel>Icon Path (Optional)</FormLabel>
                                 <FormControl><Input placeholder="/Plans-Icons/Game/icon.png" {...field} /></FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                          <div className="md:col-span-2">
-                             <FormField
-                              control={form.control}
-                              name={`plans.${index}.features`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Features (comma-separated)</FormLabel>
-                                  <FormControl><Textarea placeholder="Feature 1, Feature 2, Feature 3" {...field} /></FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
                            <FormField
                               control={form.control}
                               name={`plans.${index}.popular`}
@@ -286,6 +315,19 @@ function AddGameForm() {
                                 </FormItem>
                               )}
                             />
+                          <div className="md:col-span-full">
+                             <FormField
+                              control={form.control}
+                              name={`plans.${index}.features`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Features (comma-separated)</FormLabel>
+                                  <FormControl><Textarea placeholder="Feature 1, Feature 2, Feature 3" {...field} /></FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                        </div>
                        <Button type="button" variant="destructive" size="icon" className="absolute top-4 right-4" onClick={() => remove(index)}>
                           <Trash2 className="h-4 w-4" />
@@ -298,7 +340,7 @@ function AddGameForm() {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false })}
+                  onClick={() => append({ name: '', price: '', priceId: '', features: '', cpu: 100, ram: 2048, disk: 5120, icon: '', popular: false })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Plan
@@ -379,6 +421,9 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
             icon: plan.icon || '',
             popular: plan.popular || false,
             features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
+            cpu: plan.cpu,
+            ram: plan.ram,
+            disk: plan.disk,
         },
     });
     
@@ -387,6 +432,9 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
             ...data,
             id: plan.id!,
             features: data.features.split(',').map(s => s.trim()),
+            cpu: Number(data.cpu),
+            ram: Number(data.ram),
+            disk: Number(data.disk),
         });
 
         if (result.success) {
@@ -409,12 +457,14 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
             </DialogHeader>
              <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Plan Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MiB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MiB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem className="lg:col-span-2"> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField
                             control={form.control}
                             name="popular"
@@ -434,6 +484,8 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
                                 </FormItem>
                             )}
                         />
+                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-full"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+
                     </div>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
@@ -454,6 +506,9 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
             price: '',
             priceId: '',
             features: '',
+            cpu: 100,
+            ram: 2048,
+            disk: 5120,
             icon: '',
             popular: false,
         },
@@ -463,6 +518,9 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
         const result = await addPlan({
             ...data,
             features: data.features.split(',').map(s => s.trim()),
+            cpu: Number(data.cpu),
+            ram: Number(data.ram),
+            disk: Number(data.disk),
         });
         if (result.success) {
             toast({ title: 'Success!', description: result.message });
@@ -484,13 +542,15 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
             </DialogHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Plan Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField
+                       <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MiB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MiB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem className="lg:col-span-2"> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                       <FormField
                             control={form.control}
                             name="popular"
                             render={({ field }) => (
@@ -509,6 +569,7 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
                                 </FormItem>
                             )}
                         />
+                       <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-full"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                     </div>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Adding..." : "Add Plan"}
@@ -688,9 +749,14 @@ function ManageGamesTab() {
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                                 {game.plans.map(plan => (
                                                     <div key={plan.id} className="flex items-center justify-between rounded-md border p-4">
-                                                        <div className="font-medium">
-                                                            <p className="text-foreground">{plan.name}</p>
+                                                        <div>
+                                                            <p className="font-medium text-foreground">{plan.name}</p>
                                                             <p className="text-sm text-muted-foreground">{plan.price}/mo</p>
+                                                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                                                                <span className="flex items-center gap-1"><Cpu size={14} /> {plan.cpu}%</span>
+                                                                <span className="flex items-center gap-1"><MemoryStick size={14} /> {plan.ram} MiB</span>
+                                                                <span className="flex items-center gap-1"><HardDrive size={14} /> {plan.disk} MiB</span>
+                                                            </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <DialogTrigger asChild>

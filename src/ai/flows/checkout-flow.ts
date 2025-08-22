@@ -22,6 +22,11 @@ const CheckoutInputSchema = z.object({
   userName: z.string().describe("The name of the user making the purchase."),
   pterodactylNestId: z.number().describe("The Pterodactyl Nest ID for the game."),
   pterodactylEggId: z.number().describe("The Pterodactyl Egg ID for the game."),
+  gameName: z.string().describe("The name of the game."),
+  planName: z.string().describe("The name of the plan."),
+  cpu: z.number().describe("The CPU limit for the server."),
+  ram: z.number().describe("The RAM limit for the server."),
+  disk: z.number().describe("The disk limit for the server."),
 });
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 
@@ -59,6 +64,9 @@ async function createCheckoutSession(
       gameName: input.gameName,
       planName: input.planName,
       priceId: input.priceId,
+      cpu: input.cpu,
+      ram: input.ram,
+      disk: input.disk,
     },
   });
 
@@ -78,3 +86,4 @@ export const checkoutFlow = ai.defineFlow(
   createCheckoutSession
 );
 
+    

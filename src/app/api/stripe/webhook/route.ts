@@ -17,21 +17,20 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
-
-// This is a simplified example. In a real-world scenario, you would have a more
-// robust way to map Stripe Price IDs to Pterodactyl server configurations.
-// For example, you might store these mappings in your database or in a dedicated config file.
-const planToPterodactylSpec: { [key: string]: { cpu: number; ram: number; disk: number } } = {
-  // Minecraft Plans
-  "price_1RwDdDGiQmXe4wKvj0RexV7n": { cpu: 100, ram: 2048, disk: 5120 }, // Coal Plan
-  // ... add other plan mappings here
-};
-
 async function createPterodactylServer(userId: number, metadata: Stripe.Metadata) {
-  const { gameName, pterodactylNestId, pterodactylEggId, planName, priceId } = metadata;
+  const { 
+      gameName, 
+      planName, 
+      pterodactylNestId, 
+      pterodactylEggId, 
+      cpu, 
+      ram, 
+      disk 
+    } = metadata;
   
-  // You would expand this logic to map plans to Pterodactyl resource limits
-  const spec = planToPterodactylSpec[priceId] || { cpu: 100, ram: 1024, disk: 5120 };
+  if (!cpu || !ram || !disk) {
+      throw new Error("Missing resource allocation metadata (cpu, ram, or disk).");
+  }
 
   const serverDetails = await createPteroServer({
       name: `${gameName} Server - ${planName}`,
@@ -41,9 +40,9 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
       docker_image: `ghcr.io/pterodactyl/yolks:java_17`, // This might need to be dynamic based on the egg
       startup: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
       limits: {
-        memory: spec.ram,
-        disk: spec.disk,
-        cpu: spec.cpu,
+        memory: Number(ram),
+        disk: Number(disk),
+        cpu: Number(cpu),
         swap: 0,
         io: 500,
       },
@@ -52,12 +51,11 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
           allocations: 1,
           backups: 2,
       },
-      // This is now an object, not a single value
       allocation: {
-        default: 1, // You need an actual allocation ID here. Pterodactyl requires this. Or you can implement logic to find a free one.
+        default: 1, 
       },
       deploy: {
-          locations: [1], // Auto-select from location ID 1. This might need to be configured.
+          locations: [1], 
           dedicated_ip: false,
           port_range: [],
       }
@@ -170,3 +168,5 @@ export async function POST(req: Request) {
   await connection.end();
   return NextResponse.json({ received: true });
 }
+
+    
