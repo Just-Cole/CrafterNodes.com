@@ -4,12 +4,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSession } from "next-auth/react";
 import { getUserSubscriptions, type Subscription } from "@/app/actions/billing";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
+import { useSession } from "next-auth/react";
 
 const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
 
@@ -32,10 +32,12 @@ export default function BillingPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (session) {
+        if (session?.user?.id) {
             getUserSubscriptions()
                 .then(setSubscriptions)
                 .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
         }
     }, [session]);
 
@@ -102,7 +104,7 @@ export default function BillingPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
-                                        You don't have any subscriptions yet.
+                                        You have no active subscriptions.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -113,4 +115,3 @@ export default function BillingPage() {
         </div>
     );
 }
-
