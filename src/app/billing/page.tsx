@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
+import Link from "next/link";
 
 const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
 
@@ -93,9 +94,11 @@ export default function BillingPage() {
                                         </TableCell>
                                         <TableCell>{format(new Date(sub.createdAt), 'PPP')}</TableCell>
                                         <TableCell className="text-right">
-                                             <a href={PTERODACTYL_PANEL_URL} target="_blank" rel="noopener noreferrer">
-                                                <Button variant="outline">Open Panel</Button>
-                                             </a>
+                                            {sub.status === 'active' && sub.pterodactylServerId && (
+                                                <Button asChild>
+                                                    <Link href={`/dashboard/server/${sub.pterodactylServerId}`}>Manage</Link>
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

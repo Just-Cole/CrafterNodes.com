@@ -20,6 +20,7 @@ export interface Subscription {
     planName: string;
     status: string;
     createdAt: string;
+    pterodactylServerId: number | null;
 }
 
 export async function getUserSubscriptions(): Promise<Subscription[]> {
@@ -36,7 +37,8 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
                 g.name AS gameName,
                 p.name AS planName,
                 s.status,
-                s.createdAt
+                s.createdAt,
+                s.pterodactylServerId
             FROM subscriptions s
             JOIN users u ON s.userId = u.id
             JOIN games g ON s.gameId = g.id
@@ -45,7 +47,10 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
             ORDER BY s.createdAt DESC
         `, [session.user.id]);
         
-        return rows as Subscription[];
+        return rows.map(row => ({
+            ...row,
+            pterodactylServerId: row.pterodactylServerId
+        })) as Subscription[];
 
     } catch (error) {
         console.error("Failed to fetch user subscriptions:", error);

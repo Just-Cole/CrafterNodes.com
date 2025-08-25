@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { CreditCard, PanelLeft, Shield } from "lucide-react";
+import { CreditCard, PanelLeft, Shield, Server } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -94,6 +94,14 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/server')}>
+                    <Link href="/billing">
+                        <Server />
+                        My Servers
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/billing'}>
                     <Link href="/billing">
                         <CreditCard />
@@ -131,6 +139,10 @@ export default function DashboardLayout({
                         >
                             <Logo />
                             <span className="sr-only">CrafterNodes</span>
+                        </Link>
+                        <Link href="/billing" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                            <Server className="h-5 w-5" />
+                            My Servers
                         </Link>
                         <Link
                             href="/billing"
