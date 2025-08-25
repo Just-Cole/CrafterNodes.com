@@ -1,7 +1,6 @@
 
 'use server';
 
-//import { randomBytes } from 'crypto';
 import mysql from 'mysql2/promise';
 
 const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
@@ -28,7 +27,7 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
         headers: {
             'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            'Accept': 'Application/vnd.pterodactyl.v1+json',
         },
         // Don't cache API requests
         cache: 'no-store'
