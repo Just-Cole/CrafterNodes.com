@@ -1,7 +1,7 @@
 
 'use server';
 
-import { randomBytes } from 'crypto';
+//import { randomBytes } from 'crypto';
 import mysql from 'mysql2/promise';
 
 const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
@@ -131,16 +131,17 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
             [input.discordId]
         );
 
+        let pteroUser;
         // 2. If user exists in our DB and has a Pterodactyl ID, verify it exists in Pterodactyl
         if (userRows.length > 0 && userRows[0].pterodactylId) {
             console.log(`User found in DB with Ptero ID: ${userRows[0].pterodactylId}. Verifying...`);
             try {
-                const pteroUser = await pteroRequest(`/users/${userRows[0].pterodactylId}`);
+                pteroUser = await pteroRequest(`/users/${userRows[0].pterodactylId}`);
                 console.log(`Pterodactyl user ${pteroUser.attributes.id} verified.`);
                 return pteroUser;
             } catch (error: any) {
                 if (error.status === 404) {
-                    console.warn(`User ${userRows[0].pterodactylId} not found in Pterodactyl, despite being in DB. A new one must be created.`);
+                    console.warn(`User ${userRows[0].pterodactylId} not found in Pterodactyl, despite being in DB. A new one will be created.`);
                     // Fall through to the creation logic.
                 } else {
                     // For other errors, we re-throw.
@@ -151,7 +152,9 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
         
         // 3. If we're here, the user either isn't linked or the linked account is gone.
         // We will create a new Pterodactyl user. This now expects a password.
-        return await createNewPterodactylUser(input, connection);
+        pteroUser = await createNewPterodactylUser(input, connection);
+        return pteroUser;
+
 
     } catch (error) {
         console.error('Failed to get or create Pterodactyl user:', error);
