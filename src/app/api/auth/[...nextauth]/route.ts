@@ -58,11 +58,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 [session.user.id]
             );
 
-            if (rows.length > 0) {
+            if (rows.length > 0 && rows[0].pterodactylId) {
                 const pteroId = rows[0].pterodactylId;
-                // You might need a separate call to Pterodactyl to check for admin status
-                // For now, we assume a field `isAdmin` could exist on the ptero user object
-                // This is a placeholder for actual admin-checking logic.
                  const pteroUserResponse = await fetch(`${process.env.PTERODACTYL_PANEL_URL}/api/application/users/${pteroId}`, {
                     headers: {
                         'Authorization': `Bearer ${process.env.PTERODACTYL_API_KEY}`,
@@ -73,6 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const pteroUser = await pteroUserResponse.json();
                     session.user.isAdmin = pteroUser.attributes.root_admin;
                  } else {
+                    console.error(`Failed to fetch Pterodactyl user ${pteroId}: ${pteroUserResponse.statusText}`);
                     session.user.isAdmin = false;
                  }
 
