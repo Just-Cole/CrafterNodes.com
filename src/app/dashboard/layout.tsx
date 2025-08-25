@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,9 +8,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
 import { CreditCard, PanelLeft, Shield } from "lucide-react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const ADMIN_DISCORD_ID = "949172257345921045";
 
 function Logo() {
     return (
@@ -23,9 +26,37 @@ function Logo() {
 }
 
 function UserMenu() {
+    const { data: session } = useSession();
     return (
          <div className="flex items-center gap-4">
-            <Button>Login</Button>
+            {session ? (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
+                                <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
+                        {session?.user?.id === ADMIN_DISCORD_ID && (
+                          <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => signOut()}>
+                            Sign out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ) : (
+                <Button onClick={() => signIn("discord")}>
+                    Login
+                </Button>
+            )}
         </div>
     )
 }
@@ -35,7 +66,22 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+    const { data: session, status } = useSession();
     const pathname = usePathname();
+
+    if (status === 'loading') {
+        return <div>Loading...</div>;
+    }
+
+    if (status === 'unauthenticated') {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+                <p className="mb-8">You must be logged in to view this page.</p>
+                <Button onClick={() => signIn('discord')}>Login with Discord</Button>
+            </div>
+        )
+    }
   
     return (
     <SidebarProvider>
@@ -55,15 +101,16 @@ export default function DashboardLayout({
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-             {/* Admin link is now unprotected, but shown */}
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin')}>
-                    <Link href="/admin">
-                        <Shield />
-                        Admin
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+             {session?.user?.id === ADMIN_DISCORD_ID && (
+               <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/admin')}>
+                      <Link href="/admin">
+                          <Shield />
+                          Admin
+                      </Link>
+                  </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -92,10 +139,12 @@ export default function DashboardLayout({
                             <CreditCard className="h-5 w-5" />
                             Billing
                         </Link>
-                        <Link href="/admin" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                            <Shield className="h-5 w-5" />
-                            Admin
-                        </Link>
+                        {session?.user?.id === ADMIN_DISCORD_ID && (
+                            <Link href="/admin" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                                <Shield className="h-5 w-5" />
+                                Admin
+                            </Link>
+                        )}
                     </nav>
                 </SheetContent>
             </Sheet>

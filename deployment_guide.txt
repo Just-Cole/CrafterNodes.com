@@ -144,6 +144,14 @@ PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+
+# NextAuth Environment Variables
+NEXTAUTH_SECRET=generate_a_strong_secret_here # You can generate one with `openssl rand -base64 32`
+NEXTAUTH_URL=https://your-domain.com
+
+# Discord OAuth Environment Variables
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
 EOF
 
 # Build your Next.js app for production
@@ -188,14 +196,14 @@ CREATE TABLE `plans` (
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `externalId` varchar(255) NOT NULL,
-  `pterodactylId` int(11) DEFAULT NULL,
+  `discordId` varchar(255) NOT NULL,
+  `pterodactylId` int(11) NOT NULL,
   `email` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `externalId` (`externalId`),
+  UNIQUE KEY `discordId` (`discordId`),
   UNIQUE KEY `pterodactylId` (`pterodactylId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -371,3 +379,7 @@ sudo apt purge -y nodejs
 sudo apt purge -y mariadb-server
 sudo npm uninstall -g pm2
 sudo apt autoremove -y
+
+
+
+    

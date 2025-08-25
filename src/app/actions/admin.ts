@@ -2,9 +2,13 @@
 'use server';
 
 import { z } from 'zod';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 import SteamGridDb from 'steamgriddb';
 import mysql from 'mysql2/promise';
+
+const ADMIN_DISCORD_ID = "949172257345921045";
 
 // IMPORTANT: Replace this with your actual database connection string.
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
@@ -95,7 +99,10 @@ async function getSteamGridDBImage(gameName: string): Promise<string> {
 
 
 export async function addGame(formData: GameSchema) {
-  // TODO: Add authentication check here when login is re-implemented
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+    return { success: false, error: "Unauthorized" };
+  }
   
   const result = gameSchema.safeParse(formData);
   if (!result.success) {
@@ -162,7 +169,10 @@ export async function addGame(formData: GameSchema) {
 }
 
 export async function addPlan(formData: z.infer<typeof addPlanSchema>) {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
 
     const result = addPlanSchema.safeParse(formData);
     if (!result.success) {
@@ -201,7 +211,10 @@ export async function addPlan(formData: z.infer<typeof addPlanSchema>) {
 }
 
 export async function updateGame(formData: z.infer<typeof updateGameSchema>) {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
 
     const result = updateGameSchema.safeParse(formData);
     if (!result.success) {
@@ -228,7 +241,10 @@ export async function updateGame(formData: z.infer<typeof updateGameSchema>) {
 }
 
 export async function updatePlan(formData: z.infer<typeof updatePlanSchema>) {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
 
     const result = updatePlanSchema.safeParse(formData);
     if (!result.success) {
@@ -255,7 +271,10 @@ export async function updatePlan(formData: z.infer<typeof updatePlanSchema>) {
 }
 
 export async function updateAllGameImages() {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
     
     const connection = await getConnection();
     try {
@@ -288,7 +307,10 @@ export async function updateAllGameImages() {
 }
 
 export async function deleteGame(gameId: number) {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
 
     const connection = await getConnection();
     try {
@@ -306,7 +328,10 @@ export async function deleteGame(gameId: number) {
 }
 
 export async function deletePlan(planId: number) {
-    // TODO: Add authentication check here when login is re-implemented
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== ADMIN_DISCORD_ID) {
+        return { success: false, error: "Unauthorized" };
+    }
 
     const connection = await getConnection();
     try {
@@ -322,3 +347,5 @@ export async function deletePlan(planId: number) {
         await connection.end();
     }
 }
+
+    

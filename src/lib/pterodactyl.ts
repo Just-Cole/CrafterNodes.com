@@ -64,18 +64,18 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
 
 
 interface PteroUserInput {
-  externalId: string; // Generic external ID, was previously discordId
+  discordId: string;
   email: string;
   name: string;
   password?: string;
 }
 
-export async function checkIfPterodactylUserExists(externalId: string): Promise<boolean> {
+export async function checkIfPterodactylUserExists(discordId: string): Promise<boolean> {
     const connection = await getDbConnection();
     try {
         const [rows] = await connection.execute<mysql.RowDataPacket[]>(
-            'SELECT pterodactylId FROM users WHERE externalId = ?', // Using generic externalId
-            [externalId]
+            'SELECT pterodactylId FROM users WHERE discordId = ?',
+            [discordId]
         );
         return rows.length > 0 && !!rows[0].pterodactylId;
     } catch (error) {
@@ -91,8 +91,8 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
     try {
         // 1. Check our database first
         const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
-            'SELECT id, pterodactylId FROM users WHERE externalId = ?',
-            [input.externalId]
+            'SELECT id, pterodactylId FROM users WHERE discordId = ?',
+            [input.discordId]
         );
         if (userRows.length > 0 && userRows[0].pterodactylId) {
             console.log(`User found in DB with Ptero ID: ${userRows[0].pterodactylId}. Verifying...`);
@@ -110,46 +110,49 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
         }
 
         // 2. If not in DB or Ptero user was deleted, check Pterodactyl by external_id
-        console.log(`Checking Pterodactyl for user with external_id: ${input.externalId}`);
-        const existingUsers = await pteroRequest(`/users/external/${input.externalId}`);
+        console.log(`Checking Pterodactyl for user with external_id: ${input.discordId}`);
+        const existingUsers = await pteroRequest(`/users/external/${input.discordId}`);
+        
+        // The above endpoint returns the user object directly if found, or 404 if not.
+        // The pteroRequest handles the 404 by throwing an error.
         
         console.log(`Found existing user in Pterodactyl: ${existingUsers.attributes.id}`);
         // If found, update our database with the correct Pterodactyl ID
         await connection.execute(
-            'UPDATE users SET pterodactylId = ? WHERE externalId = ?',
-            [existingUsers.attributes.id, input.externalId]
+            'UPDATE users SET pterodactylId = ? WHERE discordId = ?',
+            [existingUsers.attributes.id, input.discordId]
         );
         return existingUsers;
 
     } catch (error: any) {
         if (error.status === 404) {
              // 3. If not found anywhere, create a new user
-            console.log(`No Pterodactyl user found for external ID ${input.externalId}. Creating a new one.`);
-            const { name, email, externalId } = input;
+            console.log(`No Pterodactyl user found for Discord ID ${input.discordId}. Creating a new one.`);
+            const { name, email, discordId } = input;
             const [firstName, ...lastNameParts] = name.split(' ');
             const lastName = lastNameParts.join(' ') || firstName;
             // Pterodactyl requires a password for user creation via API
             const password = input.password || randomBytes(16).toString('hex');
             
             const newUserPayload = {
-                external_id: externalId,
+                external_id: discordId,
                 email: email,
-                username: externalId, // Use a guaranteed unique value for username
+                username: discordId, // Use Discord ID for a guaranteed unique username
                 first_name: firstName,
                 last_name: lastName,
                 password: password,
             };
             
             const newPteroUser = await pteroRequest('/users', 'POST', newUserPayload);
-            console.log(`Successfully created Pterodactyl user ${newPteroUser.attributes.id} for external user ${externalId}`);
+            console.log(`Successfully created Pterodactyl user ${newPteroUser.attributes.id} for Discord user ${discordId}`);
 
             await connection.execute(
-                `INSERT INTO users (externalId, pterodactylId, email, name)
+                `INSERT INTO users (discordId, pterodactylId, email, name)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE pterodactylId = VALUES(pterodactylId), email = VALUES(email), name = VALUES(name)`,
-                [externalId, newPteroUser.attributes.id, email, name]
+                [discordId, newPteroUser.attributes.id, email, name]
             );
-            console.log(`Successfully created/updated database user record for external ID ${externalId}`);
+            console.log(`Successfully created/updated database user record for Discord ID ${discordId}`);
 
             return newPteroUser;
         } else {
@@ -170,3 +173,4 @@ export async function createPterodactylServer(serverConfig: any) {
         throw error;
     }
 }
+

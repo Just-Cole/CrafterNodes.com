@@ -98,39 +98,39 @@ export async function POST(req: Request) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
       
-      const { userId, gameId, planId } = session.metadata || {}; // userId is now the Pterodactyl User ID
+      const { userId: discordId, gameId, planId } = session.metadata || {};
 
-      if (!userId || !session.subscription || !gameId || !planId) {
+      if (!discordId || !session.subscription || !gameId || !planId) {
         console.error("Webhook received with missing metadata:", session.metadata);
         return NextResponse.json({ error: 'Missing required metadata for server provisioning.' }, { status: 400 });
       }
 
-      console.log('✅ Successful checkout for user:', userId);
+      console.log('✅ Successful checkout for user:', discordId);
       console.log("Attempting to provision server via Pterodactyl...");
 
       try {
         await connection.beginTransaction();
 
-        // With Discord login removed, we rely on the `userId` in metadata being the Pterodactyl ID
-        // This part of the flow will need to be redesigned when a new auth system is in place.
-        const pteroUserId = Number(userId);
+        const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
+            'SELECT id, pterodactylId FROM users WHERE discordId = ?',
+            [discordId]
+        );
 
-        const serverDetails = await createPterodactylServer(pteroUserId, session.metadata);
+        if (userRows.length === 0 || !userRows[0].pterodactylId) {
+            throw new Error(`Database user with Discord ID ${discordId} not found or not linked to Pterodactyl. The user may need to log into the panel first.`);
+        }
+        const dbUser = userRows[0];
+
+        console.log(`Found Pterodactyl user ID: ${dbUser.pterodactylId}`);
+
+        const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata);
         const pteroServerId = serverDetails.id;
         console.log("✅ Successfully created Pterodactyl server:", serverDetails.identifier);
-        
-        // This assumes a record in the `users` table already exists for this pterodactyl user.
-        // This might fail until a new user registration flow is built.
-        const [userRows] = await connection.execute<mysql.RowDataPacket[]>('SELECT id FROM users WHERE pterodactylId = ?', [pteroUserId]);
-        if (userRows.length === 0) {
-            throw new Error(`Could not find a user in our database with Pterodactyl ID ${pteroUserId}. Cannot create subscription.`);
-        }
-        const dbUserId = userRows[0].id;
         
         await connection.execute(
             `INSERT INTO subscriptions (userId, pterodactylServerId, gameId, planId, stripeSubscriptionId, status)
             VALUES (?, ?, ?, ?, ?, ?)`,
-            [dbUserId, pteroServerId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+            [dbUser.id, pteroServerId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
         );
         console.log(`✅ Successfully created subscription record in database.`);
 
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
       } catch (error) {
         await connection.rollback();
         console.error("❌ Pterodactyl provisioning failed:", error);
-        return NextResponse.json({ error: 'Failed to provision the game server.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to provision the game server. Please ensure you have logged into the panel at least once.' }, { status: 500 });
       }
 
       break;
@@ -168,3 +168,5 @@ export async function POST(req: Request) {
   await connection.end();
   return NextResponse.json({ received: true });
 }
+
+    

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
 import { getUserSubscriptions, type Subscription } from "@/app/actions/billing";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +27,17 @@ function SubscriptionStatusBadge({ status }: { status: string }) {
 }
 
 export default function BillingPage() {
+    const { data: session } = useSession();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Since login is removed, this will return an empty array for now.
-        getUserSubscriptions()
-            .then(setSubscriptions)
-            .finally(() => setLoading(false));
-    }, []);
+        if (session) {
+            getUserSubscriptions()
+                .then(setSubscriptions)
+                .finally(() => setLoading(false));
+        }
+    }, [session]);
 
 
     return (
@@ -55,7 +58,7 @@ export default function BillingPage() {
                 <CardHeader>
                     <CardTitle>Your Subscriptions</CardTitle>
                     <CardDescription>
-                        Here is a list of all your current and past game server subscriptions. Please log in to see your subscriptions.
+                        Here is a list of all your current and past game server subscriptions.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -99,7 +102,7 @@ export default function BillingPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
-                                        You need to be logged in to see your subscriptions.
+                                        You don't have any subscriptions yet.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -110,3 +113,4 @@ export default function BillingPage() {
         </div>
     );
 }
+
