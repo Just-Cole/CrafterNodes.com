@@ -155,6 +155,7 @@ function Footer() {
 }
 
 const accountSetupSchema = z.object({
+    email: z.string().email({ message: "Please enter a valid email address." }),
     username: z.string().min(1, { message: "Username is required." }),
     firstName: z.string().min(1, { message: "First name is required." }),
     lastName: z.string().min(1, { message: "Last name is required." }),
@@ -175,6 +176,7 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
     const form = useForm<z.infer<typeof accountSetupSchema>>({
         resolver: zodResolver(accountSetupSchema),
         defaultValues: { 
+            email: '',
             username: '',
             firstName: session?.user?.name.split(' ')[0] || '',
             lastName: session?.user?.name.split(' ').slice(1).join(' ') || '',
@@ -186,6 +188,7 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
     useEffect(() => {
         if (session?.user?.name) {
             form.reset({
+                email: form.getValues('email'), // Keep existing email if typed
                 username: form.getValues('username'), // Keep existing username if typed
                 firstName: session.user.name.split(' ')[0] || '',
                 lastName: session.user.name.split(' ').slice(1).join(' ') || '',
@@ -203,7 +206,7 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
 
         const result = await completeAccountSetup({
             discordId: session.user.id,
-            email: session.user.email,
+            email: data.email,
             username: data.username,
             firstName: data.firstName,
             lastName: data.lastName,
@@ -224,7 +227,7 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
                 <DialogHeader>
                     <DialogTitle>Set Up Your Panel Account</DialogTitle>
                     <DialogDescription>
-                       To continue, please create an account for the game control panel. Your email is pre-filled.
+                       To continue, please create an account for the game control panel.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -236,7 +239,7 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
                                 <FormItem>
                                     <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                        <Input type="email" value={session?.user?.email || ''} readOnly disabled />
+                                        <Input type="email" placeholder="Enter your panel account email" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
