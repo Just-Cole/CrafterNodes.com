@@ -29,33 +29,21 @@ export const authOptions: AuthOptions = {
                 return false; // Prevent sign-in
             }
 
+            // This sign-in will now only create a basic user record.
+            // The Pterodactyl account will be created on-demand when the user
+            // tries to purchase a server for the first time.
             let connection;
             try {
                 connection = await getDbConnection();
-
-                // Get or create Pterodactyl user first to get the Pterodactyl ID
-                const pteroUser = await getOrCreatePterodactylUser({
-                    discordId: user.id,
-                    email: profile.email,
-                    name: user.name,
-                });
-
-                if (!pteroUser?.attributes?.id) {
-                     console.error("Failed to get or create Pterodactyl user or ID is missing.");
-                     return false; // Prevent sign-in if Ptero user creation fails
-                }
-                const pterodactylId = pteroUser.attributes.id;
-
                 await connection.execute(
-                    `INSERT INTO users (discordId, pterodactylId, email, name)
-                     VALUES (?, ?, ?, ?)
-                     ON DUPLICATE KEY UPDATE email = VALUES(email), name = VALUES(name), pterodactylId = VALUES(pterodactylId)`,
-                    [user.id, pterodactylId, profile.email, user.name]
+                    `INSERT INTO users (discordId, email, name)
+                     VALUES (?, ?, ?)
+                     ON DUPLICATE KEY UPDATE email = VALUES(email), name = VALUES(name)`,
+                    [user.id, profile.email, user.name]
                 );
-                
-                return true; // Sign-in successful
+                return true;
             } catch (error) {
-                console.error("Error during signIn callback:", error);
+                console.error("Error during simplified signIn callback:", error);
                 return false; // Prevent sign-in on error
             } finally {
                 if (connection) {
@@ -81,5 +69,3 @@ export const authOptions: AuthOptions = {
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
-
-// help me with this next auth stuff

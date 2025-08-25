@@ -27,11 +27,12 @@ export async function completeAccountSetup(input: z.infer<typeof accountSetupSch
   }
 
   try {
+    // This function now handles both creation and linking.
     await getOrCreatePterodactylUser({
       discordId: result.data.discordId,
       email: result.data.email,
       name: result.data.name,
-      password: result.data.password,
+      password: result.data.password, // Password is now required for explicit setup
     });
     return { success: true };
   } catch (error) {
@@ -44,13 +45,14 @@ export async function completeAccountSetup(input: z.infer<typeof accountSetupSch
 }
 
 
-export async function checkIfPterodactylUserExists(discordId: string) {
+export async function checkIfPterodactylUserExists(discordId: string): Promise<boolean> {
     const session = await getServerSession(authOptions);
     if (!session || session.user?.id !== discordId) {
-        // Basic security check
+        // Basic security check to ensure the logged-in user is checking their own status
+        console.warn(`Unauthorized attempt to check Pterodactyl user for Discord ID: ${discordId}`);
         return false;
     }
-
+    // We need to import the actual check from the library
     const { checkIfPterodactylUserExists: checkDb } = await import('@/lib/pterodactyl');
     return checkDb(discordId);
 }

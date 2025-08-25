@@ -315,9 +315,8 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
             toast({
                 title: "Authentication Required",
                 description: "Please log in to purchase a plan.",
-                variant: "destructive",
+                action: <Button onClick={() => signIn('discord')}>Login</Button>
             });
-            signIn('discord');
             return;
         }
 
@@ -699,5 +698,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
-    
