@@ -21,8 +21,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
 
 // Make sure to replace with your actual Stripe publishable key
@@ -60,51 +58,6 @@ const features = [
     { icon: <MapPin className="h-8 w-8 text-primary" />, title: "New York City", description: "Our servers are currently hosted in New York City, providing low latency to players in North America. More locations are coming soon!" },
 ];
 
-function UserMenu() {
-    const { data: session } = useSession();
-
-    if (!session?.user) {
-        return <Button onClick={() => signIn('discord')}>Login with Discord</Button>;
-    }
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={session.user.image!} alt={session.user.name!} />
-                        <AvatarFallback>{session.user.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{session.user.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                            {session.user.email}
-                        </p>
-                    </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/billing">Billing</Link>
-                </DropdownMenuItem>
-                {session.user.isAdmin && (
-                    <DropdownMenuItem asChild>
-                        <Link href="/admin">Admin Panel</Link>
-                    </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
-                    Sign out
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
-
 function Header() {
 
     return (
@@ -120,7 +73,9 @@ function Header() {
                     <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary">Features</Link>
                 </nav>
                 <div className="flex items-center gap-4">
-                    <UserMenu />
+                    <Button>
+                        Login
+                    </Button>
                 </div>
             </div>
         </header>
@@ -171,84 +126,16 @@ function Footer() {
 }
 
 export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
-    const { data: session } = useSession();
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const { toast } = useToast();
-    const [isPurchasing, setIsPurchasing] = useState(false);
 
-    const handlePurchaseClick = async (plan: typeof game.plans[0]) => {
-        if (!session?.user) {
-            toast({
-                title: "Authentication Required",
-                description: "Please log in with Discord to purchase a plan.",
-                variant: "destructive",
-            });
-            return;
-        }
 
-        setIsPurchasing(true);
+    const handlePurchaseClick = (plan: typeof game.plans[0]) => {
         toast({
-            title: "Preparing Your Order...",
-            description: "Please wait while we prepare your checkout session.",
+            title: "Authentication Required",
+            description: "Login functionality is temporarily disabled. Please check back later.",
+            variant: "destructive",
         });
-
-
-        try {
-            // First, ensure the Pterodactyl user exists
-            const pteroUser = await getOrCreatePterodactylUser({
-                discordId: session.user.id,
-                email: session.user.email!,
-                name: session.user.name!,
-            });
-            const pteroUserId = pteroUser.attributes.id;
-
-            if (!plan.priceId) {
-                throw new Error("This plan is not available for purchase yet.");
-            }
-            if (!game.pterodactylNestId || !game.pterodactylEggId) {
-                throw new Error("This game is not configured for automatic deployment.");
-            }
-
-            const checkoutResult = await checkoutFlow({
-                priceId: plan.priceId,
-                successUrl: `${window.location.origin}/billing?session_id={CHECKOUT_SESSION_ID}`,
-                cancelUrl: window.location.href,
-                gameId: game.id!,
-                planId: plan.id!,
-                userId: pteroUserId, // Pass the Pterodactyl User ID
-                userEmail: session.user.email!,
-                userName: session.user.name!,
-                pterodactylNestId: game.pterodactylNestId,
-                pterodactylEggId: game.pterodactylEggId,
-                gameName: game.name,
-                planName: plan.name,
-                cpu: plan.cpu,
-                ram: plan.ram,
-                disk: plan.disk,
-            });
-
-            const stripe = await stripePromise;
-            if (!stripe) {
-                throw new Error("Stripe.js has not loaded yet.");
-            }
-
-            const { error } = await stripe.redirectToCheckout({
-                sessionId: checkoutResult.sessionId,
-            });
-
-            if (error) {
-                throw new Error(`Stripe Checkout Error: ${error.message}`);
-            }
-
-        } catch (error: any) {
-             toast({
-                title: "Purchase Failed",
-                description: error.message || "An unexpected error occurred. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsPurchasing(false);
-        }
     };
 
 
@@ -297,9 +184,8 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     <Button
                                         className="w-full mt-6"
                                         onClick={() => handlePurchaseClick(plan)}
-                                        disabled={isPurchasing}
                                     >
-                                        {isPurchasing ? 'Processing...' : 'Get Started'}
+                                        Get Started
                                     </Button>
                                 </CardContent>
                             </Card>

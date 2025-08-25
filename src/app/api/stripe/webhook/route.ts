@@ -111,13 +111,16 @@ export async function POST(req: Request) {
       try {
         await connection.beginTransaction();
 
+        // With Discord login removed, we rely on the `userId` in metadata being the Pterodactyl ID
+        // This part of the flow will need to be redesigned when a new auth system is in place.
         const pteroUserId = Number(userId);
 
         const serverDetails = await createPterodactylServer(pteroUserId, session.metadata);
         const pteroServerId = serverDetails.id;
         console.log("✅ Successfully created Pterodactyl server:", serverDetails.identifier);
         
-        // Find the internal database user ID from the Pterodactyl user ID.
+        // This assumes a record in the `users` table already exists for this pterodactyl user.
+        // This might fail until a new user registration flow is built.
         const [userRows] = await connection.execute<mysql.RowDataPacket[]>('SELECT id FROM users WHERE pterodactylId = ?', [pteroUserId]);
         if (userRows.length === 0) {
             throw new Error(`Could not find a user in our database with Pterodactyl ID ${pteroUserId}. Cannot create subscription.`);

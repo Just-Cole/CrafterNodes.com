@@ -1,100 +1,72 @@
 
-import NextAuth from "next-auth"
-import Discord from "next-auth/providers/discord"
-import { initialUserSetup } from "@/app/actions/user";
+import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
+import NextAuth, { AuthOptions } from "next-auth";
+import DiscordProvider from "next-auth/providers/discord";
 import mysql from 'mysql2/promise';
 
-// IMPORTANT: Replace this with your actual database connection string.
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
-async function getConnection() {
+async function getDbConnection() {
     if (!DATABASE_URL) {
-        throw new Error(
-            'DATABASE_URL is not set. Please add it directly in the auth route.'
-        );
+        throw new Error('DATABASE_URL is not set.');
     }
     return mysql.createConnection(DATABASE_URL);
 }
 
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
-    Discord({
-        clientId: process.env.DISCORD_CLIENT_ID!,
-        clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-        // Define scopes needed. 'identify' and 'email' are common.
-        authorization: { params: { scope: 'identify email' } },
-    }),
-  ],
-  callbacks: {
-    async signIn({ user, account }) {
-        if (account?.provider === 'discord') {
-            if (!user.id || !user.email || !user.name) return false;
-            
-            // Perform the initial setup which creates users in the DB and Pterodactyl
-            const setupResult = await initialUserSetup({
-                discordId: user.id,
-                email: user.email,
-                name: user.name,
-            });
+export const authOptions: AuthOptions = {
+    providers: [
+        DiscordProvider({
+            clientId: process.env.DISCORD_CLIENT_ID!,
+            clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+            authorization: "https://discord.com/api/oauth2/authorize?scope=identify+email",
+        }),
+    ],
+    callbacks: {
+        async jwt({ token, user, account, profile }) {
+            // On sign in
+            if (user && account && profile) {
+                token.id = user.id; // Discord user ID
+                token.name = profile.username;
+                token.email = profile.email;
+                token.image = profile.image_url;
 
-            // If the setup fails, prevent sign-in
-            if (!setupResult.success) {
-                console.error("Failed to complete initial user setup on sign-in:", setupResult.error);
-                return false;
+                try {
+                    console.log("Attempting to get or create Pterodactyl user...");
+                    const pteroUser = await getOrCreatePterodactylUser({
+                        externalId: user.id,
+                        email: profile.email!,
+                        name: profile.global_name || profile.username,
+                    });
+                    
+                    if (pteroUser && pteroUser.attributes) {
+                        console.log("Pterodactyl user confirmed/created with ID:", pteroUser.attributes.id);
+                        token.pterodactylId = pteroUser.attributes.id;
+                        token.isAdmin = pteroUser.attributes.root_admin;
+                    } else {
+                        console.error("Failed to get or create a valid Pterodactyl user object.");
+                        token.pterodactylId = null;
+                        token.isAdmin = false;
+                    }
+
+                } catch (error) {
+                    console.error("Error in JWT callback during Pterodactyl user creation:", error);
+                    // Prevent login if Pterodactyl user creation fails
+                    return Promise.reject(new Error("Failed to provision Pterodactyl account."));
+                }
             }
-        }
-        return true; // Allow sign-in
+            return token;
+        },
+        async session({ session, token }) {
+            session.user.id = token.id as string;
+            session.user.pterodactylId = token.pterodactylId as number;
+            session.user.isAdmin = token.isAdmin as boolean;
+            return session;
+        },
     },
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub; // token.sub is the user's ID from the provider (Discord ID)
+    secret: process.env.NEXTAUTH_SECRET,
+};
 
-        const connection = await getConnection();
-        try {
-            // Fetch the user from your database to check for admin status
-            const [rows] = await connection.execute<mysql.RowDataPacket[]>(
-                'SELECT pterodactylId FROM users WHERE externalId = ?',
-                [session.user.id]
-            );
+const handler = NextAuth(authOptions);
 
-            if (rows.length > 0 && rows[0].pterodactylId) {
-                const pteroId = rows[0].pterodactylId;
-                 const pteroUserResponse = await fetch(`${process.env.PTERODACTYL_PANEL_URL}/api/application/users/${pteroId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.PTERODACTYL_API_KEY}`,
-                        'Accept': 'application/json',
-                    },
-                 });
-                 if (pteroUserResponse.ok) {
-                    const pteroUser = await pteroUserResponse.json();
-                    session.user.isAdmin = pteroUser.attributes.root_admin;
-                 } else {
-                    console.error(`Failed to fetch Pterodactyl user ${pteroId}: ${pteroUserResponse.statusText}`);
-                    session.user.isAdmin = false;
-                 }
-
-            } else {
-                session.user.isAdmin = false;
-            }
-        } catch (error) {
-            console.error("Error fetching user admin status:", error);
-            session.user.isAdmin = false;
-        } finally {
-            await connection.end();
-        }
-      }
-      return session;
-    },
-    async jwt({ token, user, account }) {
-      // On initial sign-in, user and account objects are available
-      if (account && user) {
-        // Persist the user ID from the provider into the token
-        token.id = user.id;
-      }
-      return token;
-    },
-  },
-  // Add secret for production environments
-  secret: process.env.AUTH_SECRET,
-})
+export { handler as GET, handler as POST };

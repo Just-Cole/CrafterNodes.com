@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
-import { useSession } from "next-auth/react";
 
 const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
 
@@ -27,19 +26,15 @@ function SubscriptionStatusBadge({ status }: { status: string }) {
 }
 
 export default function BillingPage() {
-    const { data: session } = useSession();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (session?.user?.id) {
-            getUserSubscriptions()
-                .then(setSubscriptions)
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
-        }
-    }, [session]);
+        // Since login is removed, this will return an empty array for now.
+        getUserSubscriptions()
+            .then(setSubscriptions)
+            .finally(() => setLoading(false));
+    }, []);
 
 
     return (
@@ -60,7 +55,7 @@ export default function BillingPage() {
                 <CardHeader>
                     <CardTitle>Your Subscriptions</CardTitle>
                     <CardDescription>
-                        Here is a list of all your current and past game server subscriptions.
+                        Here is a list of all your current and past game server subscriptions. Please log in to see your subscriptions.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -104,7 +99,7 @@ export default function BillingPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
-                                        You have no active subscriptions.
+                                        You need to be logged in to see your subscriptions.
                                     </TableCell>
                                 </TableRow>
                             )}
