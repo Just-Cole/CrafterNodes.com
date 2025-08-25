@@ -2,6 +2,7 @@
 import NextAuth, { type AuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
 import mysql from 'mysql2/promise';
+import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
@@ -32,22 +33,35 @@ export const authOptions: AuthOptions = {
   events: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'discord' && user.id && user.email && user.name) {
-        // When a user signs in with Discord, we'll create a record for them in our DB
-        // if one doesn't already exist. The Pterodactyl account creation is now handled
-        // separately during the first checkout.
         let connection;
         try {
-          connection = await getDbConnection();
-          // Use INSERT ... ON DUPLICATE KEY UPDATE to avoid errors if the user already exists
-          await connection.execute(
-            `INSERT INTO users (discordId, email, name)
-             VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE email = VALUES(email), name = VALUES(name)`,
-            [user.id, user.email, user.name]
-          );
-          console.log(`[Auth] User ${user.name} signed in. Ensured database record exists.`);
+            // First, ensure a Pterodactyl user exists to get the ID
+            const pteroUser = await getOrCreatePterodactylUser({
+              discordId: user.id,
+              email: user.email,
+              name: user.name,
+              // A password is not needed here as getOrCreate handles it if creation is required
+            });
+
+            if (!pteroUser?.attributes?.id) {
+                throw new Error("Failed to get or create Pterodactyl user ID.");
+            }
+            const pterodactylId = pteroUser.attributes.id;
+
+            // Now, insert into our database with the Pterodactyl ID
+            connection = await getDbConnection();
+            await connection.execute(
+                `INSERT INTO users (discordId, pterodactylId, email, name)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE pterodactylId = VALUES(pterodactylId), email = VALUES(email), name = VALUES(name)`,
+                [user.id, pterodactylId, user.email, user.name]
+            );
+            console.log(`[Auth] User ${user.name} signed in. Ensured database and Pterodactyl records exist.`);
         } catch (error) {
-          console.error('[Auth] Failed to create or update user record on sign-in:', error);
+          console.error('[Auth] Failed to complete sign-in process:', error);
+          // Throwing the error here will cause the generic "Callback" error page,
+          // which is the expected behavior when the sign-in flow fails.
+          throw error; 
         } finally {
             await connection?.end();
         }
