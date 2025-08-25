@@ -66,7 +66,9 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
 interface PteroUserInput {
   discordId: string;
   email: string;
-  name: string;
+  username: string;
+  firstName: string;
+  lastName: string;
   password?: string;
 }
 
@@ -90,9 +92,7 @@ export async function checkIfPterodactylUserExists(discordId: string): Promise<b
 
 async function createNewPterodactylUser(input: PteroUserInput, connection: mysql.Connection) {
     console.log(`No Pterodactyl user found for Discord ID ${input.discordId}. Creating a new one.`);
-    const { name, email, discordId } = input;
-    const [firstName, ...lastNameParts] = name.split(' ');
-    const lastName = lastNameParts.join(' ') || firstName;
+    const { username, email, firstName, lastName, discordId } = input;
     
     // In the explicit setup flow, a password MUST be provided.
     if (!input.password) {
@@ -102,7 +102,7 @@ async function createNewPterodactylUser(input: PteroUserInput, connection: mysql
     const newUserPayload = {
         external_id: discordId,
         email: email,
-        username: discordId, // Use Discord ID for a guaranteed unique username
+        username: username,
         first_name: firstName,
         last_name: lastName,
         password: input.password,

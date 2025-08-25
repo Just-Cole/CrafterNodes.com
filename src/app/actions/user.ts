@@ -9,7 +9,9 @@ import { authOptions } from '../api/auth/[...nextauth]/route';
 const accountSetupSchema = z.object({
   discordId: z.string(),
   email: z.string().email(),
-  name: z.string(),
+  username: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   password: z.string().min(8),
 });
 
@@ -31,7 +33,9 @@ export async function completeAccountSetup(input: z.infer<typeof accountSetupSch
     await getOrCreatePterodactylUser({
       discordId: result.data.discordId,
       email: result.data.email,
-      name: result.data.name,
+      username: result.data.username,
+      firstName: result.data.firstName,
+      lastName: result.data.lastName,
       password: result.data.password, // Password is now required for explicit setup
     });
     return { success: true };

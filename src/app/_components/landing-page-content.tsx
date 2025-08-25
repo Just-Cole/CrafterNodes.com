@@ -155,6 +155,9 @@ function Footer() {
 }
 
 const accountSetupSchema = z.object({
+    username: z.string().min(1, { message: "Username is required." }),
+    firstName: z.string().min(1, { message: "First name is required." }),
+    lastName: z.string().min(1, { message: "Last name is required." }),
     password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
     confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -168,10 +171,29 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
     const { toast } = useToast();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const form = useForm<z.infer<typeof accountSetupSchema>>({
         resolver: zodResolver(accountSetupSchema),
-        defaultValues: { password: '', confirmPassword: '' },
+        defaultValues: { 
+            username: '',
+            firstName: session?.user?.name.split(' ')[0] || '',
+            lastName: session?.user?.name.split(' ').slice(1).join(' ') || '',
+            password: '', 
+            confirmPassword: '' 
+        },
     });
+
+    useEffect(() => {
+        if (session?.user?.name) {
+            form.reset({
+                username: form.getValues('username'), // Keep existing username if typed
+                firstName: session.user.name.split(' ')[0] || '',
+                lastName: session.user.name.split(' ').slice(1).join(' ') || '',
+                password: '',
+                confirmPassword: ''
+            });
+        }
+    }, [session, form]);
 
     const onSubmit = async (data: z.infer<typeof accountSetupSchema>) => {
         if (!session?.user) {
@@ -182,7 +204,9 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
         const result = await completeAccountSetup({
             discordId: session.user.id,
             email: session.user.email,
-            name: session.user.name,
+            username: data.username,
+            firstName: data.firstName,
+            lastName: data.lastName,
             password: data.password,
         });
 
@@ -200,11 +224,65 @@ function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boo
                 <DialogHeader>
                     <DialogTitle>Set Up Your Panel Account</DialogTitle>
                     <DialogDescription>
-                        Create a password for the game control panel. You will use your email ({session?.user?.email}) and this password to log in.
+                       To continue, please create an account for the game control panel. Your email is pre-filled.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" value={session?.user?.email || ''} readOnly disabled />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="username"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter a username" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="firstName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>First Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Your first name" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="lastName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Last Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Your last name" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
                             name="password"
