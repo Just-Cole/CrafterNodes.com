@@ -3,11 +3,8 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-const ADMIN_DISCORD_ID = "949172257345921045";
 
 function Logo() {
     return (
@@ -21,8 +18,6 @@ function Logo() {
 }
 
 function Header() {
-    const { data: session } = useSession();
-
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between">
@@ -30,34 +25,7 @@ function Header() {
                   <Logo />
                 </Link>
                 <div className="flex items-center gap-4">
-                    {session ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
-                                        <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                                <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
-                                {session?.user?.id === ADMIN_DISCORD_ID && (
-                                  <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => signOut()}>
-                                    Sign out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <Button onClick={() => signIn("discord")}>
-                            Login
-                        </Button>
-                    )}
+                    <Button>Login</Button>
                 </div>
             </div>
         </header>
