@@ -1,6 +1,7 @@
 
-import NextAuth, { type AuthOptions } from "next-auth"
-import DiscordProvider from "next-auth/providers/discord"
+import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
+import NextAuth, { AuthOptions } from "next-auth";
+import DiscordProvider from "next-auth/providers/discord";
 import mysql from 'mysql2/promise';
 import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
@@ -15,61 +16,58 @@ async function getDbConnection() {
 
 
 export const authOptions: AuthOptions = {
-  providers: [
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    }),
-  ],
-  secret: process.env.NEXTAUTH_SECRET,
-  callbacks: {
-    async session({ session, token }: { session: any, token: any }) {
-      if (session?.user) {
-        session.user.id = token.sub; // token.sub is the user's Discord ID
-      }
-      return session;
-    },
-  },
-  events: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'discord' && user.id && user.email && user.name) {
-        let connection;
-        try {
-            // First, ensure a Pterodactyl user exists to get the ID
-            const pteroUser = await getOrCreatePterodactylUser({
-              discordId: user.id,
-              email: user.email,
-              name: user.name,
-              // A password is not needed here as getOrCreate handles it if creation is required
-            });
+    providers: [
+        DiscordProvider({
+            clientId: process.env.DISCORD_CLIENT_ID!,
+            clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+            authorization: "https://discord.com/api/oauth2/authorize?scope=identify+email",
+        }),
+    ],
+    callbacks: {
+        async jwt({ token, user, account, profile }) {
+            // On sign in
+            if (user && account && profile) {
+                token.id = user.id; // Discord user ID
+                token.name = profile.username;
+                token.email = profile.email;
+                token.image = profile.image_url;
 
-            if (!pteroUser?.attributes?.id) {
-                throw new Error("Failed to get or create Pterodactyl user ID.");
+                try {
+                    console.log("Attempting to get or create Pterodactyl user...");
+                    const pteroUser = await getOrCreatePterodactylUser({
+                        externalId: user.id,
+                        email: profile.email!,
+                        name: profile.global_name || profile.username,
+                    });
+                    
+                    if (pteroUser && pteroUser.attributes) {
+                        console.log("Pterodactyl user confirmed/created with ID:", pteroUser.attributes.id);
+                        token.pterodactylId = pteroUser.attributes.id;
+                        token.isAdmin = pteroUser.attributes.root_admin;
+                    } else {
+                        console.error("Failed to get or create a valid Pterodactyl user object.");
+                        token.pterodactylId = null;
+                        token.isAdmin = false;
+                    }
+
+                } catch (error) {
+                    console.error("Error in JWT callback during Pterodactyl user creation:", error);
+                    // Prevent login if Pterodactyl user creation fails
+                    return Promise.reject(new Error("Failed to provision Pterodactyl account."));
+                }
             }
-            const pterodactylId = pteroUser.attributes.id;
+            return token;
+        },
+        async session({ session, token }) {
+            session.user.id = token.id as string;
+            session.user.pterodactylId = token.pterodactylId as number;
+            session.user.isAdmin = token.isAdmin as boolean;
+            return session;
+        },
+    },
+    secret: process.env.NEXTAUTH_SECRET,
+};
 
-            // Now, insert into our database with the Pterodactyl ID
-            connection = await getDbConnection();
-            await connection.execute(
-                `INSERT INTO users (discordId, pterodactylId, email, name)
-                 VALUES (?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE pterodactylId = VALUES(pterodactylId), email = VALUES(email), name = VALUES(name)`,
-                [user.id, pterodactylId, user.email, user.name]
-            );
-            console.log(`[Auth] User ${user.name} signed in. Ensured database and Pterodactyl records exist.`);
-        } catch (error) {
-          console.error('[Auth] Failed to complete sign-in process:', error);
-          // Throwing the error here will cause the generic "Callback" error page,
-          // which is the expected behavior when the sign-in flow fails.
-          throw error; 
-        } finally {
-            await connection?.end();
-        }
-      }
-    }
-  }
-}
+const handler = NextAuth(authOptions);
 
-const handler = NextAuth(authOptions)
-
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST };

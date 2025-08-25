@@ -137,8 +137,7 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
             const newUserPayload = {
                 external_id: discordId,
                 email: email,
-                // Create a unique username to avoid conflicts
-                username: name.replace(/[^a-zA-Z0-9]/g, '') + `_${discordId.slice(-4)}`,
+                username: discordId, // Use Discord ID for a guaranteed unique username
                 first_name: firstName,
                 last_name: lastName,
                 password: password,
@@ -174,3 +173,4 @@ export async function createPterodactylServer(serverConfig: any) {
         throw error;
     }
 }
+
