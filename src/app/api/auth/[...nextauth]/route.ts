@@ -35,6 +35,9 @@ export const authOptions: AuthOptions = {
             let connection;
             try {
                 connection = await getDbConnection();
+                // This query ensures that if the user already exists (based on the unique discordId),
+                // it updates their email and name. If they don't exist, it inserts a new record.
+                // This handles both new and returning users gracefully.
                 await connection.execute(
                     `INSERT INTO users (discordId, email, name)
                      VALUES (?, ?, ?)
