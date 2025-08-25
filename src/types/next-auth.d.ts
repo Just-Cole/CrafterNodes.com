@@ -1,20 +1,25 @@
 
-import NextAuth from "next-auth"
+import NextAuth, { DefaultSession } from "next-auth"
 
 declare module "next-auth" {
   /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
+   * Extends the built-in session to add the `isAdmin` property.
    */
   interface Session {
-    user: {
-      /** The user's name. */
-      name: string
-       /** The user's email. */
-      email: string
-       /** The user's image. */
-      image: string
-      /** The user's unique ID from the provider. */
-      id: string
-    }
+    user?: {
+      id: string;
+      isAdmin?: boolean;
+    } & DefaultSession["user"]
+  }
+
+   interface User {
+    isAdmin?: boolean
+  }
+}
+
+declare module "next-auth/jwt" {
+  /** Extends the built-in JWT type. */
+  interface JWT {
+    isAdmin?: boolean
   }
 }

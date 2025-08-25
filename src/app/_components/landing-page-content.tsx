@@ -10,7 +10,6 @@ import { ShieldCheck, Rocket, Zap, Server, CheckCircle, Star, MapPin, Users, Lif
 import Link from "next/link";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
@@ -22,13 +21,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { completeAccountSetup, checkIfPterodactylUserExists } from "../actions/user";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-const ADMIN_DISCORD_ID = "949172257345921045";
 const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
 
 
@@ -61,8 +60,52 @@ const features = [
     { icon: <MapPin className="h-8 w-8 text-primary" />, title: "New York City", description: "Our servers are currently hosted in New York City, providing low latency to players in North America. More locations are coming soon!" },
 ];
 
-function Header() {
+function UserMenu() {
     const { data: session } = useSession();
+
+    if (!session?.user) {
+        return <Button onClick={() => signIn('discord')}>Login with Discord</Button>;
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={session.user.image!} alt={session.user.name!} />
+                        <AvatarFallback>{session.user.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                            {session.user.email}
+                        </p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/billing">Billing</Link>
+                </DropdownMenuItem>
+                {session.user.isAdmin && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/admin">Admin Panel</Link>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                    Sign out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+
+function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,34 +120,7 @@ function Header() {
                     <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary">Features</Link>
                 </nav>
                 <div className="flex items-center gap-4">
-                    {session ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
-                                        <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                                <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
-                                {session?.user?.id === ADMIN_DISCORD_ID && (
-                                  <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => signOut()}>
-                                    Sign out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <Button onClick={() => signIn("discord")}>
-                            Login
-                        </Button>
-                    )}
+                    <UserMenu />
                 </div>
             </div>
         </header>
@@ -154,132 +170,52 @@ function Footer() {
     );
 }
 
-const accountSetupSchema = z.object({
-    password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
-    confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-});
-
-
-function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boolean, onOpenChange: (open: boolean) => void, onSetupComplete: () => void }) {
+export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
     const { data: session } = useSession();
+    const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const { toast } = useToast();
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const form = useForm<z.infer<typeof accountSetupSchema>>({
-        resolver: zodResolver(accountSetupSchema),
-        defaultValues: { password: '', confirmPassword: '' },
-    });
+    const [isPurchasing, setIsPurchasing] = useState(false);
 
-    const onSubmit = async (data: z.infer<typeof accountSetupSchema>) => {
+    const handlePurchaseClick = async (plan: typeof game.plans[0]) => {
         if (!session?.user) {
-            toast({ variant: "destructive", title: "Error", description: "You are not logged in." });
+            toast({
+                title: "Authentication Required",
+                description: "Please log in with Discord to purchase a plan.",
+                variant: "destructive",
+            });
             return;
         }
 
-        const result = await completeAccountSetup({
-            discordId: session.user.id,
-            email: session.user.email,
-            name: session.user.name,
-            password: data.password,
+        setIsPurchasing(true);
+        toast({
+            title: "Preparing Your Order...",
+            description: "Please wait while we prepare your checkout session.",
         });
 
-        if (result.success) {
-            toast({ title: "Success!", description: "Your account is set up. You can now proceed to checkout." });
-            onSetupComplete();
-        } else {
-            toast({ variant: "destructive", title: "Setup Failed", description: result.error });
-        }
-    };
-    
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Set Up Your Panel Account</DialogTitle>
-                    <DialogDescription>
-                        Create a password for the game control panel. You will use your email ({session?.user?.email}) and this password to log in.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Password</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
-                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                                                {showPassword ? <EyeOff /> : <Eye />}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="confirmPassword"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Confirm Password</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" {...field} />
-                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                                {showConfirmPassword ? <EyeOff /> : <Eye />}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                            {form.formState.isSubmitting ? "Creating Account..." : "Complete Setup"}
-                        </Button>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
-
-export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
-    const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
-    const [loading, setLoading] = React.useState<string | null>(null);
-    const { data: session } = useSession();
-    const { toast } = useToast();
-    const [isAccountSetupOpen, setAccountSetupOpen] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState<typeof game.plans[0] | null>(null);
-
-
-    const startCheckout = async (plan: typeof game.plans[0]) => {
-         if (!session || !session.user || !plan.priceId) return;
-
-        setLoading(plan.priceId);
         try {
-            const stripe = await stripePromise;
-            if (!stripe) {
-                console.error("Stripe.js has not loaded yet.");
-                setLoading(null);
-                return;
+            // First, ensure the Pterodactyl user exists
+            const pteroUser = await getOrCreatePterodactylUser({
+                discordId: session.user.id,
+                email: session.user.email!,
+                name: session.user.name!,
+            });
+            const pteroUserId = pteroUser.attributes.id;
+
+            if (!plan.priceId) {
+                throw new Error("This plan is not available for purchase yet.");
+            }
+            if (!game.pterodactylNestId || !game.pterodactylEggId) {
+                throw new Error("This game is not configured for automatic deployment.");
             }
 
-            const response = await checkoutFlow({
+            const checkoutResult = await checkoutFlow({
                 priceId: plan.priceId,
-                successUrl: PTERODACTYL_PANEL_URL,
+                successUrl: `${window.location.origin}/billing?session_id={CHECKOUT_SESSION_ID}`,
                 cancelUrl: window.location.href,
                 gameId: game.id!,
                 planId: plan.id!,
-                userId: session.user.id,
+                userId: pteroUserId, // Pass the Pterodactyl User ID
                 userEmail: session.user.email!,
                 userName: session.user.name!,
                 pterodactylNestId: game.pterodactylNestId,
@@ -291,67 +227,27 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 disk: plan.disk,
             });
 
+            const stripe = await stripePromise;
+            if (!stripe) {
+                throw new Error("Stripe.js has not loaded yet.");
+            }
+
             const { error } = await stripe.redirectToCheckout({
-                sessionId: response.sessionId,
+                sessionId: checkoutResult.sessionId,
             });
 
             if (error) {
-                console.error("Stripe checkout error:", error);
-                 toast({
-                    title: "Checkout Error",
-                    description: error.message || "An unexpected error occurred.",
-                    variant: "destructive",
-                })
+                throw new Error(`Stripe Checkout Error: ${error.message}`);
             }
-        } catch (error) {
-            console.error("Error creating checkout session:", error);
-            toast({
-                title: "Error",
-                description: "Could not initiate the checkout process. Please try again later.",
+
+        } catch (error: any) {
+             toast({
+                title: "Purchase Failed",
+                description: error.message || "An unexpected error occurred. Please try again.",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setLoading(null);
-        }
-    };
-
-    const handlePurchaseClick = async (plan: typeof game.plans[0]) => {
-        if (!session || !session.user) {
-            toast({
-                title: "Authentication Required",
-                description: "Please log in to purchase a plan.",
-                variant: "destructive",
-            });
-            signIn('discord');
-            return;
-        }
-
-        if (!plan.priceId) {
-            toast({
-                title: "Price ID Missing",
-                description: "This plan is not available for purchase yet.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setSelectedPlan(plan);
-
-        // Check if the user has a Pterodactyl account linked
-        const hasPteroAccount = await checkIfPterodactylUserExists(session.user.id);
-
-        if (hasPteroAccount) {
-            await startCheckout(plan);
-        } else {
-            // If not, open the account setup dialog
-            setAccountSetupOpen(true);
-        }
-    };
-    
-    const onSetupComplete = () => {
-        setAccountSetupOpen(false);
-        if (selectedPlan) {
-            startCheckout(selectedPlan);
+            setIsPurchasing(false);
         }
     };
 
@@ -401,9 +297,9 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                                     <Button
                                         className="w-full mt-6"
                                         onClick={() => handlePurchaseClick(plan)}
-                                        disabled={loading === plan.priceId || !plan.priceId}
+                                        disabled={isPurchasing}
                                     >
-                                        {loading === plan.priceId ? 'Processing...' : (plan.priceId ? 'Get Started' : 'Unavailable')}
+                                        {isPurchasing ? 'Processing...' : 'Get Started'}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -419,11 +315,6 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 </div>
             </DialogContent>
         </Dialog>
-         <AccountSetupDialog
-            open={isAccountSetupOpen}
-            onOpenChange={setAccountSetupOpen}
-            onSetupComplete={onSetupComplete}
-        />
         </>
     )
 }
@@ -503,7 +394,7 @@ export function LandingPageContent({ supportedGames, heroImage }: { supportedGam
                 <div className="container relative z-10 mx-auto px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-                            Premium Game Hosting for Serious Gamers
+                            Premium Game Hosting
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-gray-300">
                             Make your game server in an instant with our high-performance hosting, fully equipped with DDoS protection and 24/7 customer support.
@@ -704,5 +595,3 @@ const GlobalStyles = () => (
         }
     `}</style>
 );
-
-    
