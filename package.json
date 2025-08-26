@@ -49,6 +49,7 @@
     "mysql2": "^3.10.3",
     "next": "15.3.3",
     "next-auth": "^4.24.7",
+    "node-fetch": "^2.7.0",
     "patch-package": "^8.0.0",
     "quickpterodactyl": "latest",
     "react": "^18.3.1",
