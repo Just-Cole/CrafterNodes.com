@@ -50,6 +50,7 @@
     "next": "15.3.3",
     "next-auth": "^4.24.7",
     "patch-package": "^8.0.0",
+    "quickpterodactyl": "latest",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
