@@ -17,21 +17,36 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
+// This function queries the database to get the resource specs for a given plan ID.
+async function getPlanSpecs(planId: number, connection: mysql.Connection) {
+    const [rows] = await connection.execute<mysql.RowDataPacket[]>(
+        'SELECT cpu, ram, disk FROM plans WHERE id = ?',
+        [planId]
+    );
 
-// This is a simplified example. In a real-world scenario, you would have a more
-// robust way to map Stripe Price IDs to Pterodactyl server configurations.
-// For example, you might store these mappings in your database or in a dedicated config file.
-const planToPterodactylSpec: { [key: string]: { cpu: number; ram: number; disk: number } } = {
-  // Minecraft Plans
-  "price_1RwDdDGiQmXe4wKvj0RexV7n": { cpu: 100, ram: 2048, disk: 5120 }, // Coal Plan
-  // ... add other plan mappings here
-};
+    if (rows.length === 0) {
+        throw new Error(`Plan with ID ${planId} not found in the database.`);
+    }
 
-async function createPterodactylServer(userId: number, metadata: Stripe.Metadata) {
-  const { gameName, pterodactylNestId, pterodactylEggId, planName, priceId } = metadata;
+    const { cpu, ram, disk } = rows[0];
+
+    if (!cpu || !ram || !disk) {
+        throw new Error(`Plan ${planId} is missing resource specifications (CPU, RAM, or Disk) in the database.`);
+    }
+
+    return { cpu, ram, disk };
+}
+
+
+async function createPterodactylServer(userId: number, metadata: Stripe.Metadata, connection: mysql.Connection) {
+  const { gameName, pterodactylNestId, pterodactylEggId, planName, planId } = metadata;
   
-  // You would expand this logic to map plans to Pterodactyl resource limits
-  const spec = planToPterodactylSpec[priceId] || { cpu: 100, ram: 1024, disk: 5120 };
+  if (!planId) {
+      throw new Error("Plan ID is missing from Stripe metadata.");
+  }
+
+  // Fetch the plan specifications (CPU, RAM, DISK) from the database
+  const spec = await getPlanSpecs(Number(planId), connection);
 
   const serverDetails = await createPteroServer({
       name: `${gameName} Server - ${planName}`,
@@ -52,15 +67,11 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
           allocations: 1,
           backups: 2,
       },
-      // This is now an object, not a single value
+      // You might need to implement logic to find a free allocation
+      // For now, we request the default one.
       allocation: {
-        default: 1, // You need an actual allocation ID here. Pterodactyl requires this. Or you can implement logic to find a free one.
+        default: 1, 
       },
-      deploy: {
-          locations: [1], // Auto-select from location ID 1. This might need to be configured.
-          dedicated_ip: false,
-          port_range: [],
-      }
   });
 
 
@@ -125,7 +136,7 @@ export async function POST(req: Request) {
 
         console.log(`Found Pterodactyl user ID: ${dbUser.pterodactylId}`);
 
-        const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata);
+        const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata, connection);
         const pteroServerId = serverDetails.id;
         console.log("✅ Successfully created Pterodactyl server:", serverDetails.identifier);
         
@@ -141,7 +152,9 @@ export async function POST(req: Request) {
       } catch (error) {
         await connection.rollback();
         console.error("❌ Pterodactyl provisioning failed:", error);
-        return NextResponse.json({ error: 'Failed to provision the game server. Please ensure you have logged into the panel at least once.' }, { status: 500 });
+        // Provide a more detailed error message to the client if possible
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return NextResponse.json({ error: `Failed to provision the game server. Reason: ${errorMessage}` }, { status: 500 });
       }
 
       break;
@@ -170,5 +183,3 @@ export async function POST(req: Request) {
   await connection.end();
   return NextResponse.json({ received: true });
 }
-
-    
