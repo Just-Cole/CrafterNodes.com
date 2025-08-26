@@ -21,7 +21,7 @@ async function getDbConnection() {
 
 // A generic fetch wrapper for Pterodactyl API
 async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET', body?: object) {
-    const url = new URL(`/api/application${endpoint}`, PTERODACTYL_URL).href;
+    const url = `${PTERODACTYL_URL}/api/application${endpoint}`;
     const options: RequestInit = {
         method,
         headers: {
