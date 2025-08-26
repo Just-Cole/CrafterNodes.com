@@ -139,6 +139,7 @@ STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
 # Pterodactyl Environment Variables
 PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
 PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
+PTERODACTYL_CLIENT_API_KEY=your_pterodactyl_client_api_key
 
 # Stripe Environment Variables
 STRIPE_SECRET_KEY=your_stripe_secret_key

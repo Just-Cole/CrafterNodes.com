@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
 // NOTE: This uses the CLIENT API KEY, not the application key
-const PTERODACTYL_API_KEY = process.env.PTERODACTYL_CLIENT_API_KEY;
+const PTERODACTYL_CLIENT_API_KEY = process.env.PTERODACTYL_CLIENT_API_KEY;
 
 
 export async function GET(request: NextRequest, { params }: { params: { serverId: string } }) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: { serverId
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
+    if (!PTERODACTYL_URL || !PTERODACTYL_CLIENT_API_KEY) {
         return NextResponse.json({ error: "Pterodactyl client API environment variables are not set." }, { status: 500 });
     }
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { serverId
     try {
         const pteroResponse = await fetch(`${PTERODACTYL_URL}/api/client/servers/${serverId}/websocket`, {
             headers: {
-                'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
+                'Authorization': `Bearer ${PTERODACTYL_CLIENT_API_KEY}`,
                 'Accept': 'application/json',
             },
             cache: 'no-store', // Always fetch a fresh token
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: { serverId
         }
 
         const data = await pteroResponse.json();
-        return NextResponse.json(data);
+        return NextResponse.json(data.data);
 
     } catch (error) {
         console.error("Internal error fetching ws-token: ", error);
