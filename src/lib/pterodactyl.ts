@@ -25,7 +25,7 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
     
     const headers = {
         'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-        'Accept': 'Application/vnd.pterodactyl.v1+json',
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
     };
 
@@ -35,7 +35,7 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
         cache: 'no-store'
     };
 
-    if (body) {
+    if (body && (method === 'POST' || method === 'PATCH')) {
         options.body = JSON.stringify(body);
     }
     
