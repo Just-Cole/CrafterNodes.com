@@ -19,17 +19,19 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
-// A generic fetch wrapper for Pterodactyl API
+// A generic fetch wrapper for Pterodactyl API, modeled after the provided documentation example.
 async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET', body?: object) {
     const url = `${PTERODACTYL_URL}/api/application${endpoint}`;
+    
+    const headers = {
+        'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
+        'Accept': 'Application/vnd.pterodactyl.v1+json',
+        'Content-Type': 'application/json',
+    };
+
     const options: RequestInit = {
         method,
-        headers: {
-            'Authorization': `Bearer ${PTERODACTYL_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': 'Application/vnd.pterodactyl.v1+json',
-        },
-        // Don't cache API requests
+        headers,
         cache: 'no-store'
     };
 
@@ -39,23 +41,20 @@ async function pteroRequest(endpoint: string, method: 'GET' | 'POST' | 'PATCH' |
     
     const response = await fetch(url, options);
 
-    // For 204 No Content responses (like on successful delete)
     if (response.status === 204) {
-        return null;
+        return null; // For successful DELETE requests
     }
 
     const responseData = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const errorMessages = responseData.errors?.map((e: any) => e.detail).join(', ') || response.statusText;
-        console.error(`Pterodactyl API Error (${response.status}): ${errorMessages}`, { url, body, responseData });
-        // Specifically check for 404 to handle "not found" cases gracefully
-        if (response.status === 404) {
-             const notFoundError = new Error(`Pterodactyl resource not found: ${errorMessages}`);
-             (notFoundError as any).status = 404;
-             throw notFoundError;
-        }
-        throw new Error(`Pterodactyl API Error: ${errorMessages}`);
+        const errorMessages = responseData.errors?.map((e: any) => `${e.code}: ${e.detail}`).join(', ') || `HTTP ${response.status} ${response.statusText}`;
+        console.error(`Pterodactyl API Error on ${method} ${url}: ${errorMessages}`, { responseData });
+        
+        // Create an error object that includes the status
+        const error = new Error(`Pterodactyl API Error: ${errorMessages}`);
+        (error as any).status = response.status;
+        throw error;
     }
     
     return responseData;
@@ -93,7 +92,6 @@ async function createNewPterodactylUser(input: PteroUserInput, connection: mysql
     console.log(`No Pterodactyl user found for Discord ID ${input.discordId}. Creating a new one.`);
     const { username, email, firstName, lastName, discordId } = input;
     
-    // In the explicit setup flow, a password MUST be provided.
     if (!input.password) {
         throw new Error("Password is required to create a new Pterodactyl user.");
     }
@@ -105,17 +103,19 @@ async function createNewPterodactylUser(input: PteroUserInput, connection: mysql
         first_name: firstName,
         last_name: lastName,
         password: input.password,
+        language: 'en'
     };
 
     const newPteroUser = await pteroRequest('/users', 'POST', newUserPayload);
-    console.log(`Successfully created Pterodactyl user ${newPteroUser.attributes.id} for Discord user ${discordId}`);
+    const pteroId = newPteroUser.attributes.id;
+    console.log(`Successfully created Pterodactyl user ${pteroId} for Discord user ${discordId}`);
 
     // Update our local DB to link the accounts
     await connection.execute(
         `UPDATE users SET pterodactylId = ? WHERE discordId = ?`,
-        [newPteroUser.attributes.id, discordId]
+        [pteroId, discordId]
     );
-    console.log(`Successfully linked Pterodactyl ID ${newPteroUser.attributes.id} to local user with Discord ID ${discordId}`);
+    console.log(`Successfully linked Pterodactyl ID ${pteroId} to local user with Discord ID ${discordId}`);
 
     return newPteroUser;
 }
@@ -133,14 +133,15 @@ export async function getOrCreatePterodactylUser(input: PteroUserInput) {
         let pteroUser;
         // 2. If user exists in our DB and has a Pterodactyl ID, verify it exists in Pterodactyl
         if (userRows.length > 0 && userRows[0].pterodactylId) {
-            console.log(`User found in DB with Ptero ID: ${userRows[0].pterodactylId}. Verifying...`);
+            const pteroId = userRows[0].pterodactylId;
+            console.log(`User found in DB with Ptero ID: ${pteroId}. Verifying...`);
             try {
-                pteroUser = await pteroRequest(`/users/${userRows[0].pterodactylId}`);
+                pteroUser = await pteroRequest(`/users/${pteroId}`);
                 console.log(`Pterodactyl user ${pteroUser.attributes.id} verified.`);
                 return pteroUser;
             } catch (error: any) {
                 if (error.status === 404) {
-                    console.warn(`User ${userRows[0].pterodactylId} not found in Pterodactyl, despite being in DB. A new one will be created.`);
+                    console.warn(`User ${pteroId} not found in Pterodactyl, despite being in DB. A new one will be created.`);
                     // Fall through to the creation logic.
                 } else {
                     // For other errors, we re-throw.
