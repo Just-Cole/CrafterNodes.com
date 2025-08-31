@@ -30,9 +30,6 @@ const planSchema = z.object({
   features: z.preprocess((val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()) : val), z.array(z.string())),
   icon: z.string().optional(),
   popular: z.boolean().optional(),
-  cpu: z.coerce.number().min(1, 'CPU is required.'),
-  ram: z.coerce.number().min(1, 'RAM is required.'),
-  disk: z.coerce.number().min(1, 'Disk is required.'),
 });
 
 const gameSchema = z.object({
@@ -128,7 +125,7 @@ export async function addGame(formData: GameSchema) {
 
     for (const plan of newGameData.plans) {
       await connection.execute(
-        `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular, cpu, ram, disk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           gameId,
           plan.name,
@@ -137,9 +134,6 @@ export async function addGame(formData: GameSchema) {
           JSON.stringify(plan.features),
           plan.icon || null,
           plan.popular || false,
-          plan.cpu,
-          plan.ram,
-          plan.disk
         ]
       );
     }
@@ -180,7 +174,7 @@ export async function addPlan(formData: z.infer<typeof addPlanSchema>) {
 
     try {
         await connection.execute(
-            `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular, cpu, ram, disk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO plans (game_id, name, price, priceId, features, icon, popular) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 plan.game_id,
                 plan.name,
@@ -189,9 +183,6 @@ export async function addPlan(formData: z.infer<typeof addPlanSchema>) {
                 JSON.stringify(plan.features),
                 plan.icon || null,
                 plan.popular || false,
-                plan.cpu,
-                plan.ram,
-                plan.disk,
             ]
         );
         revalidatePath('/');
@@ -251,8 +242,8 @@ export async function updatePlan(formData: z.infer<typeof updatePlanSchema>) {
     const connection = await getConnection();
     try {
         await connection.execute(
-            `UPDATE plans SET name = ?, price = ?, priceId = ?, features = ?, icon = ?, popular = ?, cpu = ?, ram = ?, disk = ? WHERE id = ?`,
-            [planData.name, planData.price, planData.priceId || null, JSON.stringify(planData.features), planData.icon || null, planData.popular || false, planData.cpu, planData.ram, planData.disk, id]
+            `UPDATE plans SET name = ?, price = ?, priceId = ?, features = ?, icon = ?, popular = ? WHERE id = ?`,
+            [planData.name, planData.price, planData.priceId || null, JSON.stringify(planData.features), planData.icon || null, planData.popular || false, id]
         );
         revalidatePath('/');
         revalidatePath('/games');

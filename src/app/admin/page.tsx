@@ -29,9 +29,6 @@ const planSchema = z.object({
   features: z.string().min(1, "Features are required."),
   icon: z.string().optional(),
   popular: z.boolean().default(false),
-  cpu: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "CPU is required."),
-  ram: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "RAM is required."),
-  disk: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Disk is required."),
 });
 
 const gameSchema = z.object({
@@ -63,7 +60,7 @@ function AddGameForm() {
       name: '',
       description: '',
       hint: '',
-      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '', cpu: 100, ram: 2048, disk: 5120 }],
+      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
     },
   });
 
@@ -227,39 +224,6 @@ function AddGameForm() {
                               </FormItem>
                             )}
                           />
-                           <FormField
-                            control={form.control}
-                            name={`plans.${index}.cpu`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>CPU (%)</FormLabel>
-                                <FormControl><Input type="number" placeholder="100" {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                           <FormField
-                            control={form.control}
-                            name={`plans.${index}.ram`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>RAM (MB)</FormLabel>
-                                <FormControl><Input type="number" placeholder="2048" {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                           <FormField
-                            control={form.control}
-                            name={`plans.${index}.disk`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Disk (MB)</FormLabel>
-                                <FormControl><Input type="number" placeholder="5120" {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
                           <div className="md:col-span-full">
                              <FormField
                               control={form.control}
@@ -304,7 +268,7 @@ function AddGameForm() {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false, cpu: 100, ram: 2048, disk: 5120 })}
+                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Plan
@@ -381,9 +345,6 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
             icon: plan.icon || '',
             popular: plan.popular || false,
             features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
-            cpu: plan.cpu,
-            ram: plan.ram,
-            disk: plan.disk,
         },
     });
     
@@ -419,9 +380,6 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField
                             control={form.control}
@@ -464,9 +422,6 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
             features: '',
             icon: '',
             popular: false,
-            cpu: 100,
-            ram: 2048,
-            disk: 5120,
         },
     });
 
@@ -500,9 +455,6 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                         <FormField
                             control={form.control}

@@ -136,15 +136,11 @@ DATABASE_URL="mysql://crafteruser:your_strong_password@172.93.108.112:3306/craft
 # SteamGridDB
 STEAMGRIDDB_API_KEY=your_steamgriddb_api_key
 
-# Pterodactyl Environment Variables
-PTERODACTYL_PANEL_URL=https://your.pterodactyl.panel
-PTERODACTYL_API_KEY=your_pterodactyl_application_api_key
-PTERODACTYL_CLIENT_API_KEY=your_pterodactyl_client_api_key
-
 # Stripe Environment Variables
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL=your_stripe_customer_portal_link
 
 # NextAuth Environment Variables
 NEXTAUTH_SECRET=generate_a_strong_secret_here # You can generate one with `openssl rand -base64 32`
@@ -173,8 +169,6 @@ CREATE TABLE `games` (
   `description` text NOT NULL,
   `image` varchar(255) NOT NULL,
   `hint` varchar(255) NOT NULL,
-  `pterodactylNestId` int(11) NOT NULL,
-  `pterodactylEggId` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -195,20 +189,17 @@ CREATE TABLE `plans` (
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `discordId` varchar(255) NOT NULL,
-  `pterodactylId` int(11) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `discordId` (`discordId`),
-  UNIQUE KEY `pterodactylId` (`pterodactylId`)
+  UNIQUE KEY `discordId` (`discordId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `subscriptions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `userId` int(11) NOT NULL,
-  `pterodactylServerId` int(11) NOT NULL,
   `gameId` int(11) NOT NULL,
   `planId` int(11) NOT NULL,
   `stripeSubscriptionId` varchar(255) NOT NULL,
@@ -216,7 +207,6 @@ CREATE TABLE `subscriptions` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `pterodactylServerId` (`pterodactylServerId`),
   UNIQUE KEY `stripeSubscriptionId` (`stripeSubscriptionId`),
   KEY `userId` (`userId`),
   KEY `gameId` (`gameId`),
@@ -377,7 +367,3 @@ sudo apt purge -y nodejs
 sudo apt purge -y mariadb-server
 sudo npm uninstall -g pm2
 sudo apt autoremove -y
-
-
-
-    

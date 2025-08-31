@@ -16,27 +16,7 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
-// This function queries the database to get the resource specs for a given plan ID.
-async function getPlanSpecs(planId: number, connection: mysql.Connection) {
-    const [rows] = await connection.execute<mysql.RowDataPacket[]>(
-        'SELECT cpu, ram, disk FROM plans WHERE id = ?',
-        [planId]
-    );
-
-    if (rows.length === 0) {
-        throw new Error(`Plan with ID ${planId} not found in the database.`);
-    }
-
-    const { cpu, ram, disk } = rows[0];
-
-    if (!cpu || !ram || !disk) {
-        throw new Error(`Plan ${planId} is missing resource specifications (CPU, RAM, or Disk) in the database.`);
-    }
-
-    return { cpu, ram, disk };
-}
-
-
+// This function will be expanded later to provision a server in your custom panel.
 async function createServer(userId: number, metadata: Stripe.Metadata, connection: mysql.Connection) {
   const { gameName, planName, planId } = metadata;
   
@@ -44,15 +24,10 @@ async function createServer(userId: number, metadata: Stripe.Metadata, connectio
       throw new Error("Plan ID is missing from Stripe metadata.");
   }
 
-  // Fetch the plan specifications (CPU, RAM, DISK) from the database
-  const spec = await getPlanSpecs(Number(planId), connection);
-
-  // TODO: Implement our own server creation logic here.
-  // For now, we will just log that we would be creating a server.
+  // In the future, this function will provision a server.
+  // For now, it returns a mock server ID.
   console.log(`Simulating server creation for user ${userId} with plan ${planName} (${planId}).`);
-  console.log(`Specs: CPU=${spec.cpu}, RAM=${spec.ram}, DISK=${spec.disk}`);
-
-  // Return a placeholder server ID. In the future this will be a real ID from our system.
+  
   const mockServerId = Math.floor(Math.random() * 100000);
   
   console.log(`✅ Successfully created mock server with ID: ${mockServerId}`);
@@ -104,13 +79,13 @@ export async function POST(req: Request) {
         }
         const dbUser = userRows[0];
 
-        const serverDetails = await createServer(dbUser.id, session.metadata, connection);
-        const serverId = serverDetails.id;
+        // This will be replaced with real server creation logic later.
+        // For now, we are inserting a record without a real server.
         
         await connection.execute(
-            `INSERT INTO subscriptions (userId, pterodactylServerId, gameId, planId, stripeSubscriptionId, status)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [dbUser.id, serverId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+            `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status)
+            VALUES (?, ?, ?, ?, ?)`,
+            [dbUser.id, Number(gameId), Number(planId), session.subscription.toString(), 'active']
         );
         console.log(`✅ Successfully created subscription record in database.`);
 

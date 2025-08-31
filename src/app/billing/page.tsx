@@ -12,9 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import Link from "next/link";
 
-const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
-
-
 function SubscriptionStatusBadge({ status }: { status: string }) {
     const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } = {
         'active': 'default',
@@ -94,9 +91,9 @@ export default function BillingPage() {
                                         </TableCell>
                                         <TableCell>{format(new Date(sub.createdAt), 'PPP')}</TableCell>
                                         <TableCell className="text-right">
-                                            {sub.status === 'active' && sub.pterodactylServerId && (
+                                            {sub.status === 'active' && sub.id && (
                                                 <Button asChild>
-                                                    <Link href={`/dashboard/server/${sub.pterodactylServerId}`}>Manage</Link>
+                                                    <Link href={`/dashboard/server/${sub.id}`}>Manage</Link>
                                                 </Button>
                                             )}
                                         </TableCell>
@@ -116,4 +113,3 @@ export default function BillingPage() {
         </div>
     );
 }
-

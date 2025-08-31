@@ -11,9 +11,6 @@ const planSchema = z.object({
   features: z.array(z.string()),
   icon: z.string().optional().nullable(),
   popular: z.boolean().optional(),
-  cpu: z.coerce.number(),
-  ram: z.coerce.number(),
-  disk: z.coerce.number(),
 });
 
 const gameSchema = z.object({
