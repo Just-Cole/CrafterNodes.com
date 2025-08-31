@@ -51,9 +51,6 @@ async function createCheckoutSession(
       userId: input.userId, // This is the Discord ID
       gameId: input.gameId,
       planId: input.planId,
-      gameName: input.gameName,
-      planName: input.planName,
-      priceId: input.priceId,
     },
   });
 

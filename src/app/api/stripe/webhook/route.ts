@@ -16,27 +16,7 @@ async function getDbConnection() {
     return mysql.createConnection(DATABASE_URL);
 }
 
-// This function will be expanded later to provision a server in your custom panel.
-async function createServer(userId: number, metadata: Stripe.Metadata, connection: mysql.Connection) {
-  const { gameName, planName, planId } = metadata;
-  
-  if (!planId) {
-      throw new Error("Plan ID is missing from Stripe metadata.");
-  }
-
-  // In the future, this function will provision a server.
-  // For now, it returns a mock server ID.
-  console.log(`Simulating server creation for user ${userId} with plan ${planName} (${planId}).`);
-  
-  const mockServerId = Math.floor(Math.random() * 100000);
-  
-  console.log(`✅ Successfully created mock server with ID: ${mockServerId}`);
-  return { id: mockServerId };
-}
-
-
 export async function POST(req: Request) {
-
   const body = await req.text();
   const signature = headers().get('stripe-signature') as string;
 
@@ -51,75 +31,70 @@ export async function POST(req: Request) {
 
   const connection = await getDbConnection();
 
-  // Handle the event
-  switch (event.type) {
-    case 'checkout.session.completed':
-      const session = event.data.object as Stripe.Checkout.Session;
-      
-      const { userId: discordId, gameId, planId } = session.metadata || {};
+  try {
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        
+        const { userId: discordId, gameId, planId } = session.metadata || {};
 
-      if (!discordId || !session.subscription || !gameId || !planId) {
-        console.error("Webhook received with missing metadata:", session.metadata);
-        return NextResponse.json({ error: 'Missing required metadata for server provisioning.' }, { status: 400 });
-      }
+        if (!discordId || !session.subscription || !gameId || !planId) {
+          console.error("Webhook received with missing metadata:", session.metadata);
+          return NextResponse.json({ error: 'Missing required metadata.' }, { status: 400 });
+        }
 
-      console.log('✅ Successful checkout for user:', discordId);
-      console.log("Attempting to provision server...");
+        console.log(`✅ Successful checkout for Discord user: ${discordId}.`);
 
-      try {
-        await connection.beginTransaction();
-
+        // 1. Find the internal user ID from the discordId
         const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
             'SELECT id FROM users WHERE discordId = ?',
             [discordId]
         );
 
         if (userRows.length === 0) {
-            throw new Error(`Database user with Discord ID ${discordId} not found.`);
+            await connection.end();
+            console.error(`❌ User with Discord ID ${discordId} not found in the database.`);
+            return NextResponse.json({ error: 'User not found.' }, { status: 404 });
         }
-        const dbUser = userRows[0];
-
-        // This will be replaced with real server creation logic later.
-        // For now, we are inserting a record without a real server.
+        const internalUserId = userRows[0].id;
         
+        console.log(`Found internal user ID: ${internalUserId}. Creating subscription...`);
+
+        // 2. Insert the subscription using the internal user ID
         await connection.execute(
             `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status)
             VALUES (?, ?, ?, ?, ?)`,
-            [dbUser.id, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+            [internalUserId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
         );
-        console.log(`✅ Successfully created subscription record in database.`);
 
-        await connection.commit();
-
-      } catch (error) {
-        await connection.rollback();
-        console.error("❌ Provisioning failed:", error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-        return NextResponse.json({ error: `Failed to provision the game server. Reason: ${errorMessage}` }, { status: 500 });
+        console.log(`✅ Successfully created subscription record in database for user ${internalUserId}.`);
+        break;
       }
-
-      break;
-    
-    case 'customer.subscription.deleted':
-    case 'customer.subscription.updated':
+      
+      case 'customer.subscription.deleted':
+      case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const subStatus = subscription.status; // e.g., 'active', 'canceled', 'past_due'
 
-        try {
-            await connection.execute(
-                'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
-                [subStatus, subscription.id]
-            );
-             console.log(`✅ Subscription ${subscription.id} status updated to ${subStatus}.`);
-        } catch (error) {
-            console.error(`❌ Failed to update subscription status for ${subscription.id}:`, error);
-        }
+        await connection.execute(
+            'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
+            [subStatus, subscription.id]
+        );
+        console.log(`✅ Subscription ${subscription.id} status updated to ${subStatus}.`);
         break;
+      }
 
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+  } catch (error) {
+    console.error("❌ Webhook handler failed:", error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    // We don't return a 500 here to prevent Stripe from retrying for our own logic errors.
+  } finally {
+    await connection.end();
   }
   
-  await connection.end();
   return NextResponse.json({ received: true });
 }
