@@ -7,9 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import Stripe from 'stripe';
-import {NextRequest} from 'next/server';
-import { headers } from 'next/headers';
-import mysql from 'mysql2/promise';
 
 const CheckoutInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe price.'),
