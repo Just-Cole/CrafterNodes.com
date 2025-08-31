@@ -45,7 +45,13 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
             ORDER BY s.createdAt DESC
         `, [session.user.id]);
         
-        return rows as Subscription[];
+        return rows.map(row => ({
+            id: row.id,
+            gameName: row.gameName,
+            planName: row.planName,
+            status: row.status,
+            createdAt: row.createdAt,
+        }));
 
     } catch (error) {
         console.error("Failed to fetch user subscriptions:", error);
