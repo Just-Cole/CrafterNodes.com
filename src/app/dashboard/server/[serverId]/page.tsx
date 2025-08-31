@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { usePterodactylWebSocket } from "@/hooks/use-pterodactyl-socket";
 import { cn } from "@/lib/utils";
 import { Circle, Cpu, HardDrive, Play, Power, RefreshCcw, Send, ServerCrash, StopCircle } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -52,21 +51,19 @@ function ResourceChart({ data, dataKey, name, unit, color }) {
 }
 
 export default function ServerPage({ params }: { params: { serverId: string } }) {
-    const { isConnected, console, serverStatus, stats, sendCommand, setPowerState } = usePterodactylWebSocket(params.serverId);
+    // This is a placeholder since we removed Pterodactyl.
+    // We will rebuild this with our own WebSocket implementation.
+    const isConnected = false;
+    const console: string[] = ["Console functionality is currently disabled."];
+    const serverStatus = 'offline';
+    const stats = null;
+    const sendCommand = (cmd: string) => { console.log("Command not sent:", cmd)};
+    const setPowerState = (state: string) => { console.log("Power state not changed:", state)};
     const [command, setCommand] = useState('');
     const consoleRef = useRef<HTMLDivElement>(null);
 
     const [cpuHistory, setCpuHistory] = useState<{ time: string, value: number }[]>([]);
     const [memoryHistory, setMemoryHistory] = useState<{ time: string, value: number }[]>([]);
-
-    useEffect(() => {
-        if (stats) {
-            const now = new Date().toLocaleTimeString();
-            setCpuHistory(prev => [...prev, { time: now, value: stats.cpu_absolute }].slice(-20));
-            setMemoryHistory(prev => [...prev, { time: now, value: stats.memory_bytes / (1024 * 1024) }].slice(-20));
-        }
-    }, [stats]);
-
 
     useEffect(() => {
         if (consoleRef.current) {
@@ -107,10 +104,10 @@ export default function ServerPage({ params }: { params: { serverId: string } })
                     <CardDescription>Control the power state of your server.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                    <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-500/10" onClick={() => setPowerState('start')} disabled={serverStatus === 'running' || serverStatus === 'starting'}><Play className="mr-2"/> Start</Button>
-                    <Button variant="outline" className="text-orange-500 border-orange-500 hover:bg-orange-500/10" onClick={() => setPowerState('restart')} disabled={serverStatus === 'offline'}><RefreshCcw className="mr-2"/> Restart</Button>
-                    <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-500/10" onClick={() => setPowerState('stop')} disabled={serverStatus === 'offline' || serverStatus === 'stopping'}><StopCircle className="mr-2"/> Stop</Button>
-                    <Button variant="destructive" onClick={() => setPowerState('kill')} disabled={serverStatus === 'offline'}><ServerCrash className="mr-2"/> Kill</Button>
+                    <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-500/10" onClick={() => setPowerState('start')} disabled><Play className="mr-2"/> Start</Button>
+                    <Button variant="outline" className="text-orange-500 border-orange-500 hover:bg-orange-500/10" onClick={() => setPowerState('restart')} disabled><RefreshCcw className="mr-2"/> Restart</Button>
+                    <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-500/10" onClick={() => setPowerState('stop')} disabled><StopCircle className="mr-2"/> Stop</Button>
+                    <Button variant="destructive" onClick={() => setPowerState('kill')} disabled><ServerCrash className="mr-2"/> Kill</Button>
                 </CardContent>
             </Card>
 
@@ -176,10 +173,10 @@ export default function ServerPage({ params }: { params: { serverId: string } })
                             placeholder="Type a command..."
                             value={command}
                             onChange={(e) => setCommand(e.target.value)}
-                            disabled={!isConnected || serverStatus !== 'running'}
+                            disabled
                             className="font-mono"
                         />
-                        <Button type="submit" disabled={!isConnected || serverStatus !== 'running'}><Send className="mr-2"/>Send</Button>
+                        <Button type="submit" disabled><Send className="mr-2"/>Send</Button>
                     </form>
                 </CardContent>
             </Card>

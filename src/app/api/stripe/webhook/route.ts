@@ -2,7 +2,6 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { createPterodactylServer as createPteroServer } from '@/lib/pterodactyl';
 import mysql from 'mysql2/promise';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -38,8 +37,8 @@ async function getPlanSpecs(planId: number, connection: mysql.Connection) {
 }
 
 
-async function createPterodactylServer(userId: number, metadata: Stripe.Metadata, connection: mysql.Connection) {
-  const { gameName, pterodactylNestId, pterodactylEggId, planName, planId } = metadata;
+async function createServer(userId: number, metadata: Stripe.Metadata, connection: mysql.Connection) {
+  const { gameName, planName, planId } = metadata;
   
   if (!planId) {
       throw new Error("Plan ID is missing from Stripe metadata.");
@@ -48,49 +47,20 @@ async function createPterodactylServer(userId: number, metadata: Stripe.Metadata
   // Fetch the plan specifications (CPU, RAM, DISK) from the database
   const spec = await getPlanSpecs(Number(planId), connection);
 
-  const serverDetails = await createPteroServer({
-      name: `${gameName} Server - ${planName}`,
-      user: userId,
-      nest: Number(pterodactylNestId),
-      egg: Number(pterodactylEggId),
-      docker_image: `ghcr.io/pterodactyl/yolks:java_17`, // This might need to be dynamic based on the egg
-      startup: `java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar`, // This also depends on the egg
-      limits: {
-        memory: spec.ram,
-        disk: spec.disk,
-        cpu: spec.cpu,
-        swap: 0,
-        io: 500,
-      },
-      feature_limits: {
-          databases: 1,
-          allocations: 1,
-          backups: 2,
-      },
-      // You might need to implement logic to find a free allocation
-      // For now, we request the default one.
-      allocation: {
-        default: 1, 
-      },
-  });
+  // TODO: Implement our own server creation logic here.
+  // For now, we will just log that we would be creating a server.
+  console.log(`Simulating server creation for user ${userId} with plan ${planName} (${planId}).`);
+  console.log(`Specs: CPU=${spec.cpu}, RAM=${spec.ram}, DISK=${spec.disk}`);
 
-
-  if (!serverDetails) {
-    throw new Error(`Failed to create Pterodactyl server.`);
-  }
-
-  return serverDetails;
+  // Return a placeholder server ID. In the future this will be a real ID from our system.
+  const mockServerId = Math.floor(Math.random() * 100000);
+  
+  console.log(`✅ Successfully created mock server with ID: ${mockServerId}`);
+  return { id: mockServerId };
 }
 
 
 export async function POST(req: Request) {
-  const PTERODACTYL_URL = process.env.PTERODACTYL_PANEL_URL;
-  const PTERODACTYL_API_KEY = process.env.PTERODACTYL_API_KEY;
-
-  if (!PTERODACTYL_URL || !PTERODACTYL_API_KEY) {
-      console.error("Pterodactyl environment variables are not set.");
-      return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
-  }
 
   const body = await req.text();
   const signature = headers().get('stripe-signature') as string;
@@ -119,31 +89,28 @@ export async function POST(req: Request) {
       }
 
       console.log('✅ Successful checkout for user:', discordId);
-      console.log("Attempting to provision server via Pterodactyl...");
+      console.log("Attempting to provision server...");
 
       try {
         await connection.beginTransaction();
 
         const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
-            'SELECT id, pterodactylId FROM users WHERE discordId = ?',
+            'SELECT id FROM users WHERE discordId = ?',
             [discordId]
         );
 
-        if (userRows.length === 0 || !userRows[0].pterodactylId) {
-            throw new Error(`Database user with Discord ID ${discordId} not found or not linked to Pterodactyl. The user may need to log into the panel first.`);
+        if (userRows.length === 0) {
+            throw new Error(`Database user with Discord ID ${discordId} not found.`);
         }
         const dbUser = userRows[0];
 
-        console.log(`Found Pterodactyl user ID: ${dbUser.pterodactylId}`);
-
-        const serverDetails = await createPterodactylServer(dbUser.pterodactylId, session.metadata, connection);
-        const pteroServerId = serverDetails.id;
-        console.log("✅ Successfully created Pterodactyl server:", serverDetails.identifier);
+        const serverDetails = await createServer(dbUser.id, session.metadata, connection);
+        const serverId = serverDetails.id;
         
         await connection.execute(
             `INSERT INTO subscriptions (userId, pterodactylServerId, gameId, planId, stripeSubscriptionId, status)
             VALUES (?, ?, ?, ?, ?, ?)`,
-            [dbUser.id, pteroServerId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+            [dbUser.id, serverId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
         );
         console.log(`✅ Successfully created subscription record in database.`);
 
@@ -151,8 +118,7 @@ export async function POST(req: Request) {
 
       } catch (error) {
         await connection.rollback();
-        console.error("❌ Pterodactyl provisioning failed:", error);
-        // Provide a more detailed error message to the client if possible
+        console.error("❌ Provisioning failed:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return NextResponse.json({ error: `Failed to provision the game server. Reason: ${errorMessage}` }, { status: 500 });
       }
@@ -172,7 +138,6 @@ export async function POST(req: Request) {
              console.log(`✅ Subscription ${subscription.id} status updated to ${subStatus}.`);
         } catch (error) {
             console.error(`❌ Failed to update subscription status for ${subscription.id}:`, error);
-            // Return 200 to Stripe so it doesn't retry, but log the error for manual intervention.
         }
         break;
 

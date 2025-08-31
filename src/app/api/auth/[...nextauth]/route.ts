@@ -2,7 +2,6 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import mysql from 'mysql2/promise';
-import { getOrCreatePterodactylUser } from "@/lib/pterodactyl";
 
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 
@@ -28,16 +27,10 @@ export const authOptions: AuthOptions = {
                 console.error("Discord profile is missing required information.");
                 return false; // Prevent sign-in
             }
-
-            // This sign-in will now only create a basic user record.
-            // The Pterodactyl account will be created on-demand when the user
-            // tries to purchase a server for the first time.
+            
             let connection;
             try {
                 connection = await getDbConnection();
-                // This query ensures that if the user already exists (based on the unique discordId),
-                // it updates their email and name. If they don't exist, it inserts a new record.
-                // This handles both new and returning users gracefully.
                 await connection.execute(
                     `INSERT INTO users (discordId, email, name)
                      VALUES (?, ?, ?)
@@ -46,7 +39,7 @@ export const authOptions: AuthOptions = {
                 );
                 return true;
             } catch (error) {
-                console.error("Error during simplified signIn callback:", error);
+                console.error("Error during signIn callback:", error);
                 return false; // Prevent sign-in on error
             } finally {
                 if (connection) {

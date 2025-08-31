@@ -39,8 +39,6 @@ const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
   hint: z.string().min(1, "AI hint is required."),
-  pterodactylNestId: z.coerce.number().min(1, "Pterodactyl Nest ID is required."),
-  pterodactylEggId: z.coerce.number().min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
@@ -118,14 +116,12 @@ export async function addGame(formData: GameSchema) {
     await connection.beginTransaction();
 
     const [gameInsertResult] = await connection.execute<mysql.ResultSetHeader>(
-      `INSERT INTO games (name, description, image, hint, pterodactylNestId, pterodactylEggId) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO games (name, description, image, hint) VALUES (?, ?, ?, ?)`,
       [
         newGameData.name,
         newGameData.description,
         imageUrl,
         newGameData.hint,
-        newGameData.pterodactylNestId,
-        newGameData.pterodactylEggId
       ]
     );
     const gameId = gameInsertResult.insertId;
@@ -225,8 +221,8 @@ export async function updateGame(formData: z.infer<typeof updateGameSchema>) {
     const connection = await getConnection();
     try {
         await connection.execute(
-            `UPDATE games SET name = ?, description = ?, hint = ?, pterodactylNestId = ?, pterodactylEggId = ? WHERE id = ?`,
-            [gameData.name, gameData.description, gameData.hint, gameData.pterodactylNestId, gameData.pterodactylEggId, id]
+            `UPDATE games SET name = ?, description = ?, hint = ? WHERE id = ?`,
+            [gameData.name, gameData.description, gameData.hint, id]
         );
         revalidatePath('/');
         revalidatePath('/games');
@@ -347,5 +343,3 @@ export async function deletePlan(planId: number) {
         await connection.end();
     }
 }
-
-    

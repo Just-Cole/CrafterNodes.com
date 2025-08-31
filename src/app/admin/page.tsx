@@ -29,14 +29,15 @@ const planSchema = z.object({
   features: z.string().min(1, "Features are required."),
   icon: z.string().optional(),
   popular: z.boolean().default(false),
+  cpu: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "CPU is required."),
+  ram: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "RAM is required."),
+  disk: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Disk is required."),
 });
 
 const gameSchema = z.object({
   name: z.string().min(1, "Game name is required."),
   description: z.string().min(1, "Description is required."),
   hint: z.string().min(1, "AI hint is required."),
-  pterodactylNestId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Nest ID is required."),
-  pterodactylEggId: z.coerce.number({invalid_type_error: "Must be a number"}).min(1, "Pterodactyl Egg ID is required."),
   plans: z.array(planSchema).min(1, "At least one plan is required."),
 });
 
@@ -62,9 +63,7 @@ function AddGameForm() {
       name: '',
       description: '',
       hint: '',
-      pterodactylNestId: 1,
-      pterodactylEggId: 1,
-      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '' }],
+      plans: [{ name: '', price: '', features: '', popular: false, priceId: '', icon: '', cpu: 100, ram: 2048, disk: 5120 }],
     },
   });
 
@@ -76,8 +75,6 @@ function AddGameForm() {
   const onSubmit = async (data: z.infer<typeof gameSchema>) => {
     const dataForAction: GameSchema = {
       ...data,
-      pterodactylNestId: Number(data.pterodactylNestId),
-      pterodactylEggId: Number(data.pterodactylEggId),
       plans: data.plans.map(p => ({...p, features: p.features.split(',').map(s => s.trim())}))
     };
     const result = await addGame(dataForAction);
@@ -107,8 +104,6 @@ function AddGameForm() {
           name: '',
           description: minecraftTemplate.description,
           hint: minecraftTemplate.hint,
-          pterodactylNestId: minecraftTemplate.pterodactylNestId,
-          pterodactylEggId: minecraftTemplate.pterodactylEggId,
           plans: minecraftTemplate.plans.map(plan => ({
             ...plan,
             features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
@@ -152,28 +147,6 @@ function AddGameForm() {
                     </FormItem>
                   )}
                 />
-                 <FormField
-                  control={form.control}
-                  name="pterodactylNestId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pterodactyl Nest ID</FormLabel>
-                      <FormControl><Input type="number" placeholder="e.g. 1" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pterodactylEggId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pterodactyl Egg ID</FormLabel>
-                      <FormControl><Input type="number" placeholder="e.g. 1" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="md:col-span-2">
                   <FormField
                     control={form.control}
@@ -209,7 +182,7 @@ function AddGameForm() {
                 <div className="space-y-6">
                   {fields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <FormField
                             control={form.control}
                             name={`plans.${index}.name`}
@@ -254,7 +227,40 @@ function AddGameForm() {
                               </FormItem>
                             )}
                           />
-                          <div className="md:col-span-2">
+                           <FormField
+                            control={form.control}
+                            name={`plans.${index}.cpu`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>CPU (%)</FormLabel>
+                                <FormControl><Input type="number" placeholder="100" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name={`plans.${index}.ram`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>RAM (MB)</FormLabel>
+                                <FormControl><Input type="number" placeholder="2048" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name={`plans.${index}.disk`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Disk (MB)</FormLabel>
+                                <FormControl><Input type="number" placeholder="5120" {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="md:col-span-full">
                              <FormField
                               control={form.control}
                               name={`plans.${index}.features`}
@@ -298,7 +304,7 @@ function AddGameForm() {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false })}
+                  onClick={() => append({ name: '', price: '', priceId: '', features: '', icon: '', popular: false, cpu: 100, ram: 2048, disk: 5120 })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Plan
@@ -324,8 +330,6 @@ function EditGameForm({ game, onFinished }: { game: GameData, onFinished: () => 
             name: game.name,
             description: game.description,
             hint: game.hint,
-            pterodactylNestId: game.pterodactylNestId,
-            pterodactylEggId: game.pterodactylEggId,
         },
     });
 
@@ -353,8 +357,6 @@ function EditGameForm({ game, onFinished }: { game: GameData, onFinished: () => 
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Game Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="pterodactylNestId" render={({ field }) => ( <FormItem> <FormLabel>Nest ID</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="pterodactylEggId" render={({ field }) => ( <FormItem> <FormLabel>Egg ID</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                         <FormField control={form.control} name="hint" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>AI Hint</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                     </div>
@@ -379,6 +381,9 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
             icon: plan.icon || '',
             popular: plan.popular || false,
             features: Array.isArray(plan.features) ? plan.features.join(', ') : '',
+            cpu: plan.cpu,
+            ram: plan.ram,
+            disk: plan.disk,
         },
     });
     
@@ -414,6 +419,9 @@ function EditPlanForm({ plan, onFinished }: { plan: PlanData, onFinished: () => 
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField
                             control={form.control}
@@ -456,6 +464,9 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
             features: '',
             icon: '',
             popular: false,
+            cpu: 100,
+            ram: 2048,
+            disk: 5120,
         },
     });
 
@@ -484,11 +495,14 @@ function AddPlanForm({ game, onFinished }: { game: GameData, onFinished: () => v
             </DialogHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Plan Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="priceId" render={({ field }) => ( <FormItem> <FormLabel>Stripe Price ID</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Icon Path</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="cpu" render={({ field }) => ( <FormItem> <FormLabel>CPU (%)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="ram" render={({ field }) => ( <FormItem> <FormLabel>RAM (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="disk" render={({ field }) => ( <FormItem> <FormLabel>Disk (MB)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                        <FormField control={form.control} name="features" render={({ field }) => ( <FormItem className="md:col-span-2"> <FormLabel>Features (comma-separated)</FormLabel> <FormControl><Textarea {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                         <FormField
                             control={form.control}
@@ -766,5 +780,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

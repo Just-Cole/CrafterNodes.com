@@ -11,6 +11,9 @@ const planSchema = z.object({
   features: z.array(z.string()),
   icon: z.string().optional().nullable(),
   popular: z.boolean().optional(),
+  cpu: z.coerce.number(),
+  ram: z.coerce.number(),
+  disk: z.coerce.number(),
 });
 
 const gameSchema = z.object({
@@ -19,8 +22,6 @@ const gameSchema = z.object({
   description: z.string(),
   image: z.string(),
   hint: z.string(),
-  pterodactylNestId: z.number(),
-  pterodactylEggId: z.number(),
   plans: z.array(planSchema),
 });
 
@@ -50,7 +51,7 @@ export async function getPricingData(): Promise<PricingData> {
   try {
     connection = await getConnection();
     const [gamesRows] = await connection.execute<mysql.RowDataPacket[]>(`
-      SELECT * FROM games ORDER BY id
+      SELECT id, name, description, image, hint FROM games ORDER BY id
     `);
 
     const games: Game[] = [];

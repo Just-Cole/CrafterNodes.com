@@ -18,18 +18,11 @@ import type { PricingData } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { completeAccountSetup, checkIfPterodactylUserExists } from "../actions/user";
-
 
 // Make sure to replace with your actual Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const ADMIN_DISCORD_ID = "949172257345921045";
-const PTERODACTYL_PANEL_URL = "https://panel.crafternodes.com";
 
 
 function Logo() {
@@ -154,193 +147,11 @@ function Footer() {
     );
 }
 
-const accountSetupSchema = z.object({
-    email: z.string().email({ message: "Please enter a valid email address." }),
-    username: z.string().min(1, { message: "Username is required." }),
-    firstName: z.string().min(1, { message: "First name is required." }),
-    lastName: z.string().min(1, { message: "Last name is required." }),
-    password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
-    confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-});
-
-
-function AccountSetupDialog({ open, onOpenChange, onSetupComplete }: { open: boolean, onOpenChange: (open: boolean) => void, onSetupComplete: () => void }) {
-    const { data: session } = useSession();
-    const { toast } = useToast();
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    const form = useForm<z.infer<typeof accountSetupSchema>>({
-        resolver: zodResolver(accountSetupSchema),
-        defaultValues: { 
-            email: '',
-            username: '',
-            firstName: session?.user?.name.split(' ')[0] || '',
-            lastName: session?.user?.name.split(' ').slice(1).join(' ') || '',
-            password: '', 
-            confirmPassword: '' 
-        },
-    });
-
-    useEffect(() => {
-        if (session?.user?.name) {
-            form.reset({
-                email: form.getValues('email'), // Keep existing email if typed
-                username: form.getValues('username'), // Keep existing username if typed
-                firstName: session.user.name.split(' ')[0] || '',
-                lastName: session.user.name.split(' ').slice(1).join(' ') || '',
-                password: '',
-                confirmPassword: ''
-            });
-        }
-    }, [session, form]);
-
-    const onSubmit = async (data: z.infer<typeof accountSetupSchema>) => {
-        if (!session?.user) {
-            toast({ variant: "destructive", title: "Error", description: "You are not logged in." });
-            return;
-        }
-
-        const result = await completeAccountSetup({
-            discordId: session.user.id,
-            email: data.email,
-            username: data.username,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            password: data.password,
-        });
-
-        if (result.success) {
-            toast({ title: "Success!", description: "Your account is set up. You can now proceed to checkout." });
-            onSetupComplete();
-        } else {
-            toast({ variant: "destructive", title: "Setup Failed", description: result.error });
-        }
-    };
-    
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Set Up Your Panel Account</DialogTitle>
-                    <DialogDescription>
-                       To continue, please create an account for the game control panel.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl>
-                                        <Input type="email" placeholder="Enter your panel account email" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="username"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter a username" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="firstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>First Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Your first name" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="lastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Last Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Your last name" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Password</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
-                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                                                {showPassword ? <EyeOff /> : <Eye />}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="confirmPassword"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Confirm Password</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" {...field} />
-                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                                {showConfirmPassword ? <EyeOff /> : <Eye />}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                            {form.formState.isSubmitting ? "Creating Account..." : "Complete Setup"}
-                        </Button>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-
 export function PricingDialog({ game, children }: { game: PricingData['supportedGames'][0], children: React.ReactNode }) {
     const planGridClass = game.plans && game.plans.length > 3 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3";
     const [loading, setLoading] = React.useState<string | null>(null);
     const { data: session } = useSession();
     const { toast } = useToast();
-    const [isAccountSetupOpen, setAccountSetupOpen] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState<typeof game.plans[0] | null>(null);
-
 
     const startCheckout = async (plan: typeof game.plans[0]) => {
          if (!session || !session.user || !plan.priceId) return;
@@ -356,15 +167,13 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
 
             const response = await checkoutFlow({
                 priceId: plan.priceId,
-                successUrl: PTERODACTYL_PANEL_URL,
+                successUrl: `${window.location.origin}/billing`,
                 cancelUrl: window.location.href,
                 gameId: game.id!,
                 planId: plan.id!,
                 userId: session.user.id,
                 userEmail: session.user.email!,
                 userName: session.user.name!,
-                pterodactylNestId: game.pterodactylNestId,
-                pterodactylEggId: game.pterodactylEggId,
             });
 
             const { error } = await stripe.redirectToCheckout({
@@ -410,29 +219,10 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
             return;
         }
 
-        setSelectedPlan(plan);
-
-        // Check if the user has a Pterodactyl account linked
-        const hasPteroAccount = await checkIfPterodactylUserExists(session.user.id);
-
-        if (hasPteroAccount) {
-            await startCheckout(plan);
-        } else {
-            // If not, open the account setup dialog
-            setAccountSetupOpen(true);
-        }
+        await startCheckout(plan);
     };
-    
-    const onSetupComplete = () => {
-        setAccountSetupOpen(false);
-        if (selectedPlan) {
-            startCheckout(selectedPlan);
-        }
-    };
-
 
     return (
-        <>
         <Dialog>
             <DialogTrigger asChild>
                 {children}
@@ -494,12 +284,6 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
                 </div>
             </DialogContent>
         </Dialog>
-         <AccountSetupDialog
-            open={isAccountSetupOpen}
-            onOpenChange={setAccountSetupOpen}
-            onSetupComplete={onSetupComplete}
-        />
-        </>
     )
 }
 

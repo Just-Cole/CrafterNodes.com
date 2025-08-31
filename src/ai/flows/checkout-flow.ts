@@ -20,8 +20,6 @@ const CheckoutInputSchema = z.object({
   userId: z.string().describe('The ID of the user making the purchase.'),
   userEmail: z.string().describe("The email of the user making the purchase."),
   userName: z.string().describe("The name of the user making the purchase."),
-  pterodactylNestId: z.number().describe("The Pterodactyl Nest ID for the game."),
-  pterodactylEggId: z.number().describe("The Pterodactyl Egg ID for the game."),
 });
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 
@@ -53,9 +51,6 @@ async function createCheckoutSession(
       userId: input.userId, // This is the Discord ID
       gameId: input.gameId,
       planId: input.planId,
-      // Pass Ptero info for server creation in webhook
-      pterodactylNestId: input.pterodactylNestId,
-      pterodactylEggId: input.pterodactylEggId,
       gameName: input.gameName,
       planName: input.planName,
       priceId: input.priceId,
@@ -77,4 +72,3 @@ export const checkoutFlow = ai.defineFlow(
   },
   createCheckoutSession
 );
-
