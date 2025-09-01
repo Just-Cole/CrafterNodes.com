@@ -1,10 +1,9 @@
-
 {
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"bgBlue.bold,bgYellow.bold\" --kill-others-on-fail \"next dev -p 4000\" \"node src/backend/index.js\"",
+    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"bgBlue.bold,bgYellow.bold\" --kill-others-on-fail \"next dev -p 4000\" \"node src/backend/src/index.js\"",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
@@ -49,6 +48,7 @@
     "dotenv": "^16.5.0",
     "express": "^4.19.2",
     "extract-zip": "^2.0.1",
+    "firebase": "^11.9.1",
     "genkit": "^1.8.0",
     "lru-cache": "^11.1.0",
     "lucide-react": "^0.475.0",
