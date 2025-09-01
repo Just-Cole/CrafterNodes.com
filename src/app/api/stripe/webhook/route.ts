@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
-    console.error(`❌ Error message: ${err.message}`);
+    console.error(`❌ Webhook signature verification failed: ${err.message}`);
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
@@ -34,21 +34,26 @@ export async function POST(req: Request) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       
+      if (session.payment_status !== 'paid') {
+        console.log(`Checkout session ${session.id} not paid yet.`);
+        return NextResponse.json({ received: true });
+      }
+
       if (!session.subscription) {
-         console.error("Webhook received but session is missing subscription ID.");
+         console.error(`❌ Webhook Error: Checkout session ${session.id} is missing subscription ID.`);
          return NextResponse.json({ error: 'Missing subscription ID.' }, { status: 400 });
       }
 
-      // Retrieve the full subscription object to get the metadata
-      const subscription = await stripe.subscriptions.retrieve(session.subscription.toString());
+      const subscriptionId = session.subscription.toString();
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const { userId: discordId, gameId, planId } = subscription.metadata;
 
       if (!discordId || !gameId || !planId) {
-        console.error("Webhook received but subscription metadata is missing:", subscription.metadata);
+        console.error(`❌ Webhook Error: Subscription ${subscriptionId} metadata is missing crucial data:`, subscription.metadata);
         return NextResponse.json({ error: 'Missing required metadata on subscription.' }, { status: 400 });
       }
 
-      console.log(`✅ Successful checkout for Discord user: ${discordId}.`);
+      console.log(`✅ Successful checkout for Discord user: ${discordId}. Game: ${gameId}, Plan: ${planId}`);
       
       let connection;
       try {
@@ -59,23 +64,25 @@ export async function POST(req: Request) {
         );
 
         if (userRows.length === 0) {
-            console.error(`❌ User with Discord ID ${discordId} not found in the database.`);
-            return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+            console.error(`❌ Database Error: User with Discord ID ${discordId} not found in the database.`);
+            return NextResponse.json({ error: 'User not found in database.' }, { status: 404 });
         }
         const internalUserId = userRows[0].id;
         
-        console.log(`Found internal user ID: ${internalUserId}. Creating subscription...`);
+        console.log(`Found internal user ID: ${internalUserId}. Creating subscription record...`);
 
-        await connection.execute(
-            `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status)
-            VALUES (?, ?, ?, ?, ?)
+        const [insertResult] = await connection.execute(
+            `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
             ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = NOW()`,
             [internalUserId, Number(gameId), Number(planId), subscription.id, 'active']
         );
-        console.log(`✅ Successfully created/updated subscription record in database for user ${internalUserId}.`);
+        
+        console.log(`✅ Successfully created/updated subscription in database for user ${internalUserId}. Result:`, insertResult);
+
       } catch (error) {
-        console.error("❌ Webhook handler for checkout.session.completed failed:", error);
-        // Don't return 500 to Stripe, as it will retry for our logic errors.
+        console.error("❌ Webhook database handler for checkout.session.completed failed:", error);
+        return NextResponse.json({ error: 'Database operation failed.' }, { status: 500 });
       } finally {
         if (connection) await connection.end();
       }
@@ -88,6 +95,8 @@ export async function POST(req: Request) {
       const subStatus = subscription.status;
       const subId = subscription.id;
       
+      console.log(`Subscription ${subId} status changed to ${subStatus}.`);
+
       let connection;
       try {
         connection = await getDbConnection();
@@ -95,9 +104,10 @@ export async function POST(req: Request) {
             'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
             [subStatus, subId]
         );
-        console.log(`✅ Subscription ${subId} status updated to ${subStatus}.`);
+        console.log(`✅ Database record for subscription ${subId} status updated to ${subStatus}.`);
       } catch (error) {
-        console.error(`❌ Webhook handler for subscription update/delete failed for sub ID ${subId}:`, error);
+        console.error(`❌ Webhook database handler for subscription update/delete failed for sub ID ${subId}:`, error);
+        return NextResponse.json({ error: 'Database operation failed.' }, { status: 500 });
       } finally {
         if (connection) await connection.end();
       }
