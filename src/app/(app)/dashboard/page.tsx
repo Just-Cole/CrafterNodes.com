@@ -26,11 +26,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getAllGameServers } from "@/app/actions/billing";
 
 
 export default function DashboardPage() {
   const [servers, setServers] = React.useState<GameServer[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,6 +40,25 @@ export default function DashboardPage() {
 
   const canCreate = user?.permissions?.includes('create_servers');
   const canEdit = user?.permissions?.includes('edit_configs');
+
+  React.useEffect(() => {
+    async function fetchServers() {
+      setIsLoading(true);
+      try {
+        const fetchedServers = await getAllGameServers();
+        setServers(fetchedServers);
+      } catch (err) {
+        setError("Failed to load server data. Please try again later.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (user) {
+      fetchServers();
+    }
+  }, [user]);
 
   const handleDeleteInitiate = (server: GameServer) => {
     if (!canEdit) return;
@@ -94,9 +114,9 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold mb-2">No Servers Found</h2>
           <p className="text-muted-foreground mb-4">Get started by creating a new server.</p>
           {canCreate && (
-             <Link href="/servers/create">
+             <Link href="/#games">
               <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Create First Server
+                <PlusCircle className="mr-2 h-4 w-4" /> Purchase a Server
               </Button>
             </Link>
           )}

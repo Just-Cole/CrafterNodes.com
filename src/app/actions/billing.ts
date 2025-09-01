@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import mysql from 'mysql2/promise';
 import { getPricingData, Game } from '@/lib/pricing';
+import type { GameServer } from '@/lib/types';
 
 const DATABASE_URL = "mysql://crafteruser:%23Tjc52302@172.93.108.112:3306/crafternodes";
 const ADMIN_DISCORD_ID = "949172257345921045";
@@ -30,6 +31,23 @@ export interface Subscription {
   planName: string;
 }
 
+function subscriptionToGameServer(sub: Subscription): GameServer {
+    return {
+        id: String(sub.id),
+        name: `${sub.gameName} Server`,
+        status: sub.status === 'active' ? 'running' : 'stopped',
+        game: sub.gameName,
+        ip: '127.0.0.1', // Placeholder IP
+        resources: { // Placeholder resources
+            cpu: sub.status === 'active' ? Math.floor(Math.random() * 50) + 25 : 0,
+            memory_used: sub.status === 'active' ? Math.floor(Math.random() * 4096) + 1024 : 0,
+            memory_total: 8192,
+            disk_used: Math.floor(Math.random() * 20) + 5,
+            disk_total: 50,
+        },
+    };
+}
+
 
 export async function getUserSubscriptions(): Promise<Subscription[]> {
   const session = await getServerSession(authOptions);
@@ -50,9 +68,12 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
 
     if (userRows.length === 0) {
         console.error(`No internal user found for Discord ID: ${session.user.id}`);
-        return [];
+        // If it's the admin, we can proceed without a db record
+        if (session.user.id !== ADMIN_DISCORD_ID) {
+            return [];
+        }
     }
-    const internalUserId = userRows[0].id;
+    const internalUserId = userRows[0]?.id ?? -1;
     
     // Now, fetch real subscriptions for that internal user ID
     const [rows] = await connection.execute<mysql.RowDataPacket[]>(
@@ -76,6 +97,9 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
         const allGames = pricingData.supportedGames;
 
         const fabricatedSubscriptions: Subscription[] = allGames.map(game => {
+            if (!game.plans || game.plans.length === 0) {
+                return null;
+            }
             // Find the "best" plan (most expensive)
             const bestPlan = game.plans.reduce((best, current) => {
                 const bestPrice = parseFloat(best.price.replace(/[^0-9.-]+/g,""));
@@ -95,7 +119,7 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
                 gameName: game.name,
                 planName: `👑 ${bestPlan.name}` // Add a crown for flair
             };
-        });
+        }).filter(Boolean) as Subscription[];
 
         // Combine real and fabricated, ensuring no duplicates for the same game
         const realSubGameIds = new Set(realSubscriptions.map(s => s.gameId));
@@ -115,4 +139,25 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
       await connection.end();
     }
   }
+}
+
+export async function getAllGameServers(): Promise<GameServer[]> {
+    const subscriptions = await getUserSubscriptions();
+    return subscriptions.map(subscriptionToGameServer);
+}
+
+export async function getGameServer(id: string): Promise<GameServer | null> {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+        return null;
+    }
+    
+    const subscriptions = await getUserSubscriptions();
+    const subscription = subscriptions.find(sub => sub.id === numericId);
+
+    if (subscription) {
+        return subscriptionToGameServer(subscription);
+    }
+
+    return null;
 }

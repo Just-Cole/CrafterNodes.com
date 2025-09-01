@@ -8,16 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
-import { Power, PowerOff, RefreshCw, ChevronRight, Terminal, Files, Settings, Wrench } from 'lucide-react';
+import { Power, PowerOff, RefreshCw, ChevronRight, Terminal, Files, Settings, Wrench, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { GameServer } from '@/lib/types';
+import { getGameServer } from '@/app/actions/billing';
 
-
-// Mock data for a single server - replace with actual API call
-const mockServers: { [key: string]: GameServer } = {
-  '1': { id: '1', name: 'My Valheim Server', status: 'running', game: 'Valheim', ip: '123.45.67.89', resources: { cpu: 75, memory_used: 2048, memory_total: 8192, disk_used: 15, disk_total: 50 } },
-  '2': { id: '2', name: 'Minecraft Creative', status: 'stopped', game: 'Minecraft', ip: '98.76.54.32', resources: { cpu: 0, memory_used: 0, memory_total: 4096, disk_used: 5, disk_total: 20 } },
-};
 
 function ServerStatusBadge({ status }: { status: GameServer['status'] }) {
     const statusInfo = {
@@ -102,22 +97,36 @@ function SettingsTab() {
 
 export default function ServerPage({ params }: { params: { id: string } }) {
   const [server, setServer] = React.useState<GameServer | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // In a real app, you would fetch this data from your API
-    const serverData = mockServers[params.id];
-    if (serverData) {
-      setServer(serverData);
-    } else {
-      // If no server is found for the ID, trigger a 404
-      notFound();
+    async function fetchServer() {
+      setIsLoading(true);
+      const serverData = await getGameServer(params.id);
+      if (serverData) {
+        setServer(serverData);
+      } else {
+        notFound();
+      }
+      setIsLoading(false);
     }
+    
+    fetchServer();
   }, [params.id]);
 
 
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
+
   if (!server) {
-     // You can return a loading skeleton here
-    return <div>Loading...</div>;
+      // This will likely not be reached due to notFound() in useEffect,
+      // but it's good practice for type safety.
+      return notFound();
   }
   
   return (
