@@ -61,12 +61,14 @@ export async function getPricingData(): Promise<PricingData> {
       
       const plans = plansRows.map(planRow => ({
         ...planRow,
+        id: planRow.id,
         features: JSON.parse(planRow.features || '[]'),
         popular: Boolean(planRow.popular),
       })) as Plan[];
 
       games.push({
         ...gameRow,
+        id: gameRow.id,
         plans,
       } as Game);
     }
