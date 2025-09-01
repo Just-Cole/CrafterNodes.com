@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         await connection.execute(
             `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status)
             VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE status = VALUES(status)`, // Handle cases where a subscription might already exist
+            ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = NOW()`,
             [internalUserId, Number(gameId), Number(planId), subscription.id, 'active']
         );
         console.log(`✅ Successfully created/updated subscription record in database for user ${internalUserId}.`);
@@ -82,21 +82,22 @@ export async function POST(req: Request) {
       break;
     }
     
-    case 'customer.subscription.deleted':
-    case 'customer.subscription.updated': {
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription;
       const subStatus = subscription.status;
+      const subId = subscription.id;
       
       let connection;
       try {
         connection = await getDbConnection();
         await connection.execute(
             'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
-            [subStatus, subscription.id]
+            [subStatus, subId]
         );
-        console.log(`✅ Subscription ${subscription.id} status updated to ${subStatus}.`);
+        console.log(`✅ Subscription ${subId} status updated to ${subStatus}.`);
       } catch (error) {
-        console.error("❌ Webhook handler for customer.subscription failed:", error);
+        console.error(`❌ Webhook handler for subscription update/delete failed for sub ID ${subId}:`, error);
       } finally {
         if (connection) await connection.end();
       }
