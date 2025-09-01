@@ -91,7 +91,7 @@ export default function BillingPage() {
                                         </TableCell>
                                         <TableCell>{format(new Date(sub.createdAt), 'PPP')}</TableCell>
                                         <TableCell className="text-right">
-                                            {sub.status === 'active' && sub.id && (
+                                            {sub.status === 'active' && (
                                                 <Button asChild>
                                                     <Link href={`/dashboard/server/${sub.id}`}>Manage</Link>
                                                 </Button>

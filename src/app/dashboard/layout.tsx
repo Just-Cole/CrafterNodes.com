@@ -94,7 +94,7 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/server')}>
+                <SidebarMenuButton asChild isActive={pathname === '/billing' || pathname.startsWith('/dashboard/server')}>
                     <Link href="/billing">
                         <Server />
                         My Servers
@@ -102,7 +102,7 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/billing'}>
+                <SidebarMenuButton asChild isActive={pathname === '/dashboard/billing'}>
                     <Link href="/billing">
                         <CreditCard />
                         Billing
