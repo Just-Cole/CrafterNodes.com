@@ -19,6 +19,32 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y nginx git ufw
 
 # --------------------------------------------------
+# Step 1.5: Create a Swap File for Memory
+# --------------------------------------------------
+
+# The Next.js build process can use a lot of memory. If your server has limited
+# RAM (e.g., 1GB or 2GB), the build may fail. Creating a swap file prevents this.
+
+# 1. Allocate 2GB of space for the swap file (you can adjust the size if needed).
+sudo fallocate -l 2G /swapfile
+
+# 2. Set the correct permissions for the swap file.
+sudo chmod 600 /swapfile
+
+# 3. Mark the file as swap space.
+sudo mkswap /swapfile
+
+# 4. Enable the swap file.
+sudo swapon /swapfile
+
+# 5. Make the swap file permanent by adding it to the fstab file.
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# 6. Verify that the swap is active.
+sudo swapon --show
+
+
+# --------------------------------------------------
 # Step 2: Install Node.js and PM2
 # --------------------------------------------------
 
