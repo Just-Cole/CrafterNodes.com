@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { CreditCard, PanelLeft, Shield, Server } from "lucide-react";
+import { CreditCard, PanelLeft, Shield, Server, LayoutDashboard } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,8 +42,9 @@ function UserMenu() {
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href="/billing">Dashboard</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/billing">My Subscriptions</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                         {session?.user?.id === ADMIN_DISCORD_ID && (
                           <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                         )}
@@ -71,7 +72,7 @@ export default function DashboardLayout({
     const pathname = usePathname();
 
     if (status === 'loading') {
-        return <div>Loading...</div>;
+        return <div className="flex h-screen items-center justify-center">Loading...</div>;
     }
 
     if (status === 'unauthenticated') {
@@ -95,6 +96,14 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/dashboard'}>
+                    <Link href="/dashboard">
+                        <LayoutDashboard />
+                        Dashboard
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/server') || pathname === '/billing'}>
                     <Link href="/billing">
                         <Server />
@@ -104,7 +113,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/dashboard/billing'}>
-                    <Link href="/billing">
+                    <Link href="/dashboard/billing">
                         <CreditCard />
                         Billing
                     </Link>
@@ -141,12 +150,16 @@ export default function DashboardLayout({
                             <Logo />
                             <span className="sr-only">CrafterNodes</span>
                         </Link>
+                        <Link href="/dashboard" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                            <LayoutDashboard className="h-5 w-5" />
+                            Dashboard
+                        </Link>
                         <Link href="/billing" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                             <Server className="h-5 w-5" />
                             My Servers
                         </Link>
                         <Link
-                            href="/billing"
+                            href="/dashboard/billing"
                             className="flex items-center gap-4 px-2.5 text-foreground"
                         >
                             <CreditCard className="h-5 w-5" />

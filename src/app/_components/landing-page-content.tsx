@@ -83,8 +83,9 @@ function Header() {
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild><Link href="/billing">Dashboard</Link></DropdownMenuItem>
-                                <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href="/billing">My Subscriptions</Link></DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                                 {session?.user?.id === ADMIN_DISCORD_ID && (
                                   <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                                 )}
@@ -168,7 +169,7 @@ export function PricingDialog({ game, children }: { game: PricingData['supported
 
             const response = await checkoutFlow({
                 priceId: plan.priceId,
-                successUrl: `${window.location.origin}/billing`,
+                successUrl: `${window.location.origin}/dashboard`,
                 cancelUrl: window.location.href,
                 gameId: game.id!,
                 planId: plan.id!,

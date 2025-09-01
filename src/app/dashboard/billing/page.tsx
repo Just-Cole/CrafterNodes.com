@@ -3,49 +3,31 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
 
 export default function BillingPage() {
-
-    // In a real app, you'd fetch subscription status from your backend
-    const subscription = {
-        plan: 'Pro',
-        status: 'Active',
-        nextBilling: 'September 15, 2024'
-    }
+    const { data: session } = useSession();
 
     return (
         <div className="py-6">
              <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Billing</h1>
-                    <p className="text-muted-foreground">Manage your subscription and payment details.</p>
+                    <h1 className="text-2xl font-bold">Billing Portal</h1>
+                    <p className="text-muted-foreground">Manage your subscription, payment methods, and view your invoice history.</p>
                 </div>
             </div>
 
-            <div className="mt-8 grid gap-8 md:grid-cols-2">
+            <div className="mt-8 grid gap-8">
                  <Card>
                     <CardHeader>
-                        <CardTitle>Current Plan</CardTitle>
-                        <CardDescription>You are currently on the <strong>{subscription.plan}</strong> plan.</CardDescription>
+                        <CardTitle>Manage Your Subscription</CardTitle>
+                        <CardDescription>Click the button below to be redirected to our secure billing portal, powered by Stripe. You can update your payment method, cancel subscriptions, and download invoices there.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p>Status: <span className="font-semibold text-green-500">{subscription.status}</span></p>
-                        <p className="text-muted-foreground">Your next bill is on {subscription.nextBilling}.</p>
-                        <div className="mt-4 flex gap-2">
-                             <Button>Upgrade Plan</Button>
-                             <Button variant="outline">Cancel Subscription</Button>
-                        </div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Payment Method</CardTitle>
-                        <CardDescription>Your primary payment method.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p>Visa ending in <strong>4242</strong></p>
-                        <p className="text-muted-foreground">Expires 12/2028</p>
-                        <Button variant="outline" className="mt-4">Update Payment Method</Button>
+                        <a href={process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL} target="_blank" rel="noopener noreferrer">
+                            <Button>Open Secure Billing Portal</Button>
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-4">You will be securely redirected to Stripe to manage your billing information.</p>
                     </CardContent>
                 </Card>
             </div>

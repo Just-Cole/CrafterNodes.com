@@ -25,7 +25,7 @@ function SubscriptionStatusBadge({ status }: { status: string }) {
     return <Badge variant={statusVariant[status] || 'secondary'}>{status}</Badge>;
 }
 
-export default function BillingPage() {
+export default function DashboardPage() {
     const { data: session } = useSession();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,31 +33,25 @@ export default function BillingPage() {
     useEffect(() => {
         if (session) {
             getUserSubscriptions()
-                .then(setSubscriptions)
+                .then(subs => setSubscriptions(subs.filter(s => s.status === 'active')))
                 .finally(() => setLoading(false));
         }
     }, [session]);
 
-
     return (
-        <div className="container mx-auto py-12 md:py-20">
-             <div className="flex items-center justify-between mb-8">
+        <div className="py-6 space-y-8">
+             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">My Subscriptions</h1>
-                    <p className="text-muted-foreground">Manage your active and past subscriptions.</p>
-                </div>
-                <div>
-                    <Button asChild>
-                      <Link href="/dashboard/billing">Manage Billing</Link>
-                    </Button>
+                    <h1 className="text-2xl font-bold">Dashboard</h1>
+                    <p className="text-muted-foreground">Welcome back, {session?.user?.name}! Here are your active servers.</p>
                 </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Subscriptions</CardTitle>
+                    <CardTitle>Your Active Servers</CardTitle>
                     <CardDescription>
-                        Here is a list of all your current and past game server subscriptions.
+                        Manage your active game servers below.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -73,7 +67,7 @@ export default function BillingPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                Array.from({ length: 3 }).map((_, i) => (
+                                Array.from({ length: 1 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
@@ -92,23 +86,21 @@ export default function BillingPage() {
                                         </TableCell>
                                         <TableCell>{format(new Date(sub.createdAt), 'PPP')}</TableCell>
                                         <TableCell className="text-right">
-                                            {sub.status === 'active' && (
-                                                <Button asChild>
-                                                    <Link href={`/dashboard/server/${sub.id}`}>Manage Server</Link>
-                                                </Button>
-                                            )}
+                                            <Button asChild>
+                                                <Link href={`/dashboard/server/${sub.id}`}>Manage</Link>
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
-                                         <div className="flex flex-col items-center gap-2">
+                                        <div className="flex flex-col items-center gap-2">
                                             <Server className="h-8 w-8 text-muted-foreground" />
-                                            <p className="font-semibold">No subscriptions found.</p>
-                                            <p className="text-muted-foreground text-sm">Let's get your first server running!</p>
+                                            <p className="font-semibold">No active servers found.</p>
+                                            <p className="text-muted-foreground text-sm">Ready to start a new adventure?</p>
                                             <Button asChild variant="outline" className="mt-2">
-                                                <Link href="/#games">Explore Games</Link>
+                                                <Link href="/#games">Deploy a Server</Link>
                                             </Button>
                                         </div>
                                     </TableCell>
