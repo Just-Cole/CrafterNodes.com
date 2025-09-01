@@ -42,6 +42,7 @@ function UserMenu() {
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/billing">Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                         {session?.user?.id === ADMIN_DISCORD_ID && (
                           <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
@@ -94,7 +95,7 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/billing' || pathname.startsWith('/dashboard/server')}>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard/server') || pathname === '/billing'}>
                     <Link href="/billing">
                         <Server />
                         My Servers

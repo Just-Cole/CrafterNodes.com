@@ -47,6 +47,7 @@ function Header() {
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild><Link href="/billing">Dashboard</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href="/billing">Billing</Link></DropdownMenuItem>
                                 {session?.user?.id === ADMIN_DISCORD_ID && (
                                   <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
