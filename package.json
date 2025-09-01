@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"bgBlue.bold,bgYellow.bold\" --kill-others-on-fail \"next dev -p 4000\" \"node src/backend/src/index.js\"",
+    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"bgBlue.bold,bgYellow.bold\" --kill-others-on-fail \"next dev -p 4000\" \"node src/backend/index.js\"",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
