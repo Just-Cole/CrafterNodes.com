@@ -33,11 +33,19 @@ export async function POST(req: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      const { userId: discordId, gameId, planId } = session.metadata || {};
+      
+      if (!session.subscription) {
+         console.error("Webhook received but session is missing subscription ID.");
+         return NextResponse.json({ error: 'Missing subscription ID.' }, { status: 400 });
+      }
 
-      if (!discordId || !session.subscription || !gameId || !planId) {
-        console.error("Webhook received with missing metadata:", session.metadata);
-        return NextResponse.json({ error: 'Missing required metadata.' }, { status: 400 });
+      // Retrieve the full subscription object to get the metadata
+      const subscription = await stripe.subscriptions.retrieve(session.subscription.toString());
+      const { userId: discordId, gameId, planId } = subscription.metadata;
+
+      if (!discordId || !gameId || !planId) {
+        console.error("Webhook received but subscription metadata is missing:", subscription.metadata);
+        return NextResponse.json({ error: 'Missing required metadata on subscription.' }, { status: 400 });
       }
 
       console.log(`✅ Successful checkout for Discord user: ${discordId}.`);
@@ -60,10 +68,11 @@ export async function POST(req: Request) {
 
         await connection.execute(
             `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status)
-            VALUES (?, ?, ?, ?, ?)`,
-            [internalUserId, Number(gameId), Number(planId), session.subscription.toString(), 'active']
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE status = VALUES(status)`, // Handle cases where a subscription might already exist
+            [internalUserId, Number(gameId), Number(planId), subscription.id, 'active']
         );
-        console.log(`✅ Successfully created subscription record in database for user ${internalUserId}.`);
+        console.log(`✅ Successfully created/updated subscription record in database for user ${internalUserId}.`);
       } catch (error) {
         console.error("❌ Webhook handler for checkout.session.completed failed:", error);
         // Don't return 500 to Stripe, as it will retry for our logic errors.
@@ -100,5 +109,3 @@ export async function POST(req: Request) {
   
   return NextResponse.json({ received: true });
 }
-
-    

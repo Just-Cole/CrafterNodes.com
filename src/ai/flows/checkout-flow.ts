@@ -44,10 +44,13 @@ async function createCheckoutSession(
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     customer_email: input.userEmail,
-    metadata: {
-      userId: input.userId, // This is the Discord ID
-      gameId: input.gameId,
-      planId: input.planId,
+    // Attach metadata to the subscription itself, not the checkout session
+    subscription_data: {
+      metadata: {
+        userId: input.userId, // This is the Discord ID
+        gameId: input.gameId,
+        planId: input.planId,
+      },
     },
   });
 
