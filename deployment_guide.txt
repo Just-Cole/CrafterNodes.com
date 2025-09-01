@@ -249,7 +249,7 @@ CREATE TABLE `subscriptions` (
 
 # Start the Next.js application using PM2.
 # This will start the app on port 3000 by default.
-pm2 start npm --name "next-app" -- start
+pm2 start npm --name "crafternodes-prod" -- start
 
 # Tell PM2 to start on system boot
 pm2 startup
@@ -325,7 +325,7 @@ npm install
 npm run build
 
 # 5. Restart the app with PM2 to apply the changes
-pm2 restart next-app
+pm2 restart crafternodes-prod
 
 # --------------------------------------------------
 # Step 11: Troubleshooting
@@ -355,8 +355,8 @@ pm2 restart next-app
 # This section provides the steps to remove the application and its components.
 
 # 1. Stop and remove the application from PM2
-pm2 stop next-app
-pm2 delete next-app
+pm2 stop crafternodes-prod
+pm2 delete crafternodes-prod
 pm2 save
 pm2 unstartup
 
