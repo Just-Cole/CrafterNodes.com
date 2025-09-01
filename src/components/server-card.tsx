@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { MoreVertical, Power, PowerOff, RefreshCw, Trash2, HardDrive, Cpu, MemoryStick } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { GameServer } from "@/lib/types";
+import Link from "next/link";
 
 interface ServerCardProps {
   server: GameServer;
@@ -96,7 +97,9 @@ export function ServerCard({ server, onDelete, onStartServer, onStopServer, onRe
       </CardContent>
        <CardFooter className="justify-between">
          <p className="text-xs text-muted-foreground">IP: {server.ip}</p>
-         <Button variant="outline" size="sm">Manage</Button>
+         <Button asChild variant="outline" size="sm">
+            <Link href={`/dashboard/server/${server.id}`}>Manage</Link>
+         </Button>
       </CardFooter>
     </Card>
   );
