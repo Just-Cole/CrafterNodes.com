@@ -41,7 +41,7 @@ async function createCheckoutSession(
       },
     ],
     mode: 'subscription',
-    success_url: input.successUrl,
+    success_url: `${input.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: input.cancelUrl,
     customer_email: input.userEmail,
     // Attach metadata to the subscription itself, not the checkout session
