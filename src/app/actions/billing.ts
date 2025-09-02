@@ -68,12 +68,9 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
 
     if (userRows.length === 0) {
         console.error(`No internal user found for Discord ID: ${session.user.id}`);
-        // If it's the admin, we can proceed without a db record
-        if (session.user.id !== ADMIN_DISCORD_ID) {
-            return [];
-        }
+        return [];
     }
-    const internalUserId = userRows[0]?.id ?? -1;
+    const internalUserId = userRows[0].id;
     
     // Now, fetch real subscriptions for that internal user ID
     const [rows] = await connection.execute<mysql.RowDataPacket[]>(
@@ -89,47 +86,8 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
       [internalUserId]
     );
     
-    const realSubscriptions = rows as Subscription[];
+    return rows as Subscription[];
 
-    // If the user is the special admin, fabricate subscriptions for all games
-    if (session.user.id === ADMIN_DISCORD_ID) {
-        const pricingData = await getPricingData();
-        const allGames = pricingData.supportedGames;
-
-        const fabricatedSubscriptions: Subscription[] = allGames.map(game => {
-            if (!game.plans || game.plans.length === 0) {
-                return null;
-            }
-            // Find the "best" plan (most expensive)
-            const bestPlan = game.plans.reduce((best, current) => {
-                const bestPrice = parseFloat(best.price.replace(/[^0-9.-]+/g,""));
-                const currentPrice = parseFloat(current.price.replace(/[^0-9.-]+/g,""));
-                return currentPrice > bestPrice ? current : best;
-            }, game.plans[0]);
-
-            return {
-                id: game.id! * -1, // Use a negative ID to avoid conflicts
-                userId: internalUserId,
-                gameId: game.id!,
-                planId: bestPlan.id!,
-                stripeSubscriptionId: 'admin-access',
-                status: 'active',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                gameName: game.name,
-                planName: `👑 ${bestPlan.name}` // Add a crown for flair
-            };
-        }).filter(Boolean) as Subscription[];
-
-        // Combine real and fabricated, ensuring no duplicates for the same game
-        const realSubGameIds = new Set(realSubscriptions.map(s => s.gameId));
-        const uniqueFabricatedSubs = fabricatedSubscriptions.filter(fs => !realSubGameIds.has(fs.gameId));
-
-        return [...realSubscriptions, ...uniqueFabricatedSubs];
-    }
-
-
-    return realSubscriptions;
   } catch (error) {
     console.error('Failed to fetch user subscriptions:', error);
     // In a real app, you might want to handle specific errors differently
@@ -161,3 +119,4 @@ export async function getGameServer(id: string): Promise<GameServer | null> {
 
     return null;
 }
+
