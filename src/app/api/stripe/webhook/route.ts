@@ -66,7 +66,9 @@ export async function POST(req: Request) {
 
         if (userRows.length === 0) {
             console.error(`❌ Database Error: User with Discord ID ${discordId} not found in the database.`);
-            return NextResponse.json({ error: 'User not found in database.' }, { status: 404 });
+            // Even if the user isn't found, we should not stop the webhook from acknowledging receipt.
+            // Log the error and return a 200 to Stripe. A separate process could handle reconciliation.
+            return NextResponse.json({ error: 'User not found in database, but webhook acknowledged.' }, { status: 200 });
         }
         const internalUserId = userRows[0].id;
         
@@ -91,6 +93,7 @@ export async function POST(req: Request) {
 
       } catch (error) {
         console.error("❌ Webhook database handler for checkout.session.completed failed:", error);
+        // Return a 500 but Stripe will retry. This is better than a 400 which Stripe won't retry.
         return NextResponse.json({ error: 'Database operation failed.' }, { status: 500 });
       } finally {
         if (connection) await connection.end();
