@@ -71,11 +71,16 @@ export async function POST(req: Request) {
         
         console.log(`Found internal user ID: ${internalUserId}. Creating subscription record...`);
 
+        // Use ON DUPLICATE KEY UPDATE to handle both new subscriptions and reactivations.
         const [insertResult] = await connection.execute(
             `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-            ON DUPLICATE KEY UPDATE status = VALUES(status), updatedAt = NOW()`,
-            [internalUserId, Number(gameId), Number(planId), subscription.id, 'active']
+            VALUES (?, ?, ?, ?, 'active', NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+                status = 'active', 
+                updatedAt = NOW(),
+                gameId = VALUES(gameId),
+                planId = VALUES(planId)`,
+            [internalUserId, Number(gameId), Number(planId), subscription.id]
         );
         
         console.log(`✅ Successfully created/updated subscription in database for user ${internalUserId}. Result:`, insertResult);
@@ -92,7 +97,7 @@ export async function POST(req: Request) {
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription;
-      const subStatus = subscription.status;
+      const subStatus = subscription.status; // e.g., 'active', 'canceled', 'past_due'
       const subId = subscription.id;
       
       console.log(`Subscription ${subId} status changed to ${subStatus}.`);
@@ -100,11 +105,12 @@ export async function POST(req: Request) {
       let connection;
       try {
         connection = await getDbConnection();
-        await connection.execute(
+        // Update the status of the subscription in your database
+        const [updateResult] = await connection.execute(
             'UPDATE subscriptions SET status = ? WHERE stripeSubscriptionId = ?',
             [subStatus, subId]
         );
-        console.log(`✅ Database record for subscription ${subId} status updated to ${subStatus}.`);
+        console.log(`✅ Database record for subscription ${subId} status updated to ${subStatus}. Result:`, updateResult);
       } catch (error) {
         console.error(`❌ Webhook database handler for subscription update/delete failed for sub ID ${subId}:`, error);
         return NextResponse.json({ error: 'Database operation failed.' }, { status: 500 });
@@ -115,7 +121,7 @@ export async function POST(req: Request) {
     }
 
     default:
-      console.log(`Unhandled event type ${event.type}`);
+      // console.log(`Unhandled event type ${event.type}`);
   }
   
   return NextResponse.json({ received: true });
