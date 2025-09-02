@@ -58,42 +58,42 @@ export async function POST(req: Request) {
       let connection;
       try {
         connection = await getDbConnection();
-        // Correctly look up the internal user ID from the Discord ID
-        const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
-            'SELECT id FROM users WHERE discordId = ?',
-            [discordId]
-        );
+        
+        // This is a more robust way to handle the insert.
+        // It combines finding the user and creating the subscription into one atomic operation.
+        const sql = `
+          INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status, createdAt, updatedAt)
+          SELECT u.id, ?, ?, ?, 'active', NOW(), NOW()
+          FROM users u
+          WHERE u.discordId = ?
+          ON DUPLICATE KEY UPDATE 
+              status = 'active', 
+              updatedAt = NOW(),
+              gameId = VALUES(gameId),
+              planId = VALUES(planId),
+              userId = (SELECT id FROM users WHERE discordId = ?)`;
 
-        if (userRows.length === 0) {
-            console.error(`❌ Database Error: User with Discord ID ${discordId} not found in the database.`);
-            // Even if the user isn't found, we should not stop the webhook from acknowledging receipt.
-            // Log the error and return a 200 to Stripe. A separate process could handle reconciliation.
-            return NextResponse.json({ error: 'User not found in database, but webhook acknowledged.' }, { status: 200 });
+        const params = [
+            Number(gameId), 
+            Number(planId), 
+            subscription.id, 
+            discordId,
+            discordId // For the ON DUPLICATE KEY UPDATE part
+        ];
+
+        const [result] = await connection.execute<mysql.ResultSetHeader>(sql, params);
+        
+        if (result.affectedRows === 0) {
+           console.error(`❌ Database Error: Could not create subscription. User with Discord ID ${discordId} might not exist.`);
+           // Acknowledge the webhook to prevent retries, but log the failure.
+           return NextResponse.json({ error: `User with Discord ID ${discordId} not found.` }, { status: 200 });
         }
-        const internalUserId = userRows[0].id;
-        
-        console.log(`Found internal user ID: ${internalUserId}. Creating subscription record...`);
 
-        // Use ON DUPLICATE KEY UPDATE to handle both new subscriptions and reactivations.
-        // This is crucial for when a user resubscribes. We update the status and plan details
-        // on the existing `stripeSubscriptionId` record.
-        const [insertResult] = await connection.execute(
-            `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, 'active', NOW(), NOW())
-            ON DUPLICATE KEY UPDATE 
-                status = 'active', 
-                updatedAt = NOW(),
-                gameId = VALUES(gameId),
-                planId = VALUES(planId),
-                userId = VALUES(userId)`, // Ensure userId is updated if it somehow changed
-            [internalUserId, Number(gameId), Number(planId), subscription.id]
-        );
-        
-        console.log(`✅ Successfully created/updated subscription in database for user ${internalUserId}. Result:`, insertResult);
+        console.log(`✅ Successfully created/updated subscription in database for user with Discord ID ${discordId}. Result:`, result);
 
       } catch (error) {
         console.error("❌ Webhook database handler for checkout.session.completed failed:", error);
-        // Return a 500 but Stripe will retry. This is better than a 400 which Stripe won't retry.
+        // Return a 500 so Stripe will retry.
         return NextResponse.json({ error: 'Database operation failed.' }, { status: 500 });
       } finally {
         if (connection) await connection.end();
