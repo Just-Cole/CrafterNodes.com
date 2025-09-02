@@ -8,8 +8,9 @@ import { createCustomerPortalFlow } from "@/ai/flows/create-customer-portal-flow
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
-export default function BillingPage() {
+export default function BillingDashboardPage() {
     const { data: session } = useSession();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -36,9 +37,10 @@ export default function BillingPage() {
 
         } catch (error) {
             console.error("Error creating customer portal session:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again later.";
             toast({
                 title: "Error",
-                description: "An unexpected error occurred. Please try again later.",
+                description: errorMessage,
                 variant: "destructive"
             });
         } finally {
@@ -51,12 +53,12 @@ export default function BillingPage() {
         <div className="py-6">
              <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Billing Portal</h1>
+                    <h1 className="text-2xl font-bold">Billing</h1>
                     <p className="text-muted-foreground">Manage your subscription, payment methods, and view your invoice history.</p>
                 </div>
             </div>
 
-            <div className="mt-8 grid gap-8">
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
                  <Card>
                     <CardHeader>
                         <CardTitle>Manage Your Subscription</CardTitle>
@@ -68,6 +70,18 @@ export default function BillingPage() {
                             {isLoading ? "Redirecting..." : "Open Secure Billing Portal"}
                         </Button>
                         <p className="text-xs text-muted-foreground mt-4">You will be securely redirected to Stripe to manage your billing information.</p>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Your Servers</CardTitle>
+                        <CardDescription>View your active game servers and manage their configurations.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <Button asChild>
+                           <Link href="/billing">Go to My Servers</Link>
+                       </Button>
+                        <p className="text-xs text-muted-foreground mt-4">This will take you to the list of your active and past subscriptions.</p>
                     </CardContent>
                 </Card>
             </div>

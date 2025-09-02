@@ -85,7 +85,6 @@ function Header() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href="/billing">My Subscriptions</Link></DropdownMenuItem>
-                                <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                                 {session?.user?.id === ADMIN_DISCORD_ID && (
                                   <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                                 )}

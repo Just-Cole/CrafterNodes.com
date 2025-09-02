@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const ADMIN_DISCORD_ID = "949172257345921045";
 
@@ -45,7 +46,6 @@ function Header() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href="/billing">My Subscriptions</Link></DropdownMenuItem>
-                                <DropdownMenuItem asChild><Link href="/dashboard/billing">Billing</Link></DropdownMenuItem>
                                 {session?.user?.id === ADMIN_DISCORD_ID && (
                                   <DropdownMenuItem asChild><Link href="/admin">Admin</Link></DropdownMenuItem>
                                 )}
@@ -131,10 +131,12 @@ export default function BillingLayout({
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        </div>
+        <AuthProvider>
+            <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+            </div>
+        </AuthProvider>
     )
 }

@@ -12,6 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import Link from "next/link";
 import { Server } from "lucide-react";
+import { createCustomerPortalFlow } from "@/ai/flows/create-customer-portal-flow";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 function SubscriptionStatusBadge({ status }: { status: string }) {
     const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } = {
@@ -29,6 +32,8 @@ export default function BillingPage() {
     const { data: session } = useSession();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPortalLoading, setIsPortalLoading] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (session) {
@@ -37,6 +42,39 @@ export default function BillingPage() {
                 .finally(() => setLoading(false));
         }
     }, [session]);
+
+    const handleManageBilling = async () => {
+        if (!session?.user?.id) return;
+        
+        setIsPortalLoading(true);
+        try {
+            const response = await createCustomerPortalFlow({
+                discordId: session.user.id,
+                returnUrl: window.location.href,
+            });
+
+            if (response.url) {
+                window.location.href = response.url;
+            } else {
+                 toast({
+                    title: "Error",
+                    description: "Could not create a billing portal session. You may not have any active subscriptions.",
+                    variant: "destructive"
+                });
+            }
+
+        } catch (error) {
+            console.error("Error creating customer portal session:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again later.";
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive"
+            });
+        } finally {
+            setIsPortalLoading(false);
+        }
+    };
 
 
     return (
@@ -47,15 +85,16 @@ export default function BillingPage() {
                     <p className="text-muted-foreground">Manage your active and past subscriptions.</p>
                 </div>
                 <div>
-                    <Button asChild>
-                      <Link href="/dashboard/billing">Manage Billing</Link>
+                    <Button onClick={handleManageBilling} disabled={isPortalLoading}>
+                        {isPortalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Manage Billing & Invoices
                     </Button>
                 </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Subscriptions</CardTitle>
+                    <CardTitle>Your Game Servers</CardTitle>
                     <CardDescription>
                         Here is a list of all your current and past game server subscriptions.
                     </CardDescription>
