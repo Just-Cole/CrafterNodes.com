@@ -67,7 +67,7 @@ export async function getUserSubscriptions(): Promise<Subscription[]> {
     );
 
     if (userRows.length === 0) {
-        console.error(`No internal user found for Discord ID: ${session.user.id}`);
+        console.log(`No internal user found for Discord ID: ${session.user.id}`);
         return [];
     }
     const internalUserId = userRows[0].id;
@@ -119,4 +119,3 @@ export async function getGameServer(id: string): Promise<GameServer | null> {
 
     return null;
 }
-
