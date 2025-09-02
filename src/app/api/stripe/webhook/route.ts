@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       let connection;
       try {
         connection = await getDbConnection();
+        // Correctly look up the internal user ID from the Discord ID
         const [userRows] = await connection.execute<mysql.RowDataPacket[]>(
             'SELECT id FROM users WHERE discordId = ?',
             [discordId]
@@ -72,6 +73,8 @@ export async function POST(req: Request) {
         console.log(`Found internal user ID: ${internalUserId}. Creating subscription record...`);
 
         // Use ON DUPLICATE KEY UPDATE to handle both new subscriptions and reactivations.
+        // This is crucial for when a user resubscribes. We update the status and plan details
+        // on the existing `stripeSubscriptionId` record.
         const [insertResult] = await connection.execute(
             `INSERT INTO subscriptions (userId, gameId, planId, stripeSubscriptionId, status, createdAt, updatedAt)
             VALUES (?, ?, ?, ?, 'active', NOW(), NOW())
@@ -79,7 +82,8 @@ export async function POST(req: Request) {
                 status = 'active', 
                 updatedAt = NOW(),
                 gameId = VALUES(gameId),
-                planId = VALUES(planId)`,
+                planId = VALUES(planId),
+                userId = VALUES(userId)`, // Ensure userId is updated if it somehow changed
             [internalUserId, Number(gameId), Number(planId), subscription.id]
         );
         
