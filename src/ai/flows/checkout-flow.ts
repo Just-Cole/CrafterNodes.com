@@ -48,8 +48,8 @@ async function createCheckoutSession(
     subscription_data: {
       metadata: {
         userId: input.userId, // This is the Discord ID
-        gameId: input.gameId,
-        planId: input.planId,
+        gameId: input.gameId.toString(),
+        planId: input.planId.toString(),
       },
     },
   });
